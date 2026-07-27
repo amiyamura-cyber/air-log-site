@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+
+<html lang="ja">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>エアログ管理画面</title>
+
+<style>
+
+  /* ===== RESET & BASE ===== */
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif; background: #f0f2f5; color: #333; line-height: 1.6; }
+
+  a { text-decoration: none; color: inherit; }
+
+  img { max-width: 100%; display: block; }
+
+  
+
+  /* ===== LAYOUT ===== */
+
+  .l-header { background: #fff; padding: 16px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+
+  .l-header__title { font-size: 1.25rem; font-weight: bold; color: #1a73e8; }
+
+  .l-container { display: flex; max-width: 1400px; margin: 24px auto; padding: 0 24px; gap: 32px; align-items: flex-start; }
+
+  .l-editor { flex: 0 0 500px; background: #fff; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); position: sticky; top: 88px; max-height: calc(100vh - 100px); overflow-y: auto; }
+
+  .l-list { flex: 1; }
+
+
+
+  /* ===== FORM ===== */
+
+  .c-form-group { margin-bottom: 20px; }
+
+  .c-label { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: bold; margin-bottom: 8px; color: #555; }
+
+  .c-input, .c-select, .c-textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; font-family: inherit; transition: border-color 0.2s; }
+
+  .c-input:focus, .c-select:focus, .c-textarea:focus { border-color: #1a73e8; outline: none; }
+
+  .c-textarea { height: 120px; resize: vertical; line-height: 1.5; font-family: monospace; }
+
+  
+
+  .c-radio-group { display: flex; gap: 16px; }
+
+  .c-radio-label { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; cursor: pointer; }
+
+  
+
+  .c-date-group { display: flex; gap: 12px; align-items: center; }
+
+  .c-date-group span { color: #888; }
+
+
+
+  /* Toolbar */
+
+  .c-toolbar { display: flex; gap: 8px; margin-bottom: 8px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
+
+  .c-toolbar-btn { background: #fff; border: 1px solid #ccc; padding: 4px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; }
+
+  .c-toolbar-btn:hover { background: #e8f0fe; color: #1a73e8; border-color: #1a73e8; }
+
+
+
+  /* Image Upload */
+
+  .c-image-upload { border: 2px dashed #ddd; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; position: relative; overflow: hidden; background: #fafafa; }
+
+  .c-image-upload:hover { border-color: #1a73e8; background: #f0f4f8; }
+
+  .c-image-upload input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  .c-image-upload__preview { display: none; width: 100%; height: 180px; object-fit: cover; border-radius: 6px; margin-bottom: 12px; object-position: 50% 50%; }
+
+  .c-image-upload__text { font-size: 0.85rem; color: #888; }
+
+  .c-btn-remove-img { display: none; background: #ef5350; color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; cursor: pointer; margin: 0 auto; }
+
+  
+
+  .c-slider-group { display: none; margin-top: 12px; background: #f8f9fa; padding: 12px; border-radius: 6px; border: 1px solid #eee; }
+
+  .c-slider-group label { font-size: 0.8rem; color: #555; display: block; margin-bottom: 8px; text-align: center; font-weight: bold; }
+
+  .c-slider { width: 100%; cursor: pointer; }
+
+
+
+  /* Buttons */
+
+  .c-btn { width: 100%; padding: 14px; border: none; border-radius: 6px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s; text-align: center; }
+
+  .c-btn--primary { background: #1a73e8; color: #fff; }
+
+  .c-btn--primary:hover { background: #1557b0; }
+
+  .c-btn--secondary { background: #e0e0e0; color: #333; margin-top: 12px; }
+
+  .c-btn--secondary:hover { background: #bdbdbd; }
+
+  .c-btn--small { padding: 4px 12px; font-size: 0.8rem; width: auto; margin: 0; }
+
+  .c-btn-group { display: flex; gap: 12px; margin-top: 20px; }
+
+  .c-btn-group .c-btn { margin-top: 0; }
+
+
+
+  /* ===== LIST AREA & FOLDER ===== */
+
+  .l-list__header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 20px; }
+
+  .l-list__title { font-size: 1.5rem; font-weight: bold; }
+
+  
+
+  .c-folder { margin-bottom: 24px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow: hidden; }
+
+  .c-folder summary { padding: 16px 24px; font-size: 1.1rem; font-weight: bold; background: #fff; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid transparent; transition: background 0.2s; user-select: none; }
+
+  .c-folder summary:hover { background: #f8f9fa; }
+
+  .c-folder summary::-webkit-details-marker { display: none; }
+
+  .c-folder summary::after { content: "▼"; font-size: 0.8rem; color: #888; transition: transform 0.3s; }
+
+  .c-folder[open] summary { border-bottom: 1px solid #eee; background: #f8f9fa; }
+
+  .c-folder[open] summary::after { transform: rotate(180deg); }
+
+  .c-folder__content { padding: 24px; background: #f0f2f5; }
+
+
+
+  .p-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 24px; }
+
+  .p-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform 0.2s; position: relative; display: flex; flex-direction: column; cursor: pointer; border: 1px solid transparent; }
+
+  .p-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+
+  .p-card--private { opacity: 0.7; border-style: dashed; border-color: #999; }
+
+  .p-card--private::after { content: '非公開'; position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: #fff; font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; z-index: 10; }
+
+  
+
+  .p-card__img { width: 100%; height: 180px; object-fit: cover; background: #eee; }
+
+  .p-card__body { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+
+  .p-card__genre { align-self: flex-start; font-size: 0.7rem; color: #fff; background: #1a73e8; padding: 4px 10px; border-radius: 20px; margin-bottom: 12px; font-weight: bold; }
+
+  
+
+  /* カテゴリーの色分け */
+
+  .p-card__genre--採用支援 { background: #1a73e8; }
+
+  .p-card__genre--集客支援 { background: #8e24aa; }
+
+  .p-card__genre--お役立ち資料 { background: #43a047; }
+
+  .p-card__genre--セミナー情報 { background: #f57c00; }
+
+  
+
+  .p-card__title { font-size: 1rem; font-weight: 700; line-height: 1.5; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  .p-card__tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; margin-bottom: 12px; }
+
+  .p-card__tag { font-size: 0.7rem; color: #1a73e8; background: #e8f0fe; padding: 4px 8px; border-radius: 12px; font-weight: 500; }
+
+  
+
+  .p-card__footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 12px; }
+
+  .p-card__date { font-size: 0.75rem; color: #888; }
+
+  .p-card__actions { display: flex; gap: 6px; }
+
+  .p-card__btn { padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; border: none; cursor: pointer; font-weight: bold; }
+
+  .p-card__btn--copy { background: #e3f2fd; color: #1a73e8; }
+
+  .p-card__btn--edit { background: #e0f2f1; color: #00897b; }
+
+  .p-card__btn--delete { background: #ffebee; color: #e53935; }
+
+
+
+  /* ===== MODALS ===== */
+
+  .c-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 24px; opacity: 0; transition: opacity 0.3s; }
+
+  .c-modal.is-open { display: flex; opacity: 1; }
+
+  .c-modal__inner { background: #fff; width: 100%; max-width: 800px; max-height: 90vh; border-radius: 12px; overflow-y: auto; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+
+  .c-modal__close { position: absolute; top: 16px; right: 16px; background: #f0f0f0; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+
+  
+
+  /* Article Preview Styles */
+
+  .p-article-preview__cover { width: 100%; height: 300px; object-fit: cover; }
+
+  .p-article-preview__header { padding: 32px 32px 0; }
+
+  .p-article-preview__meta { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
+
+  .p-article-preview__title { font-size: 1.8rem; font-weight: bold; margin-bottom: 16px; line-height: 1.4; }
+
+  .p-article-preview__tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+
+  .p-article-preview__content{padding:0 32px 32px;line-height:1.8;font-size:1.05rem;color:#333;}
+
+  .p-article-preview__content p{margin-bottom:24px;}
+
+  .p-article-preview__content a{color:#1a73e8;text-decoration:underline}
+
+  .p-article-preview__content h2{margin: 40px 0 20px; font-size: 1.4rem; background-color: #f5f5f5; border-left: 6px solid #d44c7d; padding: 16px 20px; font-weight: 700;}
+
+  .p-article-preview__content h3{margin: 32px 0 16px; font-size: 1.25rem; border-bottom: 2px solid #d44c7d; padding-bottom: 8px; font-weight: 700;}
+
+
+
+  .c-empty-message { text-align: center; padding: 40px; background: #fff; border-radius: 12px; color: #888; font-size: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+
+</style>
+
+</head>
+
+<body>
+
+
+
+<header class="l-header">
+
+  <div class="l-header__title">エアログ 管理・編集画面</div>
+
+</header>
+
+
+
+<div class="l-container">
+
+  <aside class="l-editor">
+
+    <h2 style="font-size: 1.2rem; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">記事を編集</h2>
+
+    <form id="postForm">
+
+      <input type="hidden" id="postId">
+
+      <div class="c-form-group">
+
+        <label class="c-label"><span>ステータス</span></label>
+
+        <div class="c-radio-group">
+
+          <label class="c-radio-label"><input type="radio" name="status" value="public" checked> 公開</label>
+
+          <label class="c-radio-label"><input type="radio" name="status" value="private"> 非公開 (下書き)</label>
+
+        </div>
+
+      </div>
+
+      <div class="c-form-group">
+
+        <label class="c-label"><span>カテゴリー</span></label>
+
+        <select id="postGenre" class="c-select" required>
+
+          <option value="" disabled selected>選択してください</option>
+
+          <option value="採用支援">採用支援</option>
+
+          <option value="集客支援">集客支援</option>
+
+          <option value="お役立ち資料">お役立ち資料</option>
+
+          <option value="セミナー情報">セミナー情報</option>
+
+        </select>
+
+      </div>
+
+      <div class="c-form-group">
+
+        <label class="c-label"><span>タイトル</span></label>
+
+        <input type="text" id="postTitle" class="c-input" placeholder="記事のタイトルを入力" required>
+
+      </div>
+
+      <div class="c-form-group">
+
+        <label class="c-label"><span>カバー画像</span></label>
+
+        <div class="c-image-upload" id="imageUploadArea">
+
+          <img id="imagePreview" class="c-image-upload__preview" src="" alt="Preview">
+
+          <span class="c-image-upload__text" id="imageUploadText">クリックして画像をアップロード<br>(またはドラッグ＆ドロップ)</span>
+
+          <input type="file" id="imageInput" accept="image/*">
+
+        </div>
+
+        <input type="hidden" id="coverImageData">
+
+        <button type="button" id="btnRemoveImage" class="c-btn-remove-img" style="margin-top:8px;">画像を削除</button>
+
+        
+
+        <div class="c-slider-group" id="imageAdjustArea">
+
+          <label>表示位置調整（左 ↔ 右）</label>
+
+          <input type="range" id="imagePositionSliderX" class="c-slider" min="0" max="100" value="50">
+
+          <label style="margin-top:12px;">表示位置調整（上 ↔ 下）</label>
+
+          <input type="range" id="imagePositionSliderY" class="c-slider" min="0" max="100" value="50">
+
+        </div>
+
+      </div>
+
+      <div class="c-form-group">
+
+        <label class="c-label"><span>ハッシュタグ（カンマ区切り）</span></label>
+
+        <input type="text" id="postTags" class="c-input" placeholder="例: 採用, 就活, 新卒, 中途">
+
+      </div>
+
+      <div class="c-form-group">
+
+        <label class="c-label"><span>公開期間</span></label>
+
+        <div class="c-date-group">
+
+          <input type="date" id="startDate" class="c-input"><span>〜</span><input type="date" id="endDate" class="c-input">
+
+        </div>
+
+      </div>
+
+      <div class="c-form-group">
+
+        <label class="c-label">
+
+          <span>本文 (HTMLソースコード)</span>
+
+          <button type="button" id="btnExpandEditor" class="c-btn c-btn--primary c-btn--small">拡大して編集</button>
+
+        </label>
+
+        <div class="c-toolbar">
+
+          <button type="button" class="c-toolbar-btn btn-link" data-target="postContent">リンク挿入/編集</button>
+
+          <button type="button" class="c-toolbar-btn btn-bold" data-target="postContent">太字</button>
+
+        </div>
+
+        <textarea id="postContent" class="c-textarea" placeholder="<p>ここに記事のHTMLを記述します。</p>"></textarea>
+
+      </div>
+
+      <div class="c-btn-group">
+
+        <button type="submit" class="c-btn c-btn--primary">保存する</button>
+
+        <button type="button" id="btnPreviewInput" class="c-btn c-btn--secondary">プレビュー</button>
+
+      </div>
+
+      <button type="button" id="btnClear" class="c-btn c-btn--secondary">新規作成（クリア）</button>
+
+    </form>
+
+  </aside>
+
+
+
+  <main class="l-list">
+
+    <div class="l-list__header">
+
+      <h2 class="l-list__title">記事一覧</h2>
+
+      <span style="font-size: 0.9rem; color: #666;" id="articleCount">全 0 件</span>
+
+    </div>
+
+    <div id="articleGrid"></div>
+
+  </main>
+
+</div>
+
+
+
+<!-- TEXT EDITOR MODAL -->
+
+<div class="c-modal" id="textEditorModal">
+
+  <div class="c-modal__inner" style="max-width: 900px; height: 85vh; display: flex; flex-direction: column; padding: 24px; overflow: hidden;">
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+
+      <h2 style="font-size: 1.3rem; color: #1a73e8;">本文の編集</h2>
+
+      <button class="c-btn c-btn--primary" id="closeTextEditorModal" style="width: auto; padding: 10px 24px;">完了して閉じる</button>
+
+    </div>
+
+    <div class="c-toolbar" style="margin-bottom: 12px;">
+
+      <button type="button" class="c-toolbar-btn btn-link" data-target="modalPostContent">リンク挿入/編集</button>
+
+      <button type="button" class="c-toolbar-btn btn-bold" data-target="modalPostContent">太字</button>
+
+    </div>
+
+    <textarea id="modalPostContent" class="c-textarea" style="flex: 1; height: auto; resize: none; font-size: 1rem; padding: 16px; border-color: #ccc;"></textarea>
+
+  </div>
+
+</div>
+
+
+
+<!-- PREVIEW MODAL -->
+
+<div class="c-modal" id="previewModal">
+
+  <div class="c-modal__inner">
+
+    <button class="c-modal__close" id="closePreviewModal">&times;</button>
+
+    <img id="previewCover" class="p-article-preview__cover" src="" alt="" style="display:none;">
+
+    <div class="p-article-preview__header">
+
+      <div class="p-article-preview__meta">
+
+        <span id="previewGenre" class="p-card__genre" style="margin:0;"></span>
+
+        <span id="previewDate" class="p-card__date" style="border:none; padding:0; margin:0;"></span>
+
+      </div>
+
+      <h1 id="previewTitle" class="p-article-preview__title"></h1>
+
+      <div id="previewTags" class="p-article-preview__tags"></div>
+
+    </div>
+
+    <div id="previewContent" class="p-article-preview__content"></div>
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const STORAGE_KEY = 'tralog_posts';
+
+  const form = document.getElementById('postForm');
+
+  const articleGrid = document.getElementById('articleGrid');
+
+  const articleCount = document.getElementById('articleCount');
+
+  
+
+  const inputs = {
+
+    id: document.getElementById('postId'),
+
+    title: document.getElementById('postTitle'),
+
+    genre: document.getElementById('postGenre'),
+
+    tags: document.getElementById('postTags'),
+
+    status: document.getElementsByName('status'),
+
+    startDate: document.getElementById('startDate'),
+
+    endDate: document.getElementById('endDate'),
+
+    content: document.getElementById('postContent'),
+
+    coverImageData: document.getElementById('coverImageData')
+
+  };
+
+
+
+  const imageInput = document.getElementById('imageInput');
+
+  const imagePreview = document.getElementById('imagePreview');
+
+  const imageUploadText = document.getElementById('imageUploadText');
+
+  const btnRemoveImage = document.getElementById('btnRemoveImage');
+
+  const imageAdjustArea = document.getElementById('imageAdjustArea');
+
+  const imagePositionSliderX = document.getElementById('imagePositionSliderX');
+
+  const imagePositionSliderY = document.getElementById('imagePositionSliderY');
+
+
+
+  const previewModal = document.getElementById('previewModal');
+
+  const closePreviewModal = document.getElementById('closePreviewModal');
+
+  const textEditorModal = document.getElementById('textEditorModal');
+
+  const btnExpandEditor = document.getElementById('btnExpandEditor');
+
+  const closeTextEditorModal = document.getElementById('closeTextEditorModal');
+
+  const modalPostContent = document.getElementById('modalPostContent');
+
+
+
+  function loadData() {
+
+    try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+
+  }
+
+  function saveData(data) {
+
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { alert('【エラー】保存容量の限界に達しました。'); }
+
+  }
+
+  function generateId() { return 'post_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36); }
+
+  function formatDate(dateObj) {
+
+    const y = dateObj.getFullYear(), m = String(dateObj.getMonth() + 1).padStart(2, '0'), d = String(dateObj.getDate()).padStart(2, '0');
+
+    return `${y}.${m}.${d}`;
+
+  }
+
+
+
+  // 画像アップロード・圧縮
+
+  imageInput.addEventListener('change', (e) => {
+
+    const file = e.target.files[0];
+
+    if (file) {
+
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+
+        const img = new Image();
+
+        img.onload = () => {
+
+          const MAX_WIDTH = 800;
+
+          let width = img.width, height = img.height;
+
+          if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
+
+          const canvas = document.createElement('canvas');
+
+          canvas.width = width; canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+          inputs.coverImageData.value = compressedBase64;
+
+          showImagePreview(compressedBase64);
+
+        };
+
+        img.src = event.target.result;
+
+      };
+
+      reader.readAsDataURL(file);
+
+    }
+
+  });
+
+
+
+  function showImagePreview(src) {
+
+    if (src) {
+
+      imagePreview.src = src; imagePreview.style.display = 'block'; imageUploadText.style.display = 'none';
+
+      btnRemoveImage.style.display = 'block'; imageAdjustArea.style.display = 'block';
+
+      imagePreview.style.objectPosition = `${imagePositionSliderX.value}% ${imagePositionSliderY.value}%`;
+
+    } else {
+
+      imagePreview.src = ''; imagePreview.style.display = 'none'; imageUploadText.style.display = 'block';
+
+      btnRemoveImage.style.display = 'none'; imageAdjustArea.style.display = 'none';
+
+      inputs.coverImageData.value = ''; imageInput.value = '';
+
+      imagePositionSliderX.value = 50; imagePositionSliderY.value = 50;
+
+    }
+
+  }
+
+
+
+  function updatePreviewPosition() {
+
+    imagePreview.style.objectPosition = `${imagePositionSliderX.value}% ${imagePositionSliderY.value}%`;
+
+  }
+
+
+
+  imagePositionSliderX.addEventListener('input', updatePreviewPosition);
+
+  imagePositionSliderY.addEventListener('input', updatePreviewPosition);
+
+
+
+  btnRemoveImage.addEventListener('click', () => showImagePreview(''));
+
+
+
+  btnExpandEditor.addEventListener('click', () => {
+
+    modalPostContent.value = inputs.content.value;
+
+    textEditorModal.classList.add('is-open'); document.body.style.overflow = 'hidden';
+
+  });
+
+  closeTextEditorModal.addEventListener('click', () => {
+
+    inputs.content.value = modalPostContent.value;
+
+    textEditorModal.classList.remove('is-open'); document.body.style.overflow = '';
+
+  });
+
+
+
+  function insertLink(textareaId) {
+
+    const textarea = document.getElementById(textareaId);
+
+    const start = textarea.selectionStart, end = textarea.selectionEnd;
+
+    const selectedText = textarea.value.substring(start, end);
+
+    const url = prompt('リンク先のURLを入力してください:', 'https://');
+
+    if (url) {
+
+      const textToDisplay = selectedText || prompt('リンクとして表示するテキスト:', 'こちらをクリック') || url;
+
+      const linkTag = `<a href="${url}" target="_blank" rel="noopener noreferrer">${textToDisplay}</a>`;
+
+      textarea.setRangeText(linkTag, start, end, 'select');
+
+    }
+
+    textarea.focus();
+
+  }
+
+
+
+  function insertBold(textareaId) {
+
+    const textarea = document.getElementById(textareaId);
+
+    const start = textarea.selectionStart, end = textarea.selectionEnd;
+
+    textarea.setRangeText(`<strong>${textarea.value.substring(start, end)}</strong>`, start, end, 'select');
+
+    textarea.focus();
+
+  }
+
+
+
+  document.querySelectorAll('.btn-link').forEach(btn => btn.addEventListener('click', (e) => insertLink(e.target.dataset.target)));
+
+  document.querySelectorAll('.btn-bold').forEach(btn => btn.addEventListener('click', (e) => insertBold(e.target.dataset.target)));
+
+
+
+  // Grid描画
+
+  function renderGrid() {
+
+    const posts = loadData();
+
+    posts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+    articleGrid.innerHTML = ''; articleCount.textContent = `全 ${posts.length} 件`;
+
+
+
+    if (posts.length === 0) {
+
+      articleGrid.innerHTML = '<div class="c-empty-message">記事がありません。<br>左のフォームから新規作成してください。</div>';
+
+      return;
+
+    }
+
+
+
+    const groupedPosts = {};
+
+    posts.forEach(post => {
+
+      const [year, month] = post.displayDate.split('.');
+
+      const key = `${year}年${month}月`;
+
+      if (!groupedPosts[key]) groupedPosts[key] = [];
+
+      groupedPosts[key].push(post);
+
+    });
+
+
+
+    const keys = Object.keys(groupedPosts).sort((a, b) => a > b ? -1 : 1);
+
+
+
+    keys.forEach((key, index) => {
+
+      const group = groupedPosts[key];
+
+      const details = document.createElement('details'); details.className = 'c-folder';
+
+      if (index === 0) details.open = true;
+
+
+
+      const summary = document.createElement('summary');
+
+      summary.innerHTML = `<span>${key}</span> <span style="font-size: 0.9rem; font-weight: normal; color: #666;">${group.length} 件</span>`;
+
+      details.appendChild(summary);
+
+
+
+      const content = document.createElement('div'); content.className = 'c-folder__content';
+
+      const grid = document.createElement('div'); grid.className = 'p-grid';
+
+
+
+      group.forEach(post => {
+
+        const card = document.createElement('div');
+
+        card.className = `p-card ${post.status === 'private' ? 'p-card--private' : ''}`;
+
+        const tagsHtml = post.tags && post.tags.length > 0 ? `<div class="p-card__tags">${post.tags.map(t => `<span class="p-card__tag">#${t}</span>`).join('')}</div>` : '';
+
+        const defaultImg = `https://via.placeholder.com/400x200/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre)}`;
+
+        const imgSrc = post.coverImage || defaultImg;
+
+        const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+
+        const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+
+
+        card.innerHTML = `
+
+          <img class="p-card__img" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;">
+
+          <div class="p-card__body">
+
+            <span class="p-card__genre p-card__genre--${post.genre}">${post.genre}</span>
+
+            <h3 class="p-card__title">${post.title}</h3>
+
+            ${tagsHtml}
+
+            <div class="p-card__footer">
+
+              <span class="p-card__date">更新: ${post.displayDate}</span>
+
+              <div class="p-card__actions">
+
+                <button type="button" class="p-card__btn p-card__btn--copy" data-id="${post.id}">URL取得</button>
+
+                <button type="button" class="p-card__btn p-card__btn--edit" data-id="${post.id}">編集</button>
+
+                <button type="button" class="p-card__btn p-card__btn--delete" data-id="${post.id}">削除</button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        `;
+
+
+
+        // URL取得処理
+
+        card.querySelector('.p-card__btn--copy').addEventListener('click', (e) => {
+
+          e.stopPropagation();
+
+          const baseUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+
+          const articleUrl = `${baseUrl}/index.html?id=${post.id}`;
+
+          navigator.clipboard.writeText(articleUrl).then(() => {
+
+            alert('以下のURLをクリップボードにコピーしました！\n\n' + articleUrl);
+
+          }).catch(err => {
+
+            alert('コピーに失敗しました。\n' + articleUrl);
+
+          });
+
+        });
+
+
+
+        card.querySelector('.p-card__btn--edit').addEventListener('click', (e) => { e.stopPropagation(); editPost(post.id); });
+
+        card.querySelector('.p-card__btn--delete').addEventListener('click', (e) => { e.stopPropagation(); deletePost(post.id); });
+
+        card.addEventListener('click', () => openPreview(post));
+
+        grid.appendChild(card);
+
+      });
+
+      content.appendChild(grid); details.appendChild(content); articleGrid.appendChild(details);
+
+    });
+
+  }
+
+
+
+  form.addEventListener('submit', (e) => {
+
+    e.preventDefault();
+
+    const posts = loadData(), isEdit = inputs.id.value !== '', now = new Date();
+
+    let statusVal = 'public';
+
+    for (const radio of inputs.status) if (radio.checked) statusVal = radio.value;
+
+    const tagArray = inputs.tags.value.split(',').map(t => t.trim()).filter(t => t !== '');
+
+
+
+    const postData = {
+
+      id: isEdit ? inputs.id.value : generateId(),
+
+      title: inputs.title.value,
+
+      genre: inputs.genre.value,
+
+      tags: tagArray,
+
+      status: statusVal,
+
+      startDate: inputs.startDate.value,
+
+      endDate: inputs.endDate.value,
+
+      content: inputs.content.value,
+
+      coverImage: inputs.coverImageData.value,
+
+      coverPositionX: imagePositionSliderX.value,
+
+      coverPositionY: imagePositionSliderY.value,
+
+      date: isEdit ? posts.find(p => p.id === inputs.id.value).date : now.toISOString(),
+
+      displayDate: formatDate(now)
+
+    };
+
+
+
+    if (isEdit) { posts[posts.findIndex(p => p.id === postData.id)] = postData; } else { posts.push(postData); }
+
+    saveData(posts); renderGrid(); clearForm(); alert('保存しました。');
+
+  });
+
+
+
+  function editPost(id) {
+
+    const post = loadData().find(p => p.id === id);
+
+    if (!post) return;
+
+    inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
+
+    inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
+
+    inputs.endDate.value = post.endDate || ''; inputs.content.value = post.content || '';
+
+    imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+
+    imagePositionSliderY.value = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+    for (const radio of inputs.status) radio.checked = (radio.value === post.status);
+
+    showImagePreview(post.coverImage || ''); window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  }
+
+
+
+  function deletePost(id) {
+
+    if (!confirm('本当に削除しますか？')) return;
+
+    saveData(loadData().filter(p => p.id !== id)); renderGrid(); clearForm();
+
+  }
+
+
+
+  function clearForm() {
+
+    form.reset(); inputs.id.value = ''; inputs.coverImageData.value = '';
+
+    imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview(''); inputs.status[0].checked = true;
+
+  }
+
+  document.getElementById('btnClear').addEventListener('click', clearForm);
+
+
+
+  document.getElementById('btnPreviewInput').addEventListener('click', () => {
+
+    const dummyPost = {
+
+      title: inputs.title.value || '（タイトル未入力）', genre: inputs.genre.value || 'その他',
+
+      tags: inputs.tags.value.split(',').map(t => t.trim()).filter(t => t !== ''),
+
+      displayDate: formatDate(new Date()), coverImage: inputs.coverImageData.value,
+
+      coverPositionX: imagePositionSliderX.value, coverPositionY: imagePositionSliderY.value, content: inputs.content.value
+
+    };
+
+    openPreview(dummyPost);
+
+  });
+
+
+
+  function openPreview(post) {
+
+    document.getElementById('previewTitle').textContent = post.title;
+
+    document.getElementById('previewGenre').textContent = post.genre;
+
+    document.getElementById('previewGenre').className = `p-card__genre p-card__genre--${post.genre}`;
+
+    document.getElementById('previewDate').textContent = post.displayDate;
+
+    document.getElementById('previewTags').innerHTML = post.tags && post.tags.length > 0 ? post.tags.map(t => `<span class="p-card__tag">#${t}</span>`).join('') : '';
+
+    
+
+    const coverEl = document.getElementById('previewCover');
+
+    if (post.coverImage) {
+
+      coverEl.src = post.coverImage; coverEl.style.display = 'block';
+
+      const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+
+      const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+      coverEl.style.objectPosition = `${posX}% ${posY}%`;
+
+    } else { coverEl.style.display = 'none'; }
+
+    document.getElementById('previewContent').innerHTML = post.content || '<p>本文がありません。</p>';
+
+    previewModal.classList.add('is-open'); document.body.style.overflow = 'hidden';
+
+  }
+
+
+
+  closePreviewModal.addEventListener('click', () => { previewModal.classList.remove('is-open'); document.body.style.overflow = ''; });
+
+  previewModal.addEventListener('click', (e) => { if (e.target === previewModal) { previewModal.classList.remove('is-open'); document.body.style.overflow = ''; } });
+
+
+
+  renderGrid();
+
+});
+
+</script>
+
+
+
+</body>
+
+</html> 
+
