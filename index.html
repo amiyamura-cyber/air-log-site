@@ -570,153 +570,564 @@ ul,ol{list-style:none}
 
 
 
-<!-- Firebase SDKの読み込み -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-// 本物の鍵を設定済みです
-const firebaseConfig = {
-  apiKey: "AIzaSyCeDI2x2uPG_h-pKw-zd5k2skd2wPK8xVQ",
-  authDomain: "air-log-db.firebaseapp.com",
-  projectId: "air-log-db",
-  storageBucket: "air-log-db.firebasestorage.app",
-  messagingSenderId: "196476464726",
-  appId: "1:196476464726:web:92db3cd1177640a81695f7",
-  measurementId: "G-95HWRE3LSK"
-};
 
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+/* スマホ用メニュー & ページトップ */
+
+document.getElementById('hamburger').addEventListener('click', function(){
+
+  this.classList.toggle('active');
+
+  const nav = document.getElementById('globalNav');
+
+  if(nav.style.display === 'flex') { nav.style.display = 'none'; } else { nav.style.display = 'flex'; nav.style.flexDirection = 'column'; nav.style.position = 'absolute'; nav.style.top = '60px'; nav.style.left = '0'; nav.style.right = '0'; nav.style.background = '#fff'; nav.style.padding = '20px'; nav.style.boxShadow = '0 4px 12px rgba(0,0,0,.1)'; }
+
+});
+
+const topBtn = document.getElementById('pageTop');
+
+window.addEventListener('scroll', () => { topBtn.classList.toggle('visible', window.scrollY > 300); });
+
+topBtn.addEventListener('click', () => { window.scrollTo({top:0, behavior:'smooth'}); });
+
+
+
+/* データの読み込み */
+
+const STORAGE_KEY = 'tralog_posts';
+
+function loadPosts(){
+
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+
 }
-const db = firebase.firestore();
 
-document.addEventListener('DOMContentLoaded', async () => {
-  // サイトを開いた瞬間にFirebaseから全記事を取得
-  let globalPosts = [];
-  try {
-      const snapshot = await db.collection('posts').get();
-      globalPosts = snapshot.docs.map(doc => doc.data());
-  } catch(e) {
-      console.error(e);
-  }
+function getGenreClass(genre) {
 
-  function getGenreClass(genre) {
-    if (genre === 'お役立ち資料') return 'document';
-    if (genre === 'セミナー情報') return 'seminar';
-    if (genre === '集客支援') return 'customer';
-    if (genre === 'お問い合わせ') return 'contact';
-    return '';
-  }
+  if (genre === 'お役立ち資料') return 'document';
 
-  document.getElementById('searchInput').addEventListener('input', function(e) {
-    const query = e.target.value.toLowerCase();
-    const cards = document.querySelectorAll('.p-card');
-    cards.forEach(card => {
-      const title = card.querySelector('.p-card__title').textContent.toLowerCase();
-      card.style.display = title.includes(query) ? 'flex' : 'none';
-    });
+  if (genre === 'セミナー情報') return 'seminar';
+
+  if (genre === '集客支援') return 'customer';
+
+  if (genre === 'お問い合わせ') return 'contact';
+
+  return '';
+
+}
+
+
+
+// ===== 検索機能 =====
+
+document.getElementById('searchInput').addEventListener('input', function(e) {
+
+  const query = e.target.value.toLowerCase();
+
+  const cards = document.querySelectorAll('.p-card');
+
+  cards.forEach(card => {
+
+    const title = card.querySelector('.p-card__title').textContent.toLowerCase();
+
+    const tags = card.querySelector('.p-card__tags') ? card.querySelector('.p-card__tags').textContent.toLowerCase() : '';
+
+    if (title.includes(query) || tags.includes(query)) {
+
+      card.style.display = 'flex';
+
+    } else {
+
+      card.style.display = 'none';
+
+    }
+
   });
 
-  const params = new URLSearchParams(window.location.search);
-  const articleId = params.get('id');
-
-  if (articleId) {
-    document.getElementById('topPageSliderWrapper').style.display = 'none';
-    document.getElementById('topPageContent').style.display = 'none';
-    document.getElementById('articlePageContent').style.display = 'block';
-    renderArticle(articleId);
-  } else {
-    document.getElementById('topPageSliderWrapper').style.display = 'block';
-    document.getElementById('topPageContent').style.display = 'block';
-    document.getElementById('articlePageContent').style.display = 'none';
-    renderHeroSlider(); 
-    renderGridList();
-  }
-
-  function renderHeroSlider() {
-    let publicPosts = globalPosts.filter(p => p.status === 'public');
-    const track = document.getElementById('heroTrack');
-    track.innerHTML = '';
-    let sliderPosts = [...publicPosts.sort(() => 0.5 - Math.random()).slice(0, 6)];
-    while (sliderPosts.length < 6) { sliderPosts.push({ isDummy: true }); }
-    sliderPosts.forEach(post => {
-      if(post.isDummy) {
-        track.innerHTML += `<div class="p-hero__slide"><img src="https://via.placeholder.com/800x450/eeeeee/bbbbbb?text=No+Article" alt=""></div>`;
-      } else {
-        const defaultImg = `https://via.placeholder.com/800x450/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
-        const imgSrc = post.coverImage || defaultImg;
-        const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
-        const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
-        track.innerHTML += `<div class="p-hero__slide" data-id="${post.id}"><img src="${imgSrc}" style="object-position: ${posX}% ${posY}%;"></div>`;
-      }
-    });
-    initHeroSlider();
-  }
-
-  function initHeroSlider() {
-    const track = document.getElementById('heroTrack');
-    const slides = track.querySelectorAll('.p-hero__slide');
-    if(slides.length === 0) return;
-    let current = 0;
-    function goTo(idx) {
-      if(idx < 0) idx = slides.length - 1;
-      if(idx >= slides.length) idx = 0;
-      current = idx;
-      const offset = -(current * slides[0].offsetWidth) + (document.getElementById('heroArea').offsetWidth / 2) - (slides[0].offsetWidth / 2);
-      track.style.transform = `translateX(${offset}px)`;
-      slides.forEach((slide, i) => { slide.classList.toggle('is-center', i === current); });
-    }
-    slides.forEach((slide, idx) => {
-      slide.onclick = () => {
-        if (idx === current && slide.dataset.id) window.location.href = `?id=${slide.dataset.id}`;
-        else goTo(idx);
-      };
-    });
-    setTimeout(() => goTo(0), 50);
-  }
-
-  function renderGridList(){
-    const publicPosts = globalPosts.filter(p => p.status === 'public').sort((a,b) => new Date(b.date) - new Date(a.date));
-    function createCard(post){
-      const imgSrc = post.coverImage || `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
-      const catClass = getGenreClass(post.genre);
-      const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
-      const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
-      return `
-      <article class="p-card" onclick="window.location.href='?id=${post.id}'">
-        <img class="p-card__thumb" src="${imgSrc}" style="object-position: ${posX}% ${posY}%;">
-        <div class="p-card__body">
-          <div class="p-card__meta"><span class="p-card__cat ${catClass ? 'p-card__cat--' + catClass : ''}">${post.genre || 'その他'}</span><time class="p-card__date">${post.displayDate || ''}</time></div>
-          <h3 class="p-card__title">${post.title || '無題'}</h3>
-        </div>
-      </article>`;
-    }
-    const grids = { new: document.querySelector('#sec-new .p-card-grid'), recruit: document.querySelector('#sec-recruit .p-card-grid'), document: document.querySelector('#sec-document .p-card-grid') };
-    if(grids.new) { grids.new.innerHTML = ''; publicPosts.slice(0, 6).forEach(p => grids.new.innerHTML += createCard(p)); }
-    if(grids.recruit) { grids.recruit.innerHTML = ''; publicPosts.filter(p => p.genre === '採用支援').slice(0, 6).forEach(p => grids.recruit.innerHTML += createCard(p)); }
-    if(grids.document) { grids.document.innerHTML = ''; publicPosts.filter(p => p.genre === 'お役立ち資料').slice(0, 6).forEach(p => grids.document.innerHTML += createCard(p)); }
-  }
-
-  function renderArticle(id) {
-    const post = globalPosts.find(p => p.id === id);
-    const container = document.getElementById('articleContainer');
-    if (!post || post.status !== 'public') {
-      container.innerHTML = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>'; return;
-    }
-    const catClass = getGenreClass(post.genre);
-    const imgSrc = post.coverImage || `https://via.placeholder.com/1200x600/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre)}`;
-    const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
-    const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
-    container.innerHTML = `
-      <img class="p-article__cover" src="${imgSrc}" style="object-position: ${posX}% ${posY}%;">
-      <div class="p-article__inner">
-        <div class="p-article__meta"><span class="p-article__cat ${catClass ? 'p-article__cat--' + catClass : ''}">${post.genre || 'その他'}</span><span class="p-article__date">更新日：${post.displayDate}</span></div>
-        <h1 class="p-article__title">${post.title}</h1>
-        <div class="p-article__content">${post.content || '<p>本文がありません。</p>'}</div>
-      </div>
-    `;
-  }
 });
+
+
+
+// ===== URLをチェックして画面を切り替える =====
+
+const params = new URLSearchParams(window.location.search);
+
+const articleId = params.get('id');
+
+
+
+if (articleId) {
+
+  // --- 記事詳細モード ---
+
+  document.getElementById('topPageSliderWrapper').style.display = 'none';
+
+  document.getElementById('topPageContent').style.display = 'none';
+
+  document.getElementById('articlePageContent').style.display = 'block';
+
+  renderArticle(articleId);
+
+} else {
+
+  // --- 一覧モード ---
+
+  document.getElementById('topPageSliderWrapper').style.display = 'block';
+
+  document.getElementById('topPageContent').style.display = 'block';
+
+  document.getElementById('articlePageContent').style.display = 'none';
+
+  renderHeroSlider(); 
+
+  renderGridList();
+
+}
+
+
+
+// ★ ランダム記事スライダー (重複なし・空枠表示対応版)
+
+function renderHeroSlider() {
+
+  const allPosts = loadPosts();
+
+  let publicPosts = allPosts.filter(p => p.status === 'public');
+
+  const track = document.getElementById('heroTrack');
+
+  track.innerHTML = '';
+
+
+
+  // 1. 公開記事をランダムにシャッフルし、最大6件だけを取得
+
+  let shuffled = publicPosts.sort(() => 0.5 - Math.random()).slice(0, 6);
+
+  
+
+  // 2. 抽出した記事をスライダー用の配列にコピー
+
+  let sliderPosts = [...shuffled];
+
+  
+
+  // 3. スライダーの枠（6つ）に満たない場合は、足りない分を空枠（ダミー）で埋める
+
+  while (sliderPosts.length < 6) {
+
+    sliderPosts.push({ isDummy: true });
+
+  }
+
+
+
+  // 4. HTMLに描画
+
+  sliderPosts.forEach(post => {
+
+    if(post.isDummy) {
+
+      track.innerHTML += `
+
+        <div class="p-hero__slide" style="cursor:default;">
+
+          <img src="https://via.placeholder.com/800x450/eeeeee/bbbbbb?text=No+Article" alt="">
+
+        </div>
+
+      `;
+
+    } else {
+
+      const defaultImg = `https://via.placeholder.com/800x450/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
+
+      const imgSrc = post.coverImage || defaultImg;
+
+      const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+
+      const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+
+
+      track.innerHTML += `
+
+        <div class="p-hero__slide" data-id="${post.id}" title="${post.title || ''}">
+
+          <img src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;">
+
+        </div>
+
+      `;
+
+    }
+
+  });
+
+
+
+  initHeroSlider();
+
+}
+
+
+
+function initHeroSlider() {
+
+  const heroArea = document.getElementById('heroArea');
+
+  const track = document.getElementById('heroTrack');
+
+  const slides = track.querySelectorAll('.p-hero__slide');
+
+  const dotsWrap = document.getElementById('heroDots');
+
+  const btnPrev = document.getElementById('heroPrev');
+
+  const btnNext = document.getElementById('heroNext');
+
+  
+
+  if(slides.length === 0) return;
+
+
+
+  let current = 0;
+
+  let autoTimer;
+
+  const totalSlides = slides.length;
+
+
+
+  const newPrev = btnPrev.cloneNode(true);
+
+  btnPrev.parentNode.replaceChild(newPrev, btnPrev);
+
+  const newNext = btnNext.cloneNode(true);
+
+  btnNext.parentNode.replaceChild(newNext, btnNext);
+
+
+
+  function buildDots() {
+
+    dotsWrap.innerHTML = '';
+
+    for(let i = 0; i < totalSlides; i++) {
+
+      const dot = document.createElement('span');
+
+      dot.className = 'p-hero__dot' + (i === current ? ' active' : '');
+
+      dot.dataset.index = i;
+
+      dotsWrap.appendChild(dot);
+
+    }
+
+  }
+
+
+
+  function goTo(idx) {
+
+    if(idx < 0) idx = totalSlides - 1;
+
+    if(idx >= totalSlides) idx = 0;
+
+    current = idx;
+
+    
+
+    // スライド1枚分の幅と、コンテナの幅から「中央配置」になるよう計算
+
+    const slideWidth = slides[0].offsetWidth;
+
+    const containerWidth = heroArea.offsetWidth;
+
+    const offset = -(current * slideWidth) + (containerWidth / 2) - (slideWidth / 2);
+
+    
+
+    track.style.transform = `translateX(${offset}px)`;
+
+    
+
+    slides.forEach((slide, i) => {
+
+      if (i === current) {
+
+        slide.classList.add('is-center');
+
+      } else {
+
+        slide.classList.remove('is-center');
+
+      }
+
+    });
+
+
+
+    const dots = dotsWrap.querySelectorAll('.p-hero__dot');
+
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+
+  }
+
+
+
+  buildDots();
+
+
+
+  // クリック時の挙動：中央なら遷移、それ以外ならそのスライドへ移動
+
+  slides.forEach((slide, idx) => {
+
+    slide.onclick = () => {
+
+      if (idx === current) {
+
+        if(slide.dataset.id) window.location.href = `index.html?id=${slide.dataset.id}`;
+
+      } else {
+
+        goTo(idx);
+
+        resetAuto();
+
+      }
+
+    };
+
+  });
+
+
+
+  newNext.addEventListener('click', () => { goTo(current + 1); resetAuto(); });
+
+  newPrev.addEventListener('click', () => { goTo(current - 1); resetAuto(); });
+
+  
+
+  dotsWrap.onclick = (e) => {
+
+    if(e.target.dataset.index !== undefined) {
+
+      goTo(+e.target.dataset.index);
+
+      resetAuto();
+
+    }
+
+  };
+
+
+
+  window.addEventListener('resize', () => goTo(current));
+
+
+
+  function resetAuto() {
+
+    if(autoTimer) clearInterval(autoTimer);
+
+    autoTimer = setInterval(() => goTo(current + 1), 4000);
+
+  }
+
+  
+
+  // 描画直後の幅取得ズレを防ぐため、ごくわずかに遅らせて初期位置設定
+
+  setTimeout(() => goTo(0), 50);
+
+  resetAuto();
+
+}
+
+
+
+// ★ 一覧画面（3列グリッド）の描画処理
+
+function renderGridList(){
+
+  const allPosts = loadPosts();
+
+  const publicPosts = allPosts.filter(p => p.status === 'public').sort((a,b) => new Date(b.date) - new Date(a.date));
+
+
+
+  function createCard(post){
+
+    const defaultImg = `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
+
+    const imgSrc = post.coverImage || defaultImg;
+
+    const catClass = getGenreClass(post.genre);
+
+    const tagsHtml = post.tags && post.tags.length ? `<div class="p-card__tags">${post.tags.map(t => `<span class="p-card__tag">#${t}</span>`).join('')}</div>` : '';
+
+    const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+
+    const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+
+
+    return `
+
+    <article class="p-card" data-id="${post.id}">
+
+      <img class="p-card__thumb" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;">
+
+      <div class="p-card__body">
+
+        <div class="p-card__meta">
+
+          <span class="p-card__cat ${catClass ? 'p-card__cat--' + catClass : ''}">${post.genre || 'その他'}</span>
+
+          <time class="p-card__date">${post.displayDate || ''}</time>
+
+        </div>
+
+        <h3 class="p-card__title">${post.title || '無題'}</h3>
+
+        ${tagsHtml}
+
+      </div>
+
+    </article>`;
+
+  }
+
+
+
+  const grids = {
+
+    new: document.querySelector('#sec-new .p-card-grid'),
+
+    recruit: document.querySelector('#sec-recruit .p-card-grid'),
+
+    customer: document.querySelector('#sec-customer .p-card-grid'),
+
+    document: document.querySelector('#sec-document .p-card-grid'),
+
+    seminar: document.querySelector('#sec-seminar .p-card-grid'),
+
+    contact: document.querySelector('#sec-contact .p-card-grid')
+
+  };
+
+
+
+  if(grids.new) { grids.new.innerHTML = ''; publicPosts.slice(0, 6).forEach(p => grids.new.innerHTML += createCard(p)); }
+
+  if(grids.recruit) { grids.recruit.innerHTML = ''; publicPosts.filter(p => p.genre === '採用支援').slice(0, 6).forEach(p => grids.recruit.innerHTML += createCard(p)); }
+
+  if(grids.customer) { grids.customer.innerHTML = ''; publicPosts.filter(p => p.genre === '集客支援').slice(0, 6).forEach(p => grids.customer.innerHTML += createCard(p)); }
+
+  if(grids.document) { grids.document.innerHTML = ''; publicPosts.filter(p => p.genre === 'お役立ち資料').slice(0, 6).forEach(p => grids.document.innerHTML += createCard(p)); }
+
+  if(grids.seminar) { grids.seminar.innerHTML = ''; publicPosts.filter(p => p.genre === 'セミナー情報').slice(0, 6).forEach(p => grids.seminar.innerHTML += createCard(p)); }
+
+  if(grids.contact) { grids.contact.innerHTML = ''; publicPosts.filter(p => p.genre === 'お問い合わせ').slice(0, 6).forEach(p => grids.contact.innerHTML += createCard(p)); }
+
+
+
+  document.querySelectorAll('.p-card-grid').forEach(grid => {
+
+    grid.addEventListener('click', e => {
+
+      const card = e.target.closest('.p-card');
+
+      if(card && card.getAttribute('data-id')) {
+
+        window.location.href = `index.html?id=${card.getAttribute('data-id')}`;
+
+      }
+
+    });
+
+  });
+
+}
+
+
+
+// ★ 記事詳細画面の描画処理
+
+function renderArticle(id) {
+
+  const posts = loadPosts();
+
+  const post = posts.find(p => p.id === id);
+
+  const container = document.getElementById('articleContainer');
+
+
+
+  if (!post || post.status !== 'public') {
+
+    container.innerHTML = '<div style="padding:80px;text-align:center;color:#666;">記事が存在しないか、非公開になっています。<br><br><a href="index.html" style="color:#1a73e8;text-decoration:underline;font-weight:bold;">トップページに戻る</a></div>';
+
+    return;
+
+  }
+
+
+
+  const catClass = getGenreClass(post.genre);
+
+  const tagsHtml = post.tags && post.tags.length ? `<div class="p-article__tags">${post.tags.map(t => `<span class="p-article__tag">#${t}</span>`).join('')}</div>` : '';
+
+  const defaultImg = `https://via.placeholder.com/1200x600/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
+
+  const imgSrc = post.coverImage || defaultImg;
+
+  const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+
+  const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+  const imgHtml = post.coverImage ? `<img class="p-article__cover" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;">` : '';
+
+
+
+  document.title = `${post.title}｜エアログ`;
+
+
+
+  container.innerHTML = `
+
+    ${imgHtml}
+
+    <div class="p-article__inner">
+
+      <div class="p-article__meta">
+
+        <span class="p-article__cat ${catClass ? 'p-article__cat--' + catClass : ''}">${post.genre || 'その他'}</span>
+
+        <span class="p-article__date">更新日：${post.displayDate}</span>
+
+      </div>
+
+      <h1 class="p-article__title">${post.title}</h1>
+
+      ${tagsHtml}
+
+      <div class="p-article__content">
+
+        ${post.content || '<p>本文がありません。</p>'}
+
+      </div>
+
+    </div>
+
+  `;
+
+}
+
 </script>
 
 </body>
