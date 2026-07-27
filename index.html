@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>エアログ｜採用・集客を支援するメディア</title>
+<style>
+/* ===== RESET & BASE ===== */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;color:#333;line-height:1.7;background:#f9f9f9}
+a{text-decoration:none;color:inherit;transition:opacity .2s}
+a:hover{opacity:.7}
+img{max-width:100%;height:auto;display:block}
+ul,ol{list-style:none}
+
+/* ===== HEADER ===== */
+.l-header{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.05);position:sticky;top:0;z-index:1000}
+.l-header__inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+
+/* ★「エア」の部分を、見えやすい「濃いピンク（#d81b60）」に変更★ */
+/* フォントはヒラギノ明朝 W6系を維持 */
+.l-header__logo{
+  font-family: 'Hiragino Mincho ProN', 'ヒラギノ明朝 ProN W6', 'HiraMinProN-W6', 'Yu Mincho', 'Noto Serif JP', serif;
+  font-size:1.8rem;
+  font-weight:600;
+  color:#d81b60;
+  letter-spacing:-1px;
+}
+/* 「ログ」の部分はそのまま濃いグレー（#333） */
+.l-header__logo span{color:#333}
+
+.l-header__nav{display:flex;gap:32px}
+.l-header__nav a{font-size:.95rem;font-weight:600;color:#333}
+.l-header__nav a:hover{color:#d81b60} /* ホバー時も濃いピンクに */
+.l-header__hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px}
+.l-header__hamburger span{display:block;width:24px;height:2px;background:#333;transition:all .3s}
+
+/* ===== HERO SLIDER (Center Mode) ===== */
+.p-hero { width: 100%; margin: 24px 0 48px; position: relative; overflow: hidden; padding: 24px 0; }
+.p-hero__track { display: flex; align-items: center; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+.p-hero__slide { flex: 0 0 420px; padding: 0 12px; box-sizing: border-box; transition: all 0.5s ease; opacity: 0.4; transform: scale(0.85); cursor: pointer; }
+.p-hero__slide.is-center { opacity: 1; transform: scale(1.05); z-index: 2; }
+.p-hero__slide img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 1px solid #eaeaea; background: #fff; }
+.p-hero__btn { position: absolute; top: calc(50% - 14px); transform: translateY(-50%); background: rgba(50,50,50,0.8); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; z-index: 10; transition: background 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.p-hero__btn:hover { background: #111; }
+.p-hero__btn--prev { left: 24px; }
+.p-hero__btn--next { right: 24px; }
+.p-hero__dots { display: flex; justify-content: center; gap: 8px; margin-top: 24px; }
+.p-hero__dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; cursor: pointer; transition: background 0.3s; }
+.p-hero__dot.active { background: #d81b60; } /* ドットのアクティブ色も濃いピンクに */
+
+@media(max-width:768px){
+  .p-hero__slide { flex: 0 0 80%; }
+  .p-hero__btn--prev { left: 8px; }
+  .p-hero__btn--next { right: 8px; }
+}
+
+/* ===== 2-COLUMN LAYOUT ===== */
+.l-wrapper{max-width:1200px;margin:0 auto 40px;padding:0 24px;display:flex;gap:40px;align-items:flex-start}
+.l-main{flex:1;min-width:0;}
+.l-sidebar{width:320px;flex-shrink:0;position:sticky;top:100px}
+
+/* ===== SECTION COMMON (MAIN AREA) ===== */
+.l-section{margin-bottom:60px}
+.l-section__header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #d81b60;padding-bottom:12px;} /* 下線も濃く */
+.l-section__title{font-size:1.4rem;font-weight:bold;color:#333}
+.l-section__more{font-size:.85rem;color:#d81b60;font-weight:600} /* 「もっと見る」も濃く */
+.l-section__more:hover{text-decoration:underline}
+
+/* ===== CARD GRID ===== */
+.p-card-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.p-card{background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:transform .2s,box-shadow .2s;display:flex;flex-direction:column;cursor:pointer;border:1px solid #eee}
+.p-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.p-card__thumb{width:100%;height:150px;object-fit:cover;background:#f5f5f5;border-bottom:1px solid #eee}
+.p-card__body{padding:16px;display:flex;flex-direction:column;flex:1}
+.p-card__meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.p-card__cat{font-size:.65rem;color:#fff;background:#1a73e8;padding:4px 10px;border-radius:4px;font-weight:bold;letter-spacing:0.5px}
+
+/* 各カテゴリーの色分け */
+.p-card__cat--document{background:#43a047}
+.p-card__cat--seminar{background:#f57c00}
+.p-card__cat--customer{background:#8e24aa}
+.p-card__cat--contact{background:#607d8b}
+
+.p-card__date{font-size:.7rem;color:#888;font-weight:500}
+.p-card__title{font-size:.95rem;font-weight:700;line-height:1.5;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#222}
+.p-card__tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;}
+.p-card__tag{font-size:.7rem;color:#666;background:#f0f0f0;padding:2px 8px;border-radius:4px;}
+
+/* ===== SIDEBAR WIDGETS ===== */
+.c-sidebar-block { margin-bottom: 24px; }
+/* Search Box */
+.c-search-box { display: flex; align-items: center; border: 2px solid #333; border-radius: 30px; padding: 8px 16px; background: #fff; }
+.c-search-box__input { border: none; outline: none; flex: 1; font-size: 0.95rem; padding: 6px 0; background: transparent; }
+.c-search-box__btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #333; display: flex; align-items: center; }
+
+/* LINE Banner */
+.c-line-banner { background: #ea7c1e; color: #fff; padding: 24px 20px; border-radius: 8px; text-align: center; }
+.c-line-banner__title { font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; line-height: 1.4; }
+.c-line-banner__desc { font-size: 0.8rem; margin-bottom: 20px; opacity: 0.9; }
+.c-line-banner__btn { display: flex; align-items: center; justify-content: center; background: #fff; color: #111; font-weight: bold; padding: 12px; border-radius: 30px; font-size: 0.95rem; border: 2px solid #111; position: relative; }
+.c-line-banner__btn::after { content: '→'; position: absolute; right: 16px; font-weight: normal; }
+
+/* Widget Styles */
+.c-widget{background:#fff;border-radius:8px;padding:24px;margin-bottom:32px;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #eee}
+.c-widget__title{font-size:1.1rem;font-weight:bold;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee;color:#333; display: flex; align-items: center;}
+.c-widget__title::before { content: "📁"; margin-right: 8px; font-size: 1.2rem; }
+.c-widget__list li{margin-bottom:12px}
+.c-widget__list a{display:flex;align-items:center;font-size:.9rem;color:#555;font-weight:500}
+.c-widget__list a::before{content:"›";color:#d81b60;margin-right:8px;font-size:1.2rem} /* アイコンの色も濃く */
+.c-widget__list a:hover{color:#d81b60}
+
+/* ===== INDEPENDENT ARTICLE PAGE STYLES ===== */
+.p-article{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);overflow:hidden;border:1px solid #eee;margin-bottom:60px;}
+.p-article__cover{width:100%;height:400px;object-fit:cover;background:#f5f5f5;}
+.p-article__inner{padding:48px 56px;}
+.p-article__meta{display:flex;gap:16px;margin-bottom:20px;align-items:center}
+.p-article__cat{font-size:.85rem;color:#fff;background:#1a73e8;padding:6px 16px;border-radius:4px;font-weight:bold;}
+.p-article__cat--document{background:#43a047}
+.p-article__cat--seminar{background:#f57c00}
+.p-article__cat--customer{background:#8e24aa}
+.p-article__cat--contact{background:#607d8b}
+
+.p-article__date{font-size:.9rem;color:#888;}
+.p-article__title{font-size:2rem;font-weight:bold;margin-bottom:24px;line-height:1.4;color:#222}
+.p-article__tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid #eee;}
+.p-article__tag{font-size:.85rem;color:#555;background:#f0f0f0;padding:6px 12px;border-radius:4px;}
+
+/* --- 本文（HTMLソースコード）のスタイル --- */
+.p-article__content{line-height:1.9;font-size:1.05rem;color:#333;}
+.p-article__content p{margin-bottom:24px;}
+.p-article__content a{color:#d81b60;text-decoration:underline} /* 本文リンク色も濃く */
+.p-article__content img{margin:32px 0;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
+.p-article__content h2{margin: 48px 0 24px; font-size: 1.45rem; background-color: #f5f5f5; border-left: 6px solid #d81b60; padding: 18px 24px; font-weight: 700; color: #222;} /* 見出し色も濃く */
+.p-article__content h3{margin: 40px 0 20px; font-size: 1.25rem; border-bottom: 2px solid #d81b60; padding-bottom: 10px; font-weight: 700; color: #222;} /* 見出し色も濃く */
+
+/* ===== CTA BANNER ===== */
+.p-cta-banner{background:linear-gradient(135deg,#f06292,#d81b60);border-radius:12px;padding:48px;text-align:center;color:#fff;margin-bottom:60px;} /* CTA背景色も少し濃く */
+.p-cta-banner h2{font-size:1.6rem;margin-bottom:16px;font-weight:bold}
+.p-cta-banner p{margin-bottom:32px;opacity:.9;font-size:.95rem}
+.p-cta-banner__btn{display:inline-block;background:#fff;color:#d81b60;font-weight:bold;padding:16px 48px;border-radius:30px;font-size:1.05rem;transition:transform .2s, box-shadow .2s;box-shadow:0 4px 12px rgba(0,0,0,.15)} /* ボタン文字色も濃く */
+.p-cta-banner__btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.2);opacity:1}
+
+/* ===== FOOTER ===== */
+.l-footer{background:#263238;color:#cfd8dc;padding:60px 24px 40px;margin-top:60px}
+.l-footer__nav{max-width:1200px;margin:0 auto 24px;display:flex;flex-wrap:wrap;gap:24px;justify-content:center}
+.l-footer__nav a{font-size:.9rem;font-weight:500}
+.l-footer__nav a:hover{color:#fff}
+.l-footer__copy{text-align:center;font-size:.8rem;opacity:.6}
+
+/* ===== PAGE TOP ===== */
+.page-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;border-radius:50%;background:#d81b60;color:#fff;border:none;font-size:1.5rem;cursor:pointer;opacity:0;visibility:hidden;transition:all .3s;box-shadow:0 4px 16px rgba(216,27,96,.3);z-index:900} /* ボタン背景色も濃く */
+.page-top.visible{opacity:1;visibility:visible}
+.page-top:hover{transform:translateY(-4px)}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:992px){
+  .l-wrapper{flex-direction:column}
+  .l-sidebar{width:100%;position:static}
+  .p-article__inner{padding:32px;}
+}
+@media(max-width:768px){
+  .p-card-grid{grid-template-columns:repeat(2, 1fr)}
+  .l-header__nav{display:none}
+  .l-header__hamburger{display:flex}
+  .p-article__title{font-size:1.5rem}
+  .p-article__cover{height:250px}
+}
+@media(max-width:480px){
+  .p-card-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="l-header">
+  <div class="l-header__inner">
+    <a href="index.html" class="l-header__logo">エア<span>ログ</span></a>
+    <nav class="l-header__nav" id="globalNav">
+      <a href="index.html#sec-new">新着記事</a>
+      <a href="index.html#sec-recruit">採用支援</a>
+      <a href="index.html#sec-customer">集客支援</a>
+      <a href="index.html#sec-document">お役立ち資料</a>
+      <a href="index.html#sec-seminar">セミナー情報</a>
+      <a href="index.html#sec-contact">お問い合わせ</a>
+    </nav>
+    <div class="l-header__hamburger" id="hamburger">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</header>
+
+<!-- ★ 一覧画面でのみ表示するスライダー (中央拡大モード) ★ -->
+<div id="topPageSliderWrapper" style="display: none;">
+  <section class="p-hero" id="heroArea">
+    <button class="p-hero__btn p-hero__btn--prev" id="heroPrev">&#10094;</button>
+    <button class="p-hero__btn p-hero__btn--next" id="heroNext">&#10095;</button>
+    <div class="p-hero__track" id="heroTrack">
+      <!-- JSで重複のないランダムな記事画像が挿入されます -->
+    </div>
+    <div class="p-hero__dots" id="heroDots"></div>
+  </section>
+</div>
+
+<!-- ===== 2-COLUMN LAYOUT ===== -->
+<div class="l-wrapper">
+  
+  <main class="l-main">
+    <!-- ★ トップページ用コンテンツ（一覧など） ★ -->
+    <div id="topPageContent" style="display: none;">
+      <section class="l-section" id="sec-new"><div class="l-section__header"><h2 class="l-section__title">新着記事</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
+      <section class="l-section" id="sec-document"><div class="l-section__header"><h2 class="l-section__title">お役立ち資料</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
+      <section class="l-section" id="sec-recruit"><div class="l-section__header"><h2 class="l-section__title">採用支援</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
+      <section class="l-section" id="sec-customer"><div class="l-section__header"><h2 class="l-section__title">集客支援</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
+      <section class="l-section" id="sec-seminar"><div class="l-section__header"><h2 class="l-section__title">セミナー情報</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
+      <!-- お問い合わせセクション -->
+      <section class="l-section" id="sec-contact"><div class="l-section__header"><h2 class="l-section__title">お問い合わせ</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
+    </div>
+
+    <!-- ★ 記事詳細ページ用コンテンツ（最初は非表示） ★ -->
+    <div id="articlePageContent" style="display: none;">
+      <article class="p-article" id="articleContainer">
+        <!-- 記事詳細がここに描画されます -->
+      </article>
+    </div>
+
+    <!-- CTA BANNER -->
+    <section class="p-cta-banner">
+      <h2>採用のお悩み、まるっと解決！</h2>
+      <p>求人広告のプロが最適なプランをご提案します。まずはお気軽にご相談ください。</p>
+      <a href="#" class="p-cta-banner__btn">無料相談はこちら</a>
+    </section>
+  </main>
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="l-sidebar">
+    
+    <!-- Search Box -->
+    <div class="c-sidebar-block">
+      <div class="c-search-box">
+        <input type="text" id="searchInput" class="c-search-box__input" placeholder="気になるワードを検索">
+        <button class="c-search-box__btn">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- LINE Banner -->
+    <div class="c-sidebar-block">
+      <div class="c-line-banner">
+        <!-- ★ トラコム公式LINE → エアログ公式LINE に変更 ★ -->
+        <h3 class="c-line-banner__title">エアログ公式LINEの<br>登録受付中！</h3>
+        <p class="c-line-banner__desc">LINEで簡単・スピーディーに<br>求人掲載のご依頼が可能です</p>
+        <a href="#" class="c-line-banner__btn">LINE登録はこちら</a>
+      </div>
+    </div>
+
+    <!-- Categories Widget -->
+    <div class="c-widget">
+      <h3 class="c-widget__title">カテゴリから探す</h3>
+      <ul class="c-widget__list">
+        <li><a href="index.html#sec-recruit">採用支援</a></li>
+        <li><a href="index.html#sec-customer">集客支援</a></li>
+        <li><a href="index.html#sec-document">お役立ち資料</a></li>
+        <li><a href="index.html#sec-seminar">セミナー情報</a></li>
+        <li><a href="index.html#sec-contact">お問い合わせ</a></li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer class="l-footer">
+  <nav class="l-footer__nav">
+    <a href="#">運営会社（トラコム株式会社）</a>
+    <a href="#">サービス一覧</a>
+    <a href="#">お問い合わせ</a>
+    <a href="#">プライバシーポリシー</a>
+  </nav>
+  <p class="l-footer__copy">&copy; 2025 TRACOM Co.,Ltd.</p>
+</footer>
+
+<!-- ===== PAGE TOP ===== -->
+<button class="page-top" id="pageTop">&#8593;</button>
+
+<script>
+/* スマホ用メニュー & ページトップ */
+document.getElementById('hamburger').addEventListener('click', function(){
+  this.classList.toggle('active');
+  const nav = document.getElementById('globalNav');
+  if(nav.style.display === 'flex') { nav.style.display = 'none'; } else { nav.style.display = 'flex'; nav.style.flexDirection = 'column'; nav.style.position = 'absolute'; nav.style.top = '60px'; nav.style.left = '0'; nav.style.right = '0'; nav.style.background = '#fff'; nav.style.padding = '20px'; nav.style.boxShadow = '0 4px 12px rgba(0,0,0,.1)'; }
+});
+const topBtn = document.getElementById('pageTop');
+window.addEventListener('scroll', () => { topBtn.classList.toggle('visible', window.scrollY > 300); });
+topBtn.addEventListener('click', () => { window.scrollTo({top:0, behavior:'smooth'}); });
+
+/* データの読み込み */
+const STORAGE_KEY = 'tralog_posts';
+function loadPosts(){
+  try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { return []; }
+}
+function getGenreClass(genre) {
+  if (genre === 'お役立ち資料') return 'document';
+  if (genre === 'セミナー情報') return 'seminar';
+  if (genre === '集客支援') return 'customer';
+  if (genre === 'お問い合わせ') return 'contact';
+  return '';
+}
+
+// ===== 検索機能 =====
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  const query = e.target.value.toLowerCase();
+  const cards = document.querySelectorAll('.p-card');
+  cards.forEach(card => {
+    const title = card.querySelector('.p-card__title').textContent.toLowerCase();
+    const tags = card.querySelector('.p-card__tags') ? card.querySelector('.p-card__tags').textContent.toLowerCase() : '';
+    if (title.includes(query) || tags.includes(query)) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+});
+
+// ===== URLをチェックして画面を切り替える =====
+const params = new URLSearchParams(window.location.search);
+const articleId = params.get('id');
+
+if (articleId) {
+  // --- 記事詳細モード ---
+  document.getElementById('topPageSliderWrapper').style.display = 'none';
+  document.getElementById('topPageContent').style.display = 'none';
+  document.getElementById('articlePageContent').style.display = 'block';
+  renderArticle(articleId);
+} else {
+  // --- 一覧モード ---
+  document.getElementById('topPageSliderWrapper').style.display = 'block';
+  document.getElementById('topPageContent').style.display = 'block';
+  document.getElementById('articlePageContent').style.display = 'none';
+  renderHeroSlider(); 
+  renderGridList();
+}
+
+// ★ ランダム記事スライダー (重複なし・空枠表示対応版)
+function renderHeroSlider() {
+  const allPosts = loadPosts();
+  let publicPosts = allPosts.filter(p => p.status === 'public');
+  const track = document.getElementById('heroTrack');
+  track.innerHTML = '';
+
+  // 1. 公開記事をランダムにシャッフルし、最大6件だけを取得
+  let shuffled = publicPosts.sort(() => 0.5 - Math.random()).slice(0, 6);
+  
+  // 2. 抽出した記事をスライダー用の配列にコピー
+  let sliderPosts = [...shuffled];
+  
+  // 3. スライダーの枠（6つ）に満たない場合は、足りない分を空枠（ダミー）で埋める
+  while (sliderPosts.length < 6) {
+    sliderPosts.push({ isDummy: true });
+  }
+
+  // 4. HTMLに描画
+  sliderPosts.forEach(post => {
+    if(post.isDummy) {
+      track.innerHTML += `
+        <div class="p-hero__slide" style="cursor:default;">
+          <img src="https://via.placeholder.com/800x450/eeeeee/bbbbbb?text=No+Article" alt="">
+        </div>
+      `;
+    } else {
+      const defaultImg = `https://via.placeholder.com/800x450/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
+      const imgSrc = post.coverImage || defaultImg;
+      const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+      const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+      track.innerHTML += `
+        <div class="p-hero__slide" data-id="${post.id}" title="${post.title || ''}">
+          <img src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;">
+        </div>
+      `;
+    }
+  });
+
+  initHeroSlider();
+}
+
+function initHeroSlider() {
+  const heroArea = document.getElementById('heroArea');
+  const track = document.getElementById('heroTrack');
+  const slides = track.querySelectorAll('.p-hero__slide');
+  const dotsWrap = document.getElementById('heroDots');
+  const btnPrev = document.getElementById('heroPrev');
+  const btnNext = document.getElementById('heroNext');
+  
+  if(slides.length === 0) return;
+
+  let current = 0;
+  let autoTimer;
+  const totalSlides = slides.length;
+
+  const newPrev = btnPrev.cloneNode(true);
+  btnPrev.parentNode.replaceChild(newPrev, btnPrev);
+  const newNext = btnNext.cloneNode(true);
+  btnNext.parentNode.replaceChild(newNext, btnNext);
+
+  function buildDots() {
+    dotsWrap.innerHTML = '';
+    for(let i = 0; i < totalSlides; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'p-hero__dot' + (i === current ? ' active' : '');
+      dot.dataset.index = i;
+      dotsWrap.appendChild(dot);
+    }
+  }
+
+  function goTo(idx) {
+    if(idx < 0) idx = totalSlides - 1;
+    if(idx >= totalSlides) idx = 0;
+    current = idx;
+    
+    // スライド1枚分の幅と、コンテナの幅から「中央配置」になるよう計算
+    const slideWidth = slides[0].offsetWidth;
+    const containerWidth = heroArea.offsetWidth;
+    const offset = -(current * slideWidth) + (containerWidth / 2) - (slideWidth / 2);
+    
+    track.style.transform = `translateX(${offset}px)`;
+    
+    slides.forEach((slide, i) => {
+      if (i === current) {
+        slide.classList.add('is-center');
+      } else {
+        slide.classList.remove('is-center');
+      }
+    });
+
+    const dots = dotsWrap.querySelectorAll('.p-hero__dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+  }
+
+  buildDots();
+
+  // クリック時の挙動：中央なら遷移、それ以外ならそのスライドへ移動
+  slides.forEach((slide, idx) => {
+    slide.onclick = () => {
+      if (idx === current) {
+        if(slide.dataset.id) window.location.href = `index.html?id=${slide.dataset.id}`;
+      } else {
+        goTo(idx);
+        resetAuto();
+      }
+    };
+  });
+
+  newNext.addEventListener('click', () => { goTo(current + 1); resetAuto(); });
+  newPrev.addEventListener('click', () => { goTo(current - 1); resetAuto(); });
+  
+  dotsWrap.onclick = (e) => {
+    if(e.target.dataset.index !== undefined) {
+      goTo(+e.target.dataset.index);
+      resetAuto();
+    }
+  };
+
+  window.addEventListener('resize', () => goTo(current));
+
+  function resetAuto() {
+    if(autoTimer) clearInterval(autoTimer);
+    autoTimer = setInterval(() => goTo(current + 1), 4000);
+  }
+  
+  // 描画直後の幅取得ズレを防ぐため、ごくわずかに遅らせて初期位置設定
+  setTimeout(() => goTo(0), 50);
+  resetAuto();
+}
+
+// ★ 一覧画面（3列グリッド）の描画処理
+function renderGridList(){
+  const allPosts = loadPosts();
+  const publicPosts = allPosts.filter(p => p.status === 'public').sort((a,b) => new Date(b.date) - new Date(a.date));
+
+  function createCard(post){
+    const defaultImg = `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
+    const imgSrc = post.coverImage || defaultImg;
+    const catClass = getGenreClass(post.genre);
+    const tagsHtml = post.tags && post.tags.length ? `<div class="p-card__tags">${post.tags.map(t => `<span class="p-card__tag">#${t}</span>`).join('')}</div>` : '';
+    const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+    const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+
+    return `
+    <article class="p-card" data-id="${post.id}">
+      <img class="p-card__thumb" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;">
+      <div class="p-card__body">
+        <div class="p-card__meta">
+          <span class="p-card__cat ${catClass ? 'p-card__cat--' + catClass : ''}">${post.genre || 'その他'}</span>
+          <time class="p-card__date">${post.displayDate || ''}</time>
+        </div>
+        <h3 class="p-card__title">${post.title || '無題'}</h3>
+        ${tagsHtml}
+      </div>
+    </article>`;
+  }
+
+  const grids = {
+    new: document.querySelector('#sec-new .p-card-grid'),
+    recruit: document.querySelector('#sec-recruit .p-card-grid'),
+    customer: document.querySelector('#sec-customer .p-card-grid'),
+    document: document.querySelector('#sec-document .p-card-grid'),
+    seminar: document.querySelector('#sec-seminar .p-card-grid'),
+    contact: document.querySelector('#sec-contact .p-card-grid')
+  };
+
+  if(grids.new) { grids.new.innerHTML = ''; publicPosts.slice(0, 6).forEach(p => grids.new.innerHTML += createCard(p)); }
+  if(grids.recruit) { grids.recruit.innerHTML = ''; publicPosts.filter(p => p.genre === '採用支援').slice(0, 6).forEach(p => grids.recruit.innerHTML += createCard(p)); }
+  if(grids.customer) { grids.customer.innerHTML = ''; publicPosts.filter(p => p.genre === '集客支援').slice(0, 6).forEach(p => grids.customer.innerHTML += createCard(p)); }
+  if(grids.document) { grids.document.innerHTML = ''; publicPosts.filter(p => p.genre === 'お役立ち資料').slice(0, 6).forEach(p => grids.document.innerHTML += createCard(p)); }
+  if(grids.seminar) { grids.seminar.innerHTML = ''; publicPosts.filter(p => p.genre === 'セミナー情報').slice(0, 6).forEach(p => grids.seminar.innerHTML += createCard(p)); }
+  if(grids.contact) { grids.contact.innerHTML = ''; publicPosts.filter(p => p.genre === 'お問い合わせ').slice(0, 6).forEach(p => grids.contact.innerHTML += createCard(p)); }
+
+  document.querySelectorAll('.p-card-grid').forEach(grid => {
+    grid.addEventListener('click', e => {
+      const card = e.target.closest('.p-card');
+      if(card && card.getAttribute('data-id')) {
+        window.location.href = `index.html?id=${card.getAttribute('data-id')}`;
+      }
+    });
+  });
+}
+
+// ★ 記事詳細画面の描画処理
+function renderArticle(id) {
+  const posts = loadPosts();
+  const post = posts.find(p => p.id === id);
+  const container = document.getElementById('articleContainer');
+
+  if (!post || post.status !== 'public') {
+    container.innerHTML = '<div style="padding:80px;text-align:center;color:#666;">記事が存在しないか、非公開になっています。<br><br><a href="index.html" style="color:#1a73e8;text-decoration:underline;font-weight:bold;">トップページに戻る</a></div>';
+    return;
+  }
+
+  const catClass = getGenreClass(post.genre);
+  const tagsHtml = post.tags && post.tags.length ? `<div class="p-article__tags">${post.tags.map(t => `<span class="p-article__tag">#${t}</span>`).join('')}</div>` : '';
+  const defaultImg = `https://via.placeholder.com/1200x600/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
+  const imgSrc = post.coverImage || defaultImg;
+  const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+  const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+  const imgHtml = post.coverImage ? `<img class="p-article__cover" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;">` : '';
+
+  document.title = `${post.title}｜エアログ`;
+
+  container.innerHTML = `
+    ${imgHtml}
+    <div class="p-article__inner">
+      <div class="p-article__meta">
+        <span class="p-article__cat ${catClass ? 'p-article__cat--' + catClass : ''}">${post.genre || 'その他'}</span>
+        <span class="p-article__date">更新日：${post.displayDate}</span>
+      </div>
+      <h1 class="p-article__title">${post.title}</h1>
+      ${tagsHtml}
+      <div class="p-article__content">
+        ${post.content || '<p>本文がありません。</p>'}
+      </div>
+    </div>
+  `;
+}
+</script>
+</body>
+</html>
