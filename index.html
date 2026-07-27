@@ -591,11 +591,14 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // サイトを開いた瞬間にFirebaseから全記事を取得
   let globalPosts = [];
   try {
       const snapshot = await db.collection('posts').get();
-      globalPosts = snapshot.docs.map(doc => doc.data());
+      globalPosts = snapshot.docs.map(doc => {
+          let data = doc.data();
+          data.id = doc.id; 
+          return data;
+      });
   } catch(e) {
       console.error(e);
   }
@@ -634,7 +637,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderHeroSlider() {
-    let publicPosts = globalPosts.filter(p => p.status === 'public');
+    // 修正1: 'public' だけでなく '公開' も許可するように柔軟化
+    let publicPosts = globalPosts.filter(p => p.status === 'public' || p.status === '公開' || p.status === undefined);
+    
     const track = document.getElementById('heroTrack');
     track.innerHTML = '';
     let sliderPosts = [...publicPosts.sort(() => 0.5 - Math.random()).slice(0, 6)];
@@ -676,7 +681,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderGridList(){
-    const publicPosts = globalPosts.filter(p => p.status === 'public').sort((a,b) => new Date(b.date) - new Date(a.date));
+    const publicPosts = globalPosts.filter(p => p.status === 'public' || p.status === '公開' || p.status === undefined).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
+    
     function createCard(post){
       const imgSrc = post.coverImage || `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
       const catClass = getGenreClass(post.genre);
@@ -691,16 +697,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         </div>
       </article>`;
     }
-    const grids = { new: document.querySelector('#sec-new .p-card-grid'), recruit: document.querySelector('#sec-recruit .p-card-grid'), document: document.querySelector('#sec-document .p-card-grid') };
+
+    // 修正2: 全てのカテゴリの表示枠（grids）を定義
+    const grids = { 
+        new: document.querySelector('#sec-new .p-card-grid'), 
+        recruit: document.querySelector('#sec-recruit .p-card-grid'), 
+        document: document.querySelector('#sec-document .p-card-grid'),
+        customer: document.querySelector('#sec-customer .p-card-grid'),
+        seminar: document.querySelector('#sec-seminar .p-card-grid'),
+        contact: document.querySelector('#sec-contact .p-card-grid')
+    };
+
     if(grids.new) { grids.new.innerHTML = ''; publicPosts.slice(0, 6).forEach(p => grids.new.innerHTML += createCard(p)); }
     if(grids.recruit) { grids.recruit.innerHTML = ''; publicPosts.filter(p => p.genre === '採用支援').slice(0, 6).forEach(p => grids.recruit.innerHTML += createCard(p)); }
     if(grids.document) { grids.document.innerHTML = ''; publicPosts.filter(p => p.genre === 'お役立ち資料').slice(0, 6).forEach(p => grids.document.innerHTML += createCard(p)); }
+    if(grids.customer) { grids.customer.innerHTML = ''; publicPosts.filter(p => p.genre === '集客支援').slice(0, 6).forEach(p => grids.customer.innerHTML += createCard(p)); }
+    if(grids.seminar) { grids.seminar.innerHTML = ''; publicPosts.filter(p => p.genre === 'セミナー情報').slice(0, 6).forEach(p => grids.seminar.innerHTML += createCard(p)); }
+    if(grids.contact) { grids.contact.innerHTML = ''; publicPosts.filter(p => p.genre === 'お問い合わせ').slice(0, 6).forEach(p => grids.contact.innerHTML += createCard(p)); }
   }
 
   function renderArticle(id) {
     const post = globalPosts.find(p => p.id === id);
     const container = document.getElementById('articleContainer');
-    if (!post || post.status !== 'public') {
+    
+    if (!post || (post.status !== 'public' && post.status !== '公開' && post.status !== undefined)) {
       container.innerHTML = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>'; return;
     }
     const catClass = getGenreClass(post.genre);
@@ -710,7 +730,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     container.innerHTML = `
       <img class="p-article__cover" src="${imgSrc}" style="object-position: ${posX}% ${posY}%;">
       <div class="p-article__inner">
-        <div class="p-article__meta"><span class="p-article__cat ${catClass ? 'p-article__cat--' + catClass : ''}">${post.genre || 'その他'}</span><span class="p-article__date">更新日：${post.displayDate}</span></div>
+        <div class="p-article__meta"><span class="p-article__cat ${catClass ? 'p-article__cat--' + catClass : ''}">${post.genre || 'その他'}</span><span class="p-article__date">更新日：${post.displayDate || ''}</span></div>
         <h1 class="p-article__title">${post.title}</h1>
         <div class="p-article__content">${post.content || '<p>本文がありません。</p>'}</div>
       </div>
