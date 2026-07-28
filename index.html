@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>エアログ｜採用・集客を支援するメディア</title>
 <style>
 /* ===== RESET & BASE ===== */
 html {
   scroll-behavior: smooth;
-  scroll-padding-top: 80px; /* ヘッダーの高さ分ズレを防止 */
+  scroll-padding-top: 80px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;color:#333;line-height:1.7;background:#f9f9f9}
@@ -22,8 +22,6 @@ ul,ol{list-style:none}
 .l-header{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.05);position:sticky;top:0;z-index:1000}
 .l-header__inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
 
-/* ★「エア」の部分を、見えやすい「濃いピンク（#d81b60）」に変更★ */
-/* フォントはヒラギノ明朝 W6系を維持 */
 .l-header__logo{
   font-family: 'Hiragino Mincho ProN', 'ヒラギノ明朝 ProN W6', 'HiraMinProN-W6', 'Yu Mincho', 'Noto Serif JP', serif;
   font-size:1.8rem;
@@ -31,12 +29,11 @@ ul,ol{list-style:none}
   color:#d81b60;
   letter-spacing:-1px;
 }
-/* 「ログ」の部分はそのまま濃いグレー（#333） */
 .l-header__logo span{color:#333}
 
 .l-header__nav{display:flex;gap:32px}
 .l-header__nav a{font-size:.95rem;font-weight:600;color:#333}
-.l-header__nav a:hover{color:#d81b60} /* ホバー時も濃いピンクに */
+.l-header__nav a:hover{color:#d81b60}
 .l-header__hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px}
 .l-header__hamburger span{display:block;width:24px;height:2px;background:#333;transition:all .3s}
 
@@ -52,7 +49,7 @@ ul,ol{list-style:none}
 .p-hero__btn--next { right: 24px; }
 .p-hero__dots { display: flex; justify-content: center; gap: 8px; margin-top: 24px; }
 .p-hero__dot { width: 10px; height: 10px; border-radius: 50%; background: #ccc; cursor: pointer; transition: background 0.3s; }
-.p-hero__dot.active { background: #d81b60; } /* ドットのアクティブ色も濃いピンクに */
+.p-hero__dot.active { background: #d81b60; }
 
 @media(max-width:768px){
   .p-hero__slide { flex: 0 0 80%; }
@@ -67,9 +64,9 @@ ul,ol{list-style:none}
 
 /* ===== SECTION COMMON (MAIN AREA) ===== */
 .l-section{margin-bottom:60px}
-.l-section__header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #d81b60;padding-bottom:12px;} /* 下線も濃く */
+.l-section__header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;border-bottom:2px solid #d81b60;padding-bottom:12px;}
 .l-section__title{font-size:1.4rem;font-weight:bold;color:#333}
-.l-section__more{font-size:.85rem;color:#d81b60;font-weight:600} /* 「もっと見る」も濃く */
+.l-section__more{font-size:.85rem;color:#d81b60;font-weight:600}
 .l-section__more:hover{text-decoration:underline}
 
 /* ===== CARD GRID ===== */
@@ -81,7 +78,6 @@ ul,ol{list-style:none}
 .p-card__meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .p-card__cat{font-size:.65rem;color:#fff;background:#1a73e8;padding:4px 10px;border-radius:4px;font-weight:bold;letter-spacing:0.5px}
 
-/* 各カテゴリーの色分け */
 .p-card__cat--document{background:#43a047}
 .p-card__cat--seminar{background:#f57c00}
 .p-card__cat--customer{background:#8e24aa}
@@ -94,25 +90,22 @@ ul,ol{list-style:none}
 
 /* ===== SIDEBAR WIDGETS ===== */
 .c-sidebar-block { margin-bottom: 24px; }
-/* Search Box */
 .c-search-box { display: flex; align-items: center; border: 2px solid #333; border-radius: 30px; padding: 8px 16px; background: #fff; }
 .c-search-box__input { border: none; outline: none; flex: 1; font-size: 0.95rem; padding: 6px 0; background: transparent; }
 .c-search-box__btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #333; display: flex; align-items: center; }
 
-/* LINE Banner */
 .c-line-banner { background: #ea7c1e; color: #fff; padding: 24px 20px; border-radius: 8px; text-align: center; }
 .c-line-banner__title { font-size: 1.1rem; font-weight: bold; margin-bottom: 8px; line-height: 1.4; }
 .c-line-banner__desc { font-size: 0.8rem; margin-bottom: 20px; opacity: 0.9; }
 .c-line-banner__btn { display: flex; align-items: center; justify-content: center; background: #fff; color: #111; font-weight: bold; padding: 12px; border-radius: 30px; font-size: 0.95rem; border: 2px solid #111; position: relative; }
 .c-line-banner__btn::after { content: '→'; position: absolute; right: 16px; font-weight: normal; }
 
-/* Widget Styles */
 .c-widget{background:#fff;border-radius:8px;padding:24px;margin-bottom:32px;box-shadow:0 2px 8px rgba(0,0,0,.04);border:1px solid #eee}
 .c-widget__title{font-size:1.1rem;font-weight:bold;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee;color:#333; display: flex; align-items: center;}
 .c-widget__title::before { content: "📁"; margin-right: 8px; font-size: 1.2rem; }
 .c-widget__list li{margin-bottom:12px}
 .c-widget__list a{display:flex;align-items:center;font-size:.9rem;color:#555;font-weight:500}
-.c-widget__list a::before{content:"›";color:#d81b60;margin-right:8px;font-size:1.2rem} /* アイコンの色も濃く */
+.c-widget__list a::before{content:"›";color:#d81b60;margin-right:8px;font-size:1.2rem}
 .c-widget__list a:hover{color:#d81b60}
 
 /* ===== INDEPENDENT ARTICLE PAGE STYLES ===== */
@@ -131,19 +124,18 @@ ul,ol{list-style:none}
 .p-article__tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid #eee;}
 .p-article__tag{font-size:.85rem;color:#555;background:#f0f0f0;padding:6px 12px;border-radius:4px;}
 
-/* --- 本文（HTMLソースコード）のスタイル --- */
 .p-article__content{line-height:1.9;font-size:1.05rem;color:#333;}
 .p-article__content p{margin-bottom:24px;}
-.p-article__content a{color:#d81b60;text-decoration:underline} /* 本文リンク色も濃く */
+.p-article__content a{color:#d81b60;text-decoration:underline}
 .p-article__content img{margin:32px 0;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-.p-article__content h2{margin: 48px 0 24px; font-size: 1.45rem; background-color: #f5f5f5; border-left: 6px solid #d81b60; padding: 18px 24px; font-weight: 700; color: #222;} /* 見出し色も濃く */
-.p-article__content h3{margin: 40px 0 20px; font-size: 1.25rem; border-bottom: 2px solid #d81b60; padding-bottom: 10px; font-weight: 700; color: #222;} /* 見出し色も濃く */
+.p-article__content h2{margin: 48px 0 24px; font-size: 1.45rem; background-color: #f5f5f5; border-left: 6px solid #d81b60; padding: 18px 24px; font-weight: 700; color: #222;}
+.p-article__content h3{margin: 40px 0 20px; font-size: 1.25rem; border-bottom: 2px solid #d81b60; padding-bottom: 10px; font-weight: 700; color: #222;}
 
 /* ===== CTA BANNER ===== */
-.p-cta-banner{background:linear-gradient(135deg,#f06292,#d81b60);border-radius:12px;padding:48px;text-align:center;color:#fff;margin-bottom:60px;} /* CTA背景色も少し濃く */
+.p-cta-banner{background:linear-gradient(135deg,#f06292,#d81b60);border-radius:12px;padding:48px;text-align:center;color:#fff;margin-bottom:60px;}
 .p-cta-banner h2{font-size:1.6rem;margin-bottom:16px;font-weight:bold}
 .p-cta-banner p{margin-bottom:32px;opacity:.9;font-size:.95rem}
-.p-cta-banner__btn{display:inline-block;background:#fff;color:#d81b60;font-weight:bold;padding:16px 48px;border-radius:30px;font-size:1.05rem;transition:transform .2s, box-shadow .2s;box-shadow:0 4px 12px rgba(0,0,0,.15)} /* ボタン文字色も濃く */
+.p-cta-banner__btn{display:inline-block;background:#fff;color:#d81b60;font-weight:bold;padding:16px 48px;border-radius:30px;font-size:1.05rem;transition:transform .2s, box-shadow .2s;box-shadow:0 4px 12px rgba(0,0,0,.15)}
 .p-cta-banner__btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.2);opacity:1}
 
 /* ===== FOOTER ===== */
@@ -154,7 +146,7 @@ ul,ol{list-style:none}
 .l-footer__copy{text-align:center;font-size:.8rem;opacity:.6}
 
 /* ===== PAGE TOP ===== */
-.page-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;border-radius:50%;background:#d81b60;color:#fff;border:none;font-size:1.5rem;cursor:pointer;opacity:0;visibility:hidden;transition:all .3s;box-shadow:0 4px 16px rgba(216,27,96,.3);z-index:900} /* ボタン背景色も濃く */
+.page-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;border-radius:50%;background:#d81b60;color:#fff;border:none;font-size:1.5rem;cursor:pointer;opacity:0;visibility:hidden;transition:all .3s;box-shadow:0 4px 16px rgba(216,27,96,.3);z-index:900}
 .page-top.visible{opacity:1;visibility:visible}
 .page-top:hover{transform:translateY(-4px)}
 
@@ -219,7 +211,6 @@ ul,ol{list-style:none}
       <section class="l-section" id="sec-recruit"><div class="l-section__header"><h2 class="l-section__title">採用支援</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
       <section class="l-section" id="sec-customer"><div class="l-section__header"><h2 class="l-section__title">集客支援</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
       <section class="l-section" id="sec-seminar"><div class="l-section__header"><h2 class="l-section__title">セミナー情報</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
-      <!-- お問い合わせセクション -->
       <section class="l-section" id="sec-contact"><div class="l-section__header"><h2 class="l-section__title">お問い合わせ</h2><a href="#" class="l-section__more">一覧をみる</a></div><div class="p-card-grid"></div></section>
     </div>
 
@@ -254,7 +245,6 @@ ul,ol{list-style:none}
     <!-- LINE Banner -->
     <div class="c-sidebar-block">
       <div class="c-line-banner">
-        <!-- ★ トラコム公式LINE → エアログ公式LINE に変更 ★ -->
         <h3 class="c-line-banner__title">エアログ公式LINEの<br>登録受付中！</h3>
         <p class="c-line-banner__desc">LINEで簡単・スピーディーに<br>求人掲載のご依頼が可能です</p>
         <a href="#" class="c-line-banner__btn">LINE登録はこちら</a>
@@ -339,6 +329,59 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
+  // ==========================================
+  // ★ 追加：カテゴリを選択した時だけ表示する機能
+  // ==========================================
+  function applyCategoryFilter() {
+    const hash = window.location.hash;
+    const sections = ['sec-new', 'sec-recruit', 'sec-customer', 'sec-document', 'sec-seminar', 'sec-contact'];
+
+    // 記事詳細画面を開いている時は何もしない
+    if (document.getElementById('articlePageContent').style.display === 'block') return;
+
+    let isFiltered = false;
+    if (hash && sections.includes(hash.replace('#', ''))) {
+      isFiltered = true;
+    }
+
+    sections.forEach(secId => {
+      const el = document.getElementById(secId);
+      if (!el) return;
+
+      if (isFiltered) {
+        // 選んだカテゴリだけを表示し、他を非表示にする
+        el.style.display = (hash === '#' + secId) ? 'block' : 'none';
+      } else {
+        // 何も選ばれていない（トップページを開いた直後）はすべて表示
+        el.style.display = 'block';
+      }
+    });
+
+    // 画面を一番上に戻す
+    window.scrollTo(0, 0);
+  }
+
+  // カテゴリリンク（上部ナビ・サイドバー）をクリックした時の動作を上書き
+  document.querySelectorAll('a[href^="index.html#"], a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      // 記事を読んでいる途中なら、通常通りトップへ戻すので無視
+      if (document.getElementById('articlePageContent').style.display === 'block') return;
+
+      e.preventDefault(); // デフォルトの「下までジャンプする動き」をストップ
+      
+      const targetHref = this.getAttribute('href');
+      const targetHash = targetHref.includes('#') ? targetHref.substring(targetHref.indexOf('#')) : '';
+
+      // URLの表示だけ更新して、絞り込みを実行
+      history.pushState(null, null, targetHash || window.location.pathname);
+      applyCategoryFilter();
+    });
+  });
+
+  // ブラウザの「戻る・進む」ボタンを押した時にも絞り込みを動かす
+  window.addEventListener('popstate', applyCategoryFilter);
+  // ==========================================
+
   const params = new URLSearchParams(window.location.search);
   const articleId = params.get('id');
 
@@ -353,6 +396,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('articlePageContent').style.display = 'none';
     renderHeroSlider(); 
     renderGridList();
+    
+    // ★ ページを読み込んだ直後にも、URLにカテゴリがあれば絞り込む
+    applyCategoryFilter(); 
   }
 
   function renderHeroSlider() {
@@ -381,7 +427,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const slides = track.querySelectorAll('.p-hero__slide');
     if(slides.length === 0) return;
     let current = 0;
-    let autoPlayId; // 自動スライド用のタイマー
+    let autoPlayId;
 
     function goTo(idx) {
       if(idx < 0) idx = slides.length - 1;
@@ -391,9 +437,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       track.style.transform = `translateX(${offset}px)`;
       slides.forEach((slide, i) => { slide.classList.toggle('is-center', i === current); });
       
-      // 動くたびに自動スライドのタイマーをリセット
       clearInterval(autoPlayId);
-      autoPlayId = setInterval(() => goTo(current + 1), 4000); // 4秒ごとに次へスライド
+      autoPlayId = setInterval(() => goTo(current + 1), 4000);
     }
 
     slides.forEach((slide, idx) => {
@@ -403,7 +448,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       };
     });
 
-    // 矢印ボタンを押した時の動作を追加
     document.getElementById('heroPrev').onclick = () => goTo(current - 1);
     document.getElementById('heroNext').onclick = () => goTo(current + 1);
 
