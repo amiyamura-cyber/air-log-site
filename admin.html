@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>エアログ管理画面</title>
+
+<!-- ★ ファビコン（タブのアイコン）の設定 ★ -->
+<link rel="icon" href="kannrigamenn.png">
+
 <style>
   /* ===== RESET & BASE ===== */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -134,17 +138,42 @@
     <!-- ▼ AIプロンプト生成ツール ▼ -->
     <div style="background: #e8f0fe; padding: 16px; border-radius: 8px; margin-bottom: 24px; border: 1px solid #1a73e8;">
       <h3 style="font-size: 1rem; color: #1a73e8; margin-bottom: 12px;">🤖 AIに記事を書いてもらう</h3>
-      <p style="font-size: 0.85rem; margin-bottom: 8px; color: #555;">① 以下の枠に「どんな記事にしたいか（テーマや条件）」を入力してください。</p>
-      <textarea id="aiConditionInput" class="c-textarea" style="height: 80px; margin-bottom: 12px; background: #fff;" placeholder="例：採用面接で聞くべき質問5選。ターゲットは中小企業の社長。"></textarea>
+      <p style="font-size: 0.85rem; margin-bottom: 12px; color: #555;">以下の条件を入力してボタンを押すと、AIへの詳細な指示書がコピーされます。</p>
       
-      <p style="font-size: 0.85rem; margin-bottom: 8px; color: #555;">② 目安の文字数（空欄でもOKです）</p>
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-        <input type="number" id="aiLengthInput" class="c-input" style="width: 120px; background: #fff;" placeholder="例：1500">
-        <span style="font-size: 0.85rem; color: #555;">文字前後</span>
+      <div class="c-form-group" style="margin-bottom: 12px;">
+        <label class="c-label">対策キーワード</label>
+        <input type="text" id="promptKeyword" class="c-input" style="background: #fff;" placeholder="例：採用面接 質問">
+      </div>
+      <div class="c-form-group" style="margin-bottom: 12px;">
+        <label class="c-label">ターゲット読者</label>
+        <input type="text" id="promptTarget" class="c-input" style="background: #fff;" placeholder="例：中小企業の経営者、人事担当者">
+      </div>
+      <div class="c-form-group" style="margin-bottom: 12px;">
+        <label class="c-label">記事の目的</label>
+        <input type="text" id="promptPurpose" class="c-input" style="background: #fff;" placeholder="例：面接でのミスマッチを防ぐノウハウを提供し、採用成功に繋げる">
+      </div>
+      <div class="c-form-group" style="margin-bottom: 12px;">
+        <label class="c-label">備考・追加の要望（※任意）</label>
+        <input type="text" id="promptRemarks" class="c-input" style="background: #fff;" placeholder="例：自社サービスを自然にアピールしてほしい">
+      </div>
+      
+      <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+        <div class="c-form-group" style="flex: 1; margin-bottom: 0;">
+          <label class="c-label">文字数の目安</label>
+          <select id="promptVolume" class="c-select" style="background: #fff;">
+            <option value="3000文字前後">3000文字前後</option>
+            <option value="5000文字前後">5000文字前後</option>
+            <option value="10000文字前後">10000文字前後</option>
+          </select>
+        </div>
+        <div class="c-form-group" style="flex: 1; margin-bottom: 0;">
+          <label class="c-label">トーン＆マナー</label>
+          <input type="text" id="promptTone" class="c-input" style="background: #fff;" value="専門的だが分かりやすく、説得力のある「です・ます」調">
+        </div>
       </div>
 
-      <button type="button" id="btnGeneratePrompt" class="c-btn c-btn--primary" style="background: #1a73e8; margin-top: 0;">指示書をコピーしてAIを開く</button>
-      <p style="font-size: 0.75rem; color: #666; margin-top: 8px;">※別タブでAIが開きます。コピーされた指示をそのまま貼り付けて送信してください（端末のGoogleアカウントが使用されます）。</p>
+      <button type="button" id="btnGeneratePrompt" class="c-btn c-btn--primary" style="background: #1a73e8; margin-top: 8px;">指示書をコピーしてAIを開く</button>
+      <p style="font-size: 0.75rem; color: #666; margin-top: 8px;">※別タブでAIが開きます。コピーされた指示をそのまま貼り付けて送信してください。</p>
     </div>
     <!-- ▲ ここまで ▲ -->
 
@@ -285,29 +314,46 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnGeneratePrompt = document.getElementById('btnGeneratePrompt');
   if (btnGeneratePrompt) {
     btnGeneratePrompt.addEventListener('click', () => {
-      const condition = document.getElementById('aiConditionInput').value;
-      const length = document.getElementById('aiLengthInput').value;
-
-      if (!condition) {
-        alert('記事の条件（テーマ）を入力してください！');
-        return;
-      }
+      const keyword = document.getElementById('promptKeyword').value || '【キーワードを入力】';
+      const target = document.getElementById('promptTarget').value || '【ターゲットを入力】';
+      const purpose = document.getElementById('promptPurpose').value || '【目的を入力】';
+      const volume = document.getElementById('promptVolume').value;
+      const tone = document.getElementById('promptTone').value || '専門的だが分かりやすく、説得力のある「です・ます」調';
+      const remarks = document.getElementById('promptRemarks').value.trim();
       
-      let lengthText = "";
-      if (length) {
-        lengthText = `\n* 文字数は厳密でなくて構いませんが、おおよそ ${length} 文字前後を目安に作成してください。`;
+      let remarksCondition = '';
+      if (remarks !== '') {
+        remarksCondition = `\n・追加の要望（備考）：${remarks} ※この要素・指示を必ず記事内に組み込んでください。`;
       }
 
-      const promptText = `以下の【テーマ・条件】について、ブログ記事を作成してください。
+      const promptText = `あなたはプロのSEOライター兼Webマーケターです。
+以下の【条件】と【作成ステップ】に従って、読者の悩みを解決する高品質なブログ記事を作成してください。
 
-【絶対ルール】
-* 出力は必ずHTMLコードのみとし、余計な解説や挨拶は一切含めないでください。
-* 見出しには <h2> や <h3>、段落には <p> を使用してください。
-* 必ず \`\`\`html から始まるコードブロックで囲んで出力してください。
-* 文末表現（「です・ます」調など）は、文章全体が自然で読みやすくなることを最優先してください。${lengthText}
+【基本条件】
+・対策キーワード：${keyword}
+・ターゲット読者：${target}
+・目的：${purpose}
+・文字数の目安：${volume}
+・トーン＆マナー：${tone}${remarksCondition}
 
-【テーマ・条件】
-${condition}`;
+【作成ステップ】
+1. 検索と分析：指定された「対策キーワード」で実際にウェブ検索を行い、現在上位表示されている競合記事を複数読み込み、共通している重要な要素や見出し構造を抽出・分析してください。
+2. 目次の作成：上位記事の要素を網羅しつつ、ユーザーにとって独自の価値を加えた「目次」を作成してください。
+3. 記事の執筆：作成した目次に沿って、記事本文を執筆してください。
+4. 参考記事の提示：執筆後、分析・参考にした上位記事のリスト（タイトルとURL）を提示してください。
+
+【出力・フォーマットの絶対ルール】
+出力は必ず以下の2部構成にしてください。
+
+▼前半：記事本文（HTMLコード）
+・必ず \`\`\`html から始まるコードブロックで囲んで出力してください。
+・導入文の直後に、必ず <ul> と <li> タグを用いて「目次」を作成してください。
+・大見出しには <h2>、小見出しには <h3>、段落には <p> を使用してください。
+・重要なキーワードや強調したい一文は <strong> タグで太字にしてください。
+・AIの前置きや挨拶は一切不要です。1行目からすぐにHTMLコードを出力してください。
+
+▼後半：参考記事リスト（テキスト形式）
+・前半のHTMLコードブロックの外（下部）に、通常のテキストとして参考にした記事のリストを出力してください。`;
 
       // クリップボードにコピー
       navigator.clipboard.writeText(promptText).then(() => {
