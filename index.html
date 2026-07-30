@@ -7,7 +7,7 @@
 <title>エアログ｜採用・集客を支援するメディア</title>
 
 <!-- ★ ファビコン（タブのアイコン）の設定 ★ -->
-<link rel="icon" href="hikakusaito.png">
+<link rel="icon" href="favicon.png">
 
 <style>
 /* ===== RESET & BASE ===== */
@@ -131,7 +131,8 @@ ul,ol{list-style:none}
 /* ★ 読者向けページの目次スタイル ★ */
 .p-article__toc { background: #f8f9fa; padding: 24px 32px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 40px; }
 .p-article__toc-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 16px; display: flex; align-items: center; color: #222;}
-.p-article__toc-title::before { content: "📋"; margin-right: 8px; }
+/* ★ ここを ◾️ に変更しました ★ */
+.p-article__toc-title::before { content: "◾️"; margin-right: 8px; font-size: 0.9em; }
 .p-article__toc ul { padding-left: 24px; list-style-type: disc; }
 .p-article__toc li { margin-bottom: 8px; font-size: 1rem; }
 .p-article__toc a { color: #1a73e8; text-decoration: none; transition: opacity 0.2s; }
@@ -496,7 +497,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
     const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
     
-    // ★ 目次HTMLを生成（データがある場合のみ表示）
     let tocHtml = '';
     if (post.toc) {
       tocHtml = `<div class="p-article__toc"><div class="p-article__toc-title">目次</div>${post.toc}</div>`;

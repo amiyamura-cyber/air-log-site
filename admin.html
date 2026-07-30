@@ -7,7 +7,7 @@
 <title>エアログ管理画面</title>
 
 <!-- ★ ファビコン（タブのアイコン）の設定 ★ -->
-<link rel="icon" href="kannrigamenn.png">
+<link rel="icon" href="favicon.png">
 
 <style>
   /* ===== RESET & BASE ===== */
@@ -120,7 +120,8 @@
   /* プレビュー用の目次スタイル */
   .p-article-preview__toc { background: #f8f9fa; padding: 24px; border-radius: 8px; border: 1px solid #ddd; margin: 0 32px 32px; }
   .p-article-preview__toc-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 16px; display: flex; align-items: center; }
-  .p-article-preview__toc-title::before { content: "📋"; margin-right: 8px; }
+  /* ★ ここを ◾️ に変更しました ★ */
+  .p-article-preview__toc-title::before { content: "◾️"; margin-right: 8px; font-size: 0.9em; }
   .p-article-preview__toc ul { padding-left: 24px; list-style-type: disc; }
   .p-article-preview__toc li { margin-bottom: 8px; font-size: 0.95rem; }
   .p-article-preview__toc a { color: #1a73e8; text-decoration: none; }
@@ -351,7 +352,6 @@ document.addEventListener('DOMContentLoaded', () => {
         remarksCondition = `\n・追加の要望（備考）：${remarks} ※この要素・指示を必ず記事内に組み込んでください。`;
       }
 
-      // ★ プロンプトを変更（タイトル1つ追加＆フォーマット強化） ★
       const promptText = `あなたはプロのSEOライター兼Webマーケターです。
 以下の【条件】と【作成ステップ】に従って、読者の悩みを解決する高品質なブログ記事を作成してください。
 
