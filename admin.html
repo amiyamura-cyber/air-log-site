@@ -116,6 +116,16 @@
   .p-article-preview__meta { display: flex; gap: 12px; margin-bottom: 16px; align-items: center; }
   .p-article-preview__title { font-size: 1.8rem; font-weight: bold; margin-bottom: 16px; line-height: 1.4; }
   .p-article-preview__tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  
+  /* プレビュー用の目次スタイル */
+  .p-article-preview__toc { background: #f8f9fa; padding: 24px; border-radius: 8px; border: 1px solid #ddd; margin: 0 32px 32px; }
+  .p-article-preview__toc-title { font-weight: bold; font-size: 1.2rem; margin-bottom: 16px; display: flex; align-items: center; }
+  .p-article-preview__toc-title::before { content: "📋"; margin-right: 8px; }
+  .p-article-preview__toc ul { padding-left: 24px; list-style-type: disc; }
+  .p-article-preview__toc li { margin-bottom: 8px; font-size: 0.95rem; }
+  .p-article-preview__toc a { color: #1a73e8; text-decoration: none; }
+  .p-article-preview__toc a:hover { text-decoration: underline; }
+
   .p-article-preview__content{padding:0 32px 32px;line-height:1.8;font-size:1.05rem;color:#333;}
   .p-article-preview__content p{margin-bottom:24px;}
   .p-article-preview__content a{color:#1a73e8;text-decoration:underline}
@@ -227,6 +237,16 @@
           <input type="date" id="startDate" class="c-input"><span>〜</span><input type="date" id="endDate" class="c-input">
         </div>
       </div>
+      
+      <!-- 目次用の入力枠 -->
+      <div class="c-form-group">
+        <label class="c-label">
+          <span>目次 (HTMLソースコード)</span>
+          <button type="button" id="btnExpandTocEditor" class="c-btn c-btn--primary c-btn--small">拡大して編集</button>
+        </label>
+        <textarea id="postToc" class="c-textarea" style="height: 100px;" placeholder="<ul><li>見出し1...</li></ul>"></textarea>
+      </div>
+
       <div class="c-form-group">
         <label class="c-label">
           <span>本文 (HTMLソースコード)</span>
@@ -259,7 +279,7 @@
 <div class="c-modal" id="textEditorModal">
   <div class="c-modal__inner" style="max-width: 900px; height: 85vh; display: flex; flex-direction: column; padding: 24px; overflow: hidden;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h2 style="font-size: 1.3rem; color: #1a73e8;">本文の編集</h2>
+      <h2 id="textEditorModalTitle" style="font-size: 1.3rem; color: #1a73e8;">本文の編集</h2>
       <button class="c-btn c-btn--primary" id="closeTextEditorModal" style="width: auto; padding: 10px 24px;">完了して閉じる</button>
     </div>
     <div class="c-toolbar" style="margin-bottom: 12px;">
@@ -283,6 +303,9 @@
       <h1 id="previewTitle" class="p-article-preview__title"></h1>
       <div id="previewTags" class="p-article-preview__tags"></div>
     </div>
+    <!-- プレビュー用の目次表示エリア -->
+    <div id="previewToc" class="p-article-preview__toc" style="display:none;"></div>
+    
     <div id="previewContent" class="p-article-preview__content"></div>
   </div>
 </div>
@@ -326,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
         remarksCondition = `\n・追加の要望（備考）：${remarks} ※この要素・指示を必ず記事内に組み込んでください。`;
       }
 
+      // ★ 目次と本文を確実に分離させ、リンク用のIDを付与する強力なプロンプト ★
       const promptText = `あなたはプロのSEOライター兼Webマーケターです。
 以下の【条件】と【作成ステップ】に従って、読者の悩みを解決する高品質なブログ記事を作成してください。
 
@@ -343,17 +367,21 @@ document.addEventListener('DOMContentLoaded', () => {
 4. 参考記事の提示：執筆後、分析・参考にした上位記事のリスト（タイトルとURL）を提示してください。
 
 【出力・フォーマットの絶対ルール】
-出力は必ず以下の2部構成にしてください。
+出力は必ず以下の3部構成に分け、それぞれ個別のコードブロックで出力してください。AIの前置きや挨拶は一切不要です。
 
-▼前半：記事本文（HTMLコード）
-・必ず \`\`\`html から始まるコードブロックで囲んで出力してください。
-・導入文の直後に、必ず <ul> と <li> タグを用いて「目次」を作成してください。
-・大見出しには <h2>、小見出しには <h3>、段落には <p> を使用してください。
-・重要なキーワードや強調したい一文は <strong> タグで太字にしてください。
-・AIの前置きや挨拶は一切不要です。1行目からすぐにHTMLコードを出力してください。
+▼出力1：目次（HTMLコード）
+・必ず1つ目の \`\`\`html コードブロックとして独立させて出力してください。
+・<ul>、<li>、<a>タグを用いて目次を作成してください。
+・各リンク先（href属性）は、本文の見出しに設定するid属性と一致させてください。（例: <a href="#chapter1">見出し1</a>）
 
-▼後半：参考記事リスト（テキスト形式）
-・前半のHTMLコードブロックの外（下部）に、通常のテキストとして参考にした記事のリストを出力してください。`;
+▼出力2：記事本文（HTMLコード）
+・必ず2つ目の \`\`\`html コードブロックとして独立させて出力してください。
+・目次は含めず、本文のみを出力してください。
+・大見出しには <h2>、小見出しには <h3> を使用し、目次とリンクするように必ずid属性を付与してください。（例: <h2 id="chapter1">見出し1</h2>）
+・段落には <p> を使用し、重要なキーワードは <strong> タグで太字にしてください。
+
+▼出力3：参考記事リスト（テキスト形式）
+・HTMLコードブロックは使わず、通常のテキストとして一番下に出力してください。`;
 
       // クリップボードにコピー
       navigator.clipboard.writeText(promptText).then(() => {
@@ -375,7 +403,9 @@ document.addEventListener('DOMContentLoaded', () => {
     id: document.getElementById('postId'), title: document.getElementById('postTitle'),
     genre: document.getElementById('postGenre'), tags: document.getElementById('postTags'),
     status: document.getElementsByName('status'), startDate: document.getElementById('startDate'),
-    endDate: document.getElementById('endDate'), content: document.getElementById('postContent'),
+    endDate: document.getElementById('endDate'), 
+    toc: document.getElementById('postToc'), 
+    content: document.getElementById('postContent'),
     coverImageData: document.getElementById('coverImageData')
   };
 
@@ -388,10 +418,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const imagePositionSliderY = document.getElementById('imagePositionSliderY');
   const previewModal = document.getElementById('previewModal');
   const closePreviewModal = document.getElementById('closePreviewModal');
+  
   const textEditorModal = document.getElementById('textEditorModal');
+  const textEditorModalTitle = document.getElementById('textEditorModalTitle');
   const btnExpandEditor = document.getElementById('btnExpandEditor');
+  const btnExpandTocEditor = document.getElementById('btnExpandTocEditor');
   const closeTextEditorModal = document.getElementById('closeTextEditorModal');
   const modalPostContent = document.getElementById('modalPostContent');
+  
+  let currentEditingField = null;
 
   // Firebaseからデータを取得する関数
   async function loadData() {
@@ -448,8 +483,30 @@ document.addEventListener('DOMContentLoaded', () => {
   imagePositionSliderY.addEventListener('input', updatePreviewPosition);
   btnRemoveImage.addEventListener('click', () => showImagePreview(''));
 
-  btnExpandEditor.addEventListener('click', () => { modalPostContent.value = inputs.content.value; textEditorModal.classList.add('is-open'); document.body.style.overflow = 'hidden'; });
-  closeTextEditorModal.addEventListener('click', () => { inputs.content.value = modalPostContent.value; textEditorModal.classList.remove('is-open'); document.body.style.overflow = ''; });
+  btnExpandEditor.addEventListener('click', () => { 
+    currentEditingField = inputs.content;
+    textEditorModalTitle.textContent = '本文の編集';
+    modalPostContent.value = inputs.content.value; 
+    textEditorModal.classList.add('is-open'); 
+    document.body.style.overflow = 'hidden'; 
+  });
+  
+  btnExpandTocEditor.addEventListener('click', () => { 
+    currentEditingField = inputs.toc;
+    textEditorModalTitle.textContent = '目次の編集';
+    modalPostContent.value = inputs.toc.value; 
+    textEditorModal.classList.add('is-open'); 
+    document.body.style.overflow = 'hidden'; 
+  });
+
+  closeTextEditorModal.addEventListener('click', () => { 
+    if (currentEditingField) {
+      currentEditingField.value = modalPostContent.value;
+    }
+    textEditorModal.classList.remove('is-open'); 
+    document.body.style.overflow = ''; 
+    currentEditingField = null;
+  });
 
   async function renderGrid() {
     const posts = await loadData();
@@ -526,6 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const postData = {
       id: isEdit ? inputs.id.value : generateId(), title: inputs.title.value, genre: inputs.genre.value,
       tags: tagArray, status: statusVal, startDate: inputs.startDate.value, endDate: inputs.endDate.value,
+      toc: inputs.toc.value, 
       content: inputs.content.value, coverImage: inputs.coverImageData.value,
       coverPositionX: imagePositionSliderX.value, coverPositionY: imagePositionSliderY.value,
       date: originalDate, displayDate: formatDate(new Date(originalDate))
@@ -547,7 +605,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const post = posts.find(p => p.id === id); if (!post) return;
     inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
     inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
-    inputs.endDate.value = post.endDate || ''; inputs.content.value = post.content || '';
+    inputs.endDate.value = post.endDate || ''; 
+    inputs.toc.value = post.toc || '';
+    inputs.content.value = post.content || '';
     imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;
     imagePositionSliderY.value = post.coverPositionY !== undefined ? post.coverPositionY : 50;
     for (const radio of inputs.status) radio.checked = (radio.value === post.status);
@@ -569,7 +629,9 @@ document.addEventListener('DOMContentLoaded', () => {
       title: inputs.title.value || '（タイトル未入力）', genre: inputs.genre.value || 'その他',
       tags: inputs.tags.value.split(',').map(t => t.trim()).filter(t => t !== ''),
       displayDate: formatDate(new Date()), coverImage: inputs.coverImageData.value,
-      coverPositionX: imagePositionSliderX.value, coverPositionY: imagePositionSliderY.value, content: inputs.content.value
+      coverPositionX: imagePositionSliderX.value, coverPositionY: imagePositionSliderY.value, 
+      toc: inputs.toc.value, 
+      content: inputs.content.value
     };
     openPreview(dummyPost);
   });
@@ -586,6 +648,15 @@ document.addEventListener('DOMContentLoaded', () => {
       const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
       coverEl.style.objectPosition = `${posX}% ${posY}%`;
     } else { coverEl.style.display = 'none'; }
+    
+    const tocEl = document.getElementById('previewToc');
+    if (post.toc) {
+      tocEl.innerHTML = '<div class="p-article-preview__toc-title">目次</div>' + post.toc;
+      tocEl.style.display = 'block';
+    } else {
+      tocEl.style.display = 'none';
+    }
+
     document.getElementById('previewContent').innerHTML = post.content || '<p>本文がありません。</p>';
     previewModal.classList.add('is-open'); document.body.style.overflow = 'hidden';
   }
