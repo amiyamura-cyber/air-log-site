@@ -851,26 +851,26 @@ const TOC_FORMAT_GUIDE = `【目次の見せ方・出力フォーマットの厳
 ・小見出しには必ず「1-1. 1-2. 2-1. 2-2. ...」の連番を先頭に付けてください（例：1-1.新卒採用と中途採用の違い）。番号は「（大見出し番号）-（小見出し番号）」の形式です。番号の前に「・」などの記号は付けないでください。
 ・大見出しごとに、その配下の小見出しをネストした<ul>でまとめてください。
 ・aタグのアンカーは大見出しに #a-01, #a-02...、小見出しに #a-01-01, #a-01-02... のように付与してください。
+・「目次」という見出し（<p class="h2">目次</p> など）は付けないでください。サイト側で自動的に付きます。
 ・目次全体は <!-- parts start --> と <!-- parts end --> で囲んでください。
 【目次の出力フォーマット例】
 <!-- parts start -->
 <div class="p-media-parts">
 <div class="p-media-parts__toc">
 <div class="p-media-parts__toc-inside">
-<p class="h2">目次</p>
 <ol class="p-media-parts__toc-list js-pagelink">
 <li class="p-media-parts__toc-list__item">
   <a href="#a-01">【1】大見出しテキスト</a>
   <ul class="p-media-parts__toc-list__child">
-    <li><a href="#a-01-01">・1-1.小見出しテキスト</a></li>
-    <li><a href="#a-01-02">・1-2.小見出しテキスト</a></li>
+    <li><a href="#a-01-01">1-1.小見出しテキスト</a></li>
+    <li><a href="#a-01-02">1-2.小見出しテキスト</a></li>
   </ul>
 </li>
 <li class="p-media-parts__toc-list__item">
   <a href="#a-02">【2】大見出しテキスト</a>
   <ul class="p-media-parts__toc-list__child">
-    <li><a href="#a-02-01">・2-1.小見出しテキスト</a></li>
-    <li><a href="#a-02-02">・2-2.小見出しテキスト</a></li>
+    <li><a href="#a-02-01">2-1.小見出しテキスト</a></li>
+    <li><a href="#a-02-02">2-2.小見出しテキスト</a></li>
   </ul>
 </li>
 </ol>

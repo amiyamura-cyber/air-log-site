@@ -539,6 +539,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
 
+    // 記事データの中に入っている「目次」見出しを消す。サイト側でも付けているため二重になる
+    container.querySelectorAll('.p-article__toc p, .p-article__toc h1, .p-article__toc h2, .p-article__toc h3, .p-article__toc h4')
+      .forEach(function (el) {
+        if (el.textContent.trim() === '目次' && !el.closest('.p-article__toc-title')) el.remove();
+      });
+
     // 目次の小見出しに付いている先頭の中黒（・）を消す。点はCSSで表示しているため二重になる
     container.querySelectorAll('.p-article__toc a').forEach(function (a) {
       const t = a.textContent.replace(/^\s*[・･·]\s*/, '');
