@@ -1,0 +1,25 @@
+rules_version = '2';
+
+// エアログ（air-log-db）のアクセスルール
+// 閲覧：誰でも可（公開サイトが記事を表示するため）
+// 書き込み：rc-group.co.jp のGoogleアカウントでログインした人のみ
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isStaff() {
+      return request.auth != null
+          && request.auth.token.email_verified == true
+          && request.auth.token.email.matches('.*@rc-group[.]co[.]jp');
+    }
+
+    match /posts/{postId} {
+      allow read: if true;
+      allow create, update, delete: if isStaff();
+    }
+
+    // 上記以外は全面的に禁止
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -200,12 +200,46 @@
   .c-linkdlg__btns .c-btn { margin-top: 0; }
   .c-linkdlg__hint { font-size: 0.75rem; color: #888; margin-top: 6px; }
   /* ▲ ここまで ▲ */
+
+  /* ▼ ログイン（Googleアカウント） ▼ */
+  .c-authgate { position: fixed; inset: 0; background: #f0f2f5; z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .c-authgate.is-hidden { display: none; }
+  .c-authgate__box { background: #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding: 40px 32px; max-width: 420px; width: 100%; text-align: center; }
+  .c-authgate__title { font-size: 1.25rem; font-weight: bold; color: #1a73e8; margin-bottom: 12px; }
+  .c-authgate__lead { font-size: 0.9rem; color: #555; line-height: 1.8; margin-bottom: 24px; }
+  .c-authgate__btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-size: 1rem; font-weight: bold; color: #333; cursor: pointer; transition: background 0.2s; }
+  .c-authgate__btn:hover { background: #f8f9fa; }
+  .c-authgate__note { font-size: 0.78rem; color: #888; margin-top: 20px; line-height: 1.7; }
+  .c-authgate__error { display: none; background: #fdecea; border: 1px solid #f5c6c2; color: #b3261e; font-size: 0.85rem; border-radius: 6px; padding: 12px; margin-bottom: 20px; text-align: left; line-height: 1.7; }
+  .c-authgate__error.is-shown { display: block; }
+  .l-header__user { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; color: #555; }
+  .l-header__logout { background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; }
+  .l-header__logout:hover { background: #e8e8e8; }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
 
+<!-- ▼ ログイン画面（rc-group.co.jp のGoogleアカウントのみ） ▼ -->
+<div class="c-authgate" id="authGate">
+  <div class="c-authgate__box">
+    <div class="c-authgate__title">エアログ 管理・編集画面</div>
+    <p class="c-authgate__lead">記事の保存・編集にはログインが必要です。<br>会社のGoogleアカウントでログインしてください。</p>
+    <div class="c-authgate__error" id="authError"></div>
+    <button type="button" class="c-authgate__btn" id="btnGoogleLogin">
+      <span style="font-size:1.1rem;">🔑</span><span>Googleアカウントでログイン</span>
+    </button>
+    <p class="c-authgate__note">@rc-group.co.jp のアカウントのみ利用できます。<br>他のアカウントではログインできません。</p>
+  </div>
+</div>
+<!-- ▲ ここまで ▲ -->
+
 <header class="l-header">
   <div class="l-header__title">エアログ 管理・編集画面</div>
+  <div class="l-header__user" id="headerUser" style="display:none;">
+    <span id="headerUserMail"></span>
+    <button type="button" class="l-header__logout" id="btnLogout">ログアウト</button>
+  </div>
 </header>
 
 <div class="l-container">
@@ -414,6 +448,7 @@
 <!-- Firebase SDKの読み込み -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 // 本物の鍵
 const firebaseConfig = {
@@ -431,6 +466,63 @@ if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
 }
 const db = firebase.firestore();
+
+// ▼ ログイン制御（rc-group.co.jp のGoogleアカウントのみ書き込み可） ▼
+const ALLOWED_DOMAIN = 'rc-group.co.jp';
+const auth = firebase.auth();
+const authGate  = document.getElementById('authGate');
+const authError = document.getElementById('authError');
+
+function showAuthError(msg) {
+  authError.textContent = msg;
+  authError.classList.add('is-shown');
+}
+
+document.getElementById('btnGoogleLogin').addEventListener('click', () => {
+  authError.classList.remove('is-shown');
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ hd: ALLOWED_DOMAIN, prompt: 'select_account' });
+  auth.signInWithPopup(provider).catch((err) => {
+    if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
+    if (err.code === 'auth/unauthorized-domain') {
+      showAuthError('このURLからのログインが許可されていません。Firebaseの「承認済みドメイン」に amiyamura-cyber.github.io を追加してください。');
+      return;
+    }
+    if (err.code === 'auth/operation-not-allowed') {
+      showAuthError('Googleログインが有効になっていません。Firebaseの「Authentication」でGoogleを有効にしてください。');
+      return;
+    }
+    showAuthError('ログインに失敗しました：' + (err.message || err.code));
+  });
+});
+
+auth.onAuthStateChanged((user) => {
+  if (!user) {
+    authGate.classList.remove('is-hidden');
+    return;
+  }
+  const email = (user.email || '').toLowerCase();
+  if (!email.endsWith('@' + ALLOWED_DOMAIN)) {
+    // 社外アカウントで入られた場合は即サインアウト
+    auth.signOut().then(() => {
+      authGate.classList.remove('is-hidden');
+      showAuthError(email + ' ではログインできません。@' + ALLOWED_DOMAIN + ' のアカウントを選んでください。');
+    });
+    return;
+  }
+  authGate.classList.add('is-hidden');
+  const box = document.getElementById('headerUser');
+  if (box) {
+    document.getElementById('headerUserMail').textContent = user.email;
+    box.style.display = '';
+  }
+});
+
+document.addEventListener('click', (ev) => {
+  if (ev.target && ev.target.id === 'btnLogout') auth.signOut();
+});
+// ▲ ここまで ▲
+
 
 document.addEventListener('DOMContentLoaded', () => {
 
