@@ -134,6 +134,11 @@ ul,ol{list-style:none}
 .p-article__toc-title::before { content: "◾️"; margin-right: 8px; font-size: 0.9em; }
 .p-article__toc ul { padding-left: 24px; list-style-type: disc; }
 .p-article__toc li { margin-bottom: 8px; font-size: 1rem; }
+/* 小見出し（入れ子）の点は、親の「【1】」の幅ぶん右へずらして
+   親の本文（「人事における…」の「人」）と左端を揃える。2.66emは【1】の実測幅 */
+.p-article__toc li ul, .p-article__toc li ol { list-style: none; padding-left: 0; margin: 8px 0 0 2.66em; }
+.p-article__toc li li { position: relative; padding-left: 1.15em; }
+.p-article__toc li li::before { content: "\2022"; position: absolute; left: 0; color: #1a73e8; }
 .p-article__toc a { color: #1a73e8; text-decoration: none; transition: opacity 0.2s; }
 .p-article__toc a:hover { text-decoration: underline; opacity: 0.8; }
 
@@ -533,6 +538,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="p-article__content">${post.content || '<p>本文がありません。</p>'}</div>
       </div>
     `;
+
+    // 目次の小見出しに付いている先頭の中黒（・）を消す。点はCSSで表示しているため二重になる
+    container.querySelectorAll('.p-article__toc a').forEach(function (a) {
+      const t = a.textContent.replace(/^\s*[・･·]\s*/, '');
+      if (t !== a.textContent) a.textContent = t;
+    });
 
     // 表は横に長くなりやすいので、スマホで横スクロールできるよう包む
     container.querySelectorAll('.p-article__content table').forEach(function (t) {
