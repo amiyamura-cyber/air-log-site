@@ -596,12 +596,34 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          const MAX_WIDTH = 800; let width = img.width, height = img.height;
+          // Retina画面でも記事カバー（表示790px）がぼやけないよう幅1600pxまで許容する。
+          // 画像はFirestoreの記事データに直接埋め込むため、1記事1MBの上限を超えないよう
+          // 大きすぎる場合は品質を段階的に落とし、それでも収まらなければ幅を縮める。
+          const MAX_WIDTH = 1600;
+          const LIMIT_BYTES = 700 * 1024;   // base64の文字数。本文ぶんの余裕を残した安全ライン
+          let width = img.width, height = img.height;
           if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; }
-          const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
-          const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-          inputs.coverImageData.value = compressedBase64; showImagePreview(compressedBase64);
+
+          function encode(w, h, q) {
+            const canvas = document.createElement('canvas');
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            return canvas.toDataURL('image/jpeg', q);
+          }
+
+          let out = encode(width, height, 0.75);
+          const steps = [[width, height, 0.65], [width, height, 0.55],
+                         [Math.round(width * 0.75), Math.round(height * 0.75), 0.7],
+                         [Math.round(width * 0.5), Math.round(height * 0.5), 0.7]];
+          for (let i = 0; i < steps.length && out.length > LIMIT_BYTES; i++) {
+            out = encode(steps[i][0], steps[i][1], steps[i][2]);
+          }
+          if (out.length > LIMIT_BYTES) {
+            alert('画像の容量が大きすぎて保存できません（' + Math.round(out.length / 1024) + 'KB）。\n'
+                + 'もう少し小さい画像か、写真の場合はJPEGで書き出したものをお使いください。');
+            return;
+          }
+          inputs.coverImageData.value = out; showImagePreview(out);
         };
         img.src = event.target.result;
       };
