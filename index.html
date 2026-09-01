@@ -136,6 +136,8 @@ ul,ol{list-style:none}
 /* 「【」は文字枠より11px内側から描かれ、◾️は5px内側。枠を揃えると6pxずれて見えるため、
    括弧で始まる大見出しだけ0.375文字ぶん左へ寄せて、目に見える左端を◾️と合わせる */
 .p-article__toc a.is-bracket { margin-left: -0.375em; }
+/* 親を0.375em左へ寄せたので、その配下の小見出しも同じだけ左へ（2.66em - 0.375em） */
+.p-article__toc a.is-bracket + ul, .p-article__toc a.is-bracket + ol { margin-left: 2.285em; }
 .p-article__toc li { margin-bottom: 8px; font-size: 1rem; }
 /* 小見出し（入れ子）の点は、親の「【1】」の幅ぶん右へずらして
    親の本文（「人事における…」の「人」）と左端を揃える。2.66emは【1】の実測幅 */
