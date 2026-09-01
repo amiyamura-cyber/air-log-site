@@ -139,10 +139,33 @@ ul,ol{list-style:none}
 
 .p-article__content{line-height:1.9;font-size:1.05rem;color:#333;}
 .p-article__content p{margin-bottom:24px;}
-.p-article__content a{color:#1a73e8;text-decoration:underline}
+.p-article__content a{color:#1a73e8;text-decoration:underline;text-underline-offset:2px;}
+.p-article__content a:hover{color:#0b4fa8;}
 .p-article__content img{margin:32px 0;border-radius:8px;box-shadow:0 2px 12px rgba(0,0,0,.08)}
-.p-article__content h2{margin: 48px 0 24px; font-size: 1.45rem; background-color: #eff5f4; border-left: 6px solid #0f7b70; padding: 18px 24px; font-weight: 700; color: #222;}
-.p-article__content h3{margin: 40px 0 20px; font-size: 1.25rem; border-bottom: 2px solid #0f7b70; padding-bottom: 10px; font-weight: 700; color: #222;}
+
+/* 見出し */
+.p-article__content h2{margin: 56px 0 24px; font-size: 1.45rem; background-color: #faf3f6; border-left: 6px solid #d81b60; padding: 18px 24px; font-weight: 700; color: #222;}
+.p-article__content h2:first-child{margin-top:0;}
+.p-article__content h3{margin: 40px 0 18px; font-size: 1.25rem; border-bottom: 2px solid #d81b60; padding-bottom: 10px; font-weight: 700; color: #222;}
+.p-article__content h4{margin: 32px 0 14px; font-size: 1.08rem; font-weight: 700; color: #222; padding-left: 12px; border-left: 3px solid #f4a3bf;}
+/* 本文内にh1が混ざっていてもh2と同じ見た目に揃える */
+.p-article__content h1{margin: 56px 0 24px; font-size: 1.45rem; background-color: #faf3f6; border-left: 6px solid #d81b60; padding: 18px 24px; font-weight: 700; color: #222;}
+
+/* 箇条書き（リセットでlist-styleを消しているので記事内だけ戻す） */
+.p-article__content ul, .p-article__content ol{margin: 0 0 24px; padding-left: 1.6em;}
+.p-article__content ul{list-style: disc;}
+.p-article__content ol{list-style: decimal;}
+.p-article__content li{margin-bottom: 10px;}
+.p-article__content li::marker{color:#d81b60;}
+.p-article__content li > ul, .p-article__content li > ol{margin: 10px 0 0;}
+.p-article__content li > ul{list-style: circle;}
+
+/* 表 */
+.p-article__content .p-article__tablewrap{overflow-x:auto;margin:0 0 28px;-webkit-overflow-scrolling:touch;}
+.p-article__content table{width:100%;border-collapse:collapse;font-size:.95rem;min-width:480px;}
+.p-article__content th, .p-article__content td{border:1px solid #e5e0e2;padding:12px 14px;text-align:left;vertical-align:top;}
+.p-article__content th{background:#faf3f6;font-weight:700;color:#222;white-space:nowrap;}
+.p-article__content tbody tr:nth-child(even) td{background:#fbfafb;}
 
 /* ===== CTA BANNER ===== */
 .p-cta-banner{background:linear-gradient(135deg,#f06292,#d81b60);border-radius:12px;padding:48px;text-align:center;color:#fff;margin-bottom:60px;}
@@ -510,6 +533,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="p-article__content">${post.content || '<p>本文がありません。</p>'}</div>
       </div>
     `;
+
+    // 表は横に長くなりやすいので、スマホで横スクロールできるよう包む
+    container.querySelectorAll('.p-article__content table').forEach(function (t) {
+      if (t.parentElement && t.parentElement.classList.contains('p-article__tablewrap')) return;
+      const w = document.createElement('div');
+      w.className = 'p-article__tablewrap';
+      t.parentNode.insertBefore(w, t);
+      w.appendChild(t);
+    });
   }
 });
 </script>
