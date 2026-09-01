@@ -177,6 +177,29 @@
   }
   .kizi-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
   /* ▲ 記事作成ツールここまで ▲ */
+
+  /* ▼ 本文ツールバー（リンク／太字／文字色） ▼ */
+  .c-toolbar { flex-wrap: wrap; align-items: center; }
+  .c-toolbar-btn__b { font-weight: 900; }
+  .c-toolbar-btn__chip { display: inline-block; width: 11px; height: 11px; border-radius: 2px; border: 1px solid rgba(0,0,0,.2); vertical-align: -1px; margin-right: 2px; }
+  .c-colorpop { position: absolute; z-index: 1200; background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 12px; box-shadow: 0 6px 20px rgba(0,0,0,.18); display: none; }
+  .c-colorpop.is-open { display: block; }
+  .c-colorpop__grid { display: grid; grid-template-columns: repeat(5, 30px); gap: 8px; }
+  .c-colorpop__sw { width: 30px; height: 30px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; padding: 0; }
+  .c-colorpop__sw:hover { outline: 2px solid #1a73e8; outline-offset: 1px; }
+  .c-colorpop__row { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eee; font-size: 0.8rem; color: #555; }
+  .c-colorpop__row input[type="color"] { width: 40px; height: 30px; padding: 0; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; }
+  .c-colorpop__clear { margin-left: auto; background: #fff; border: 1px solid #ccc; border-radius: 4px; padding: 4px 10px; font-size: 0.75rem; cursor: pointer; }
+  .c-colorpop__clear:hover { background: #f0f0f0; }
+  #linkDialog { z-index: 1100; }
+  #linkDialog .c-modal__inner { max-width: 460px; padding: 24px; }
+  .c-linkdlg__title { font-size: 1.1rem; color: #1a73e8; margin-bottom: 16px; }
+  .c-linkdlg__check { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: #555; margin: 4px 0 18px; }
+  .c-linkdlg__check input { width: 16px; height: 16px; }
+  .c-linkdlg__btns { display: flex; gap: 10px; }
+  .c-linkdlg__btns .c-btn { margin-top: 0; }
+  .c-linkdlg__hint { font-size: 0.75rem; color: #888; margin-top: 6px; }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -329,8 +352,9 @@
           <button type="button" id="btnExpandEditor" class="c-btn c-btn--primary c-btn--small">拡大して編集</button>
         </label>
         <div class="c-toolbar">
-          <button type="button" class="c-toolbar-btn btn-link" data-target="postContent">リンク挿入/編集</button>
-          <button type="button" class="c-toolbar-btn btn-bold" data-target="postContent">太字</button>
+          <button type="button" class="c-toolbar-btn btn-link" data-target="postContent">🔗 リンク挿入/編集</button>
+          <button type="button" class="c-toolbar-btn btn-bold" data-target="postContent"><span class="c-toolbar-btn__b">B</span> 太字</button>
+          <button type="button" class="c-toolbar-btn btn-color" data-target="postContent"><span class="c-toolbar-btn__chip" style="background:#e53935;"></span>文字色</button>
         </div>
         <textarea id="postContent" class="c-textarea" placeholder="<p>ここに記事のHTMLを記述します。</p>"></textarea>
       </div>
@@ -359,8 +383,9 @@
       <button class="c-btn c-btn--primary" id="closeTextEditorModal" style="width: auto; padding: 10px 24px;">完了して閉じる</button>
     </div>
     <div class="c-toolbar" style="margin-bottom: 12px;">
-      <button type="button" class="c-toolbar-btn btn-link" data-target="modalPostContent">リンク挿入/編集</button>
-      <button type="button" class="c-toolbar-btn btn-bold" data-target="modalPostContent">太字</button>
+      <button type="button" class="c-toolbar-btn btn-link" data-target="modalPostContent">🔗 リンク挿入/編集</button>
+      <button type="button" class="c-toolbar-btn btn-bold" data-target="modalPostContent"><span class="c-toolbar-btn__b">B</span> 太字</button>
+      <button type="button" class="c-toolbar-btn btn-color" data-target="modalPostContent"><span class="c-toolbar-btn__chip" style="background:#e53935;"></span>文字色</button>
     </div>
     <textarea id="modalPostContent" class="c-textarea" style="flex: 1; height: auto; resize: none; font-size: 1rem; padding: 16px; border-color: #ccc;"></textarea>
   </div>
@@ -910,6 +935,243 @@ async function generateAndOpen() {
 async function generateAndOpenFromToc() {
   await runCopyAndOpen(buildPromptFromToc());
 }
+</script>
+<!-- ▲ ここまで ▲ -->
+
+<!-- ▼ 本文ツールバー用（リンク挿入ダイアログ・文字色パレット） ▼ -->
+<div class="c-modal" id="linkDialog">
+  <div class="c-modal__inner">
+    <h2 class="c-linkdlg__title" id="linkDialogTitle">リンクを挿入</h2>
+    <div class="c-form-group">
+      <label class="c-label"><span>リンク先URL</span></label>
+      <input type="text" id="linkUrl" class="c-input" placeholder="例：https://example.com　または　#chapter1">
+      <p class="c-linkdlg__hint">https:// は省略しても自動で補います。記事内の見出しへ飛ばすときは #chapter1 のように書きます。</p>
+    </div>
+    <div class="c-form-group">
+      <label class="c-label"><span>表示するテキスト</span></label>
+      <input type="text" id="linkText" class="c-input" placeholder="リンクとして表示される文字">
+    </div>
+    <label class="c-linkdlg__check">
+      <input type="checkbox" id="linkBlank" checked>
+      <span>別タブで開く（外部サイトはオンを推奨）</span>
+    </label>
+    <div class="c-linkdlg__btns">
+      <button type="button" class="c-btn c-btn--primary" id="linkSave">この内容で挿入</button>
+      <button type="button" class="c-btn c-btn--secondary" id="linkCancel">キャンセル</button>
+    </div>
+    <div class="c-linkdlg__btns" style="margin-top:10px;">
+      <button type="button" class="c-btn c-btn--secondary" id="linkRemove" style="display:none;">リンクを解除（文字は残す）</button>
+    </div>
+  </div>
+</div>
+
+<div class="c-colorpop" id="colorPop">
+  <div class="c-colorpop__grid" id="colorSwatches"></div>
+  <div class="c-colorpop__row">
+    <span>その他</span>
+    <input type="color" id="colorCustom" value="#e53935">
+    <button type="button" class="c-colorpop__clear" id="colorClear">色を消す</button>
+  </div>
+</div>
+
+<script>
+/* 本文（HTMLソースコード）のツールバー：リンク挿入/編集・太字・文字色 */
+(function () {
+  var PRESETS = ['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5',
+                 '#5e35b1','#d81b60','#00897b','#6d4c41','#333333'];
+
+  var dlg      = document.getElementById('linkDialog');
+  var dlgTitle = document.getElementById('linkDialogTitle');
+  var fUrl     = document.getElementById('linkUrl');
+  var fText    = document.getElementById('linkText');
+  var fBlank   = document.getElementById('linkBlank');
+  var btnRemove= document.getElementById('linkRemove');
+  var pop      = document.getElementById('colorPop');
+
+  var ta = null;                 // 操作対象のテキストエリア
+  var selStart = 0, selEnd = 0;  // ボタンを押す直前の選択範囲
+  var linkCtx = null;            // 既存リンクを編集中ならその情報
+
+  // --- ボタンを押した瞬間の選択範囲を覚えておく（フォーカスが移る前に取る） ---
+  function capture(btn) {
+    var t = document.getElementById(btn.getAttribute('data-target'));
+    if (!t) return false;
+    ta = t;
+    selStart = t.selectionStart;
+    selEnd   = t.selectionEnd;
+    return true;
+  }
+
+  // --- 範囲を置き換えてカーソルを戻す ---
+  function replaceRange(start, end, text, caretOffset) {
+    var v = ta.value;
+    ta.value = v.slice(0, start) + text + v.slice(end);
+    var pos = (caretOffset == null) ? start + text.length : start + caretOffset;
+    ta.focus();
+    ta.setSelectionRange(pos, pos);
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  function escAttr(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  // --- カーソル位置が既存の <a> の内側かどうか調べる ---
+  function findLinkAt(v, pos) {
+    var open = v.lastIndexOf('<a ', pos);
+    if (open === -1) return null;
+    var gt = v.indexOf('>', open);
+    if (gt === -1) return null;
+    var close = v.indexOf('</a>', gt);
+    if (close === -1) return null;
+    var outerEnd = close + 4;
+    if (pos < open || pos > outerEnd) return null;
+    if (v.slice(gt, pos).indexOf('</a>') !== -1) return null;
+    var tag = v.slice(open, gt + 1);
+    var m = tag.match(/href\s*=\s*["']([^"']*)["']/i);
+    return {
+      start: open,
+      end: outerEnd,
+      href: m ? m[1] : '',
+      text: v.slice(gt + 1, close),
+      blank: /target\s*=\s*["']_blank["']/i.test(tag)
+    };
+  }
+
+  // ===== リンク =====
+  function openLinkDialog() {
+    var v = ta.value;
+    linkCtx = findLinkAt(v, selStart);
+    if (linkCtx) {
+      dlgTitle.textContent = 'リンクを編集';
+      fUrl.value   = linkCtx.href;
+      fText.value  = linkCtx.text;
+      fBlank.checked = linkCtx.blank;
+      btnRemove.style.display = '';
+    } else {
+      dlgTitle.textContent = 'リンクを挿入';
+      fUrl.value   = '';
+      fText.value  = v.slice(selStart, selEnd);
+      fBlank.checked = true;
+      btnRemove.style.display = 'none';
+    }
+    dlg.classList.add('is-open');
+    setTimeout(function () { fUrl.focus(); }, 50);
+  }
+
+  function closeLinkDialog() { dlg.classList.remove('is-open'); }
+
+  function saveLink() {
+    var url = fUrl.value.trim();
+    if (!url) { alert('リンク先URLを入力してください。'); fUrl.focus(); return; }
+    if (!/^(https?:\/\/|\/|#|mailto:|tel:)/i.test(url)) url = 'https://' + url;
+    var text  = fText.value.trim() || url;
+    var blank = fBlank.checked ? ' target="_blank" rel="noopener"' : '';
+    var html  = '<a href="' + escAttr(url) + '"' + blank + '>' + text + '</a>';
+    if (linkCtx) replaceRange(linkCtx.start, linkCtx.end, html);
+    else         replaceRange(selStart, selEnd, html);
+    closeLinkDialog();
+  }
+
+  function removeLink() {
+    if (!linkCtx) return;
+    replaceRange(linkCtx.start, linkCtx.end, linkCtx.text);
+    closeLinkDialog();
+  }
+
+  // ===== 太字 =====
+  function applyBold() {
+    var v = ta.value, s = selStart, e = selEnd, inner = v.slice(s, e);
+    // 選択範囲がすでに <strong> で囲まれている → 外す
+    if (/^<strong>[\s\S]*<\/strong>$/.test(inner)) {
+      replaceRange(s, e, inner.replace(/^<strong>/, '').replace(/<\/strong>$/, ''));
+      return;
+    }
+    // 選択範囲の外側が <strong> → 外す
+    if (v.slice(Math.max(0, s - 8), s) === '<strong>' && v.slice(e, e + 9) === '</strong>') {
+      replaceRange(s - 8, e + 9, inner);
+      return;
+    }
+    if (s === e) replaceRange(s, e, '<strong></strong>', 8);
+    else         replaceRange(s, e, '<strong>' + inner + '</strong>');
+  }
+
+  // ===== 文字色 =====
+  function applyColor(hex) {
+    var s = selStart, e = selEnd, inner = ta.value.slice(s, e);
+    var open = '<span style="color:' + hex + ';">';
+    if (s === e) replaceRange(s, e, open + '</span>', open.length);
+    else         replaceRange(s, e, open + inner + '</span>');
+  }
+
+  // 選択範囲を包んでいる color 用 <span> を外す
+  function clearColor() {
+    var v = ta.value, s = selStart, e = selEnd, inner = v.slice(s, e);
+    var m = inner.match(/^<span style="color:[^"]*;?">([\s\S]*)<\/span>$/);
+    if (m) { replaceRange(s, e, m[1]); return; }
+    var before = v.slice(0, s), after = v.slice(e);
+    var mb = before.match(/<span style="color:[^"]*;?">$/);
+    if (mb && after.indexOf('</span>') === 0) {
+      replaceRange(s - mb[0].length, e + 7, inner);
+      return;
+    }
+    alert('色を消したい文字を、<span ...> から </span> まで含めて選択してください。');
+  }
+
+  function openColorPop(btn) {
+    var r = btn.getBoundingClientRect();
+    pop.style.top  = (r.bottom + window.scrollY + 6) + 'px';
+    pop.style.left = (r.left + window.scrollX) + 'px';
+    pop.classList.add('is-open');
+  }
+  function closeColorPop() { pop.classList.remove('is-open'); }
+
+  // --- パレットを組み立てる ---
+  var grid = document.getElementById('colorSwatches');
+  PRESETS.forEach(function (hex) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'c-colorpop__sw';
+    b.style.background = hex;
+    b.title = hex;
+    b.addEventListener('click', function () { applyColor(hex); closeColorPop(); });
+    grid.appendChild(b);
+  });
+  document.getElementById('colorCustom').addEventListener('change', function () {
+    applyColor(this.value); closeColorPop();
+  });
+  document.getElementById('colorClear').addEventListener('click', function () {
+    clearColor(); closeColorPop();
+  });
+
+  // --- ツールバーのボタンを配線（mousedown で選択範囲を確保） ---
+  document.addEventListener('mousedown', function (ev) {
+    var btn = ev.target.closest ? ev.target.closest('.c-toolbar-btn') : null;
+    if (btn) capture(btn);
+  });
+  document.addEventListener('click', function (ev) {
+    var btn = ev.target.closest ? ev.target.closest('.c-toolbar-btn') : null;
+    if (!btn) {
+      if (pop.classList.contains('is-open') && !pop.contains(ev.target)) closeColorPop();
+      return;
+    }
+    if (!ta && !capture(btn)) return;
+    if (btn.classList.contains('btn-link'))  { closeColorPop(); openLinkDialog(); }
+    else if (btn.classList.contains('btn-bold'))  { closeColorPop(); applyBold(); }
+    else if (btn.classList.contains('btn-color')) { openColorPop(btn); }
+  });
+
+  document.getElementById('linkSave').addEventListener('click', saveLink);
+  document.getElementById('linkCancel').addEventListener('click', closeLinkDialog);
+  btnRemove.addEventListener('click', removeLink);
+  dlg.addEventListener('click', function (ev) { if (ev.target === dlg) closeLinkDialog(); });
+  fUrl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); saveLink(); } });
+  fText.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); saveLink(); } });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape') { closeLinkDialog(); closeColorPop(); }
+  });
+})();
 </script>
 <!-- ▲ ここまで ▲ -->
 </body>
