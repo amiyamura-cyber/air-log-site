@@ -289,6 +289,15 @@
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   /* ▲ ここまで ▲ */
+
+  /* ▼ 公開期間の状態表示 ▼ */
+  .p-card__period {
+    display: inline-block; font-size: 0.7rem; font-weight: bold;
+    padding: 3px 8px; border-radius: 4px; margin-left: 6px; white-space: nowrap;
+  }
+  .p-card__period--before { background: #fff8e1; color: #8a6100; border: 1px solid #f0b429; }
+  .p-card__period--after  { background: #f0f0f0; color: #666; border: 1px solid #ccc; }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -746,6 +755,26 @@ document.addEventListener('DOMContentLoaded', () => {
     currentEditingField = null;
   });
 
+  // 公開期間の状態。開始日が空なら「すぐ公開」、終了日が空なら「終了しない」
+  function periodState(post) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const s = post.startDate ? new Date(post.startDate + 'T00:00:00') : null;
+    const e = post.endDate   ? new Date(post.endDate   + 'T00:00:00') : null;
+    if (s && !isNaN(s) && today < s) return 'before';
+    if (e && !isNaN(e) && today > e) return 'after';
+    return 'now';
+  }
+  function shortJpDate(str) {
+    const d = new Date(str + 'T00:00:00');
+    return isNaN(d) ? str : ((d.getMonth() + 1) + '/' + d.getDate());
+  }
+  function periodBadge(post) {
+    const st = periodState(post);
+    if (st === 'before') return '<span class="p-card__period p-card__period--before">公開前 ' + shortJpDate(post.startDate) + '〜</span>';
+    if (st === 'after')  return '<span class="p-card__period p-card__period--after">掲載終了 ' + shortJpDate(post.endDate) + '</span>';
+    return '';
+  }
+
   async function renderGrid() {
     const posts = await loadData();
     posts.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -786,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3 class="p-card__title">${post.title}</h3>
             ${tagsHtml}
             <div class="p-card__footer">
-              <span class="p-card__date">更新: ${post.displayDate}</span>
+              <span class="p-card__date">更新: ${post.displayDate}</span>${periodBadge(post)}
               <div class="p-card__actions">
                 <button type="button" class="p-card__btn p-card__btn--edit" data-id="${post.id}">編集</button>
                 <button type="button" class="p-card__btn p-card__btn--delete" data-id="${post.id}">削除</button>

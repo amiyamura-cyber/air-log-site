@@ -177,6 +177,18 @@ ul,ol{list-style:none}
 .p-article__content th{background:#faf3f6;font-weight:700;color:#222;white-space:nowrap;}
 .p-article__content tbody tr:nth-child(even) td{background:#fbfafb;}
 
+
+/* ===== 公開期間のお知らせ ===== */
+.p-article__notice{
+  display:flex; align-items:flex-start; gap:12px;
+  border-radius:8px; padding:16px 20px; margin-bottom:28px;
+  font-size:.92rem; line-height:1.8;
+}
+.p-article__notice--before{ background:#fff8e1; border:1px solid #f0b429; color:#5c4600; }
+.p-article__notice--after { background:#f4f5f6; border:1px solid #c9ccd0; color:#4a4f55; }
+.p-article__notice__icon{ font-size:1.15rem; line-height:1.5; flex:none; }
+.p-article__notice__body strong{ display:block; font-size:1rem; margin-bottom:2px; }
+
 /* ===== CTA BANNER ===== */
 .p-cta-banner{background:linear-gradient(135deg,#f06292,#d81b60);border-radius:12px;padding:48px;text-align:center;color:#fff;margin-bottom:60px;}
 .p-cta-banner h2{font-size:1.6rem;margin-bottom:16px;font-weight:bold}
@@ -348,6 +360,22 @@ const db = firebase.firestore();
 
 document.addEventListener('DOMContentLoaded', async () => {
   let globalPosts = [];
+
+  // 公開期間の判定。開始日が空なら「すぐ公開」、終了日が空なら「終了しない」。終了日は当日まで表示する
+  function periodState(post) {
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const s = post.startDate ? new Date(post.startDate + 'T00:00:00') : null;
+    const e = post.endDate   ? new Date(post.endDate   + 'T00:00:00') : null;
+    if (s && !isNaN(s) && today < s) return 'before';
+    if (e && !isNaN(e) && today > e) return 'after';
+    return 'now';
+  }
+  function isPublishedNow(post) { return periodState(post) === 'now'; }
+  function formatJpDate(str) {
+    const d = new Date(str + 'T00:00:00');
+    if (isNaN(d)) return str;
+    return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+  }
   try {
       const snapshot = await db.collection('posts').get();
       globalPosts = snapshot.docs.map(doc => {
@@ -431,7 +459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderHeroSlider() {
-    let publicPosts = globalPosts.filter(p => p.status === 'public' || p.status === '公開' || p.status === undefined);
+    let publicPosts = globalPosts.filter(p => (p.status === 'public' || p.status === '公開' || p.status === undefined) && isPublishedNow(p));
     
     const track = document.getElementById('heroTrack');
     track.innerHTML = '';
@@ -484,11 +512,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderGridList(){
-    const publicPosts = globalPosts.filter(p => p.status === 'public' || p.status === '公開' || p.status === undefined).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
+    const publicPosts = globalPosts.filter(p => (p.status === 'public' || p.status === '公開' || p.status === undefined) && isPublishedNow(p)).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
     
     function createCard(post){
       const imgSrc = post.coverImage || `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
-      const catClass = getGenreClass(post.genre);
+      // 公開期間の外でもURLを知っていれば読めるが、状態が分かるようお知らせを出す
+    const state = periodState(post);
+    let noticeHtml = '';
+    if (state === 'before') {
+      noticeHtml = '<div class="p-article__notice p-article__notice--before">'
+        + '<span class="p-article__notice__icon">🕒</span>'
+        + '<span class="p-article__notice__body"><strong>この記事はまだ公開されていません</strong>'
+        + '公開予定日：' + formatJpDate(post.startDate) + '（この日まで記事一覧には表示されません）</span></div>';
+    } else if (state === 'after') {
+      noticeHtml = '<div class="p-article__notice p-article__notice--after">'
+        + '<span class="p-article__notice__icon">📁</span>'
+        + '<span class="p-article__notice__body"><strong>この記事の公開期間は終了しています</strong>'
+        + '掲載終了日：' + formatJpDate(post.endDate) + '（記事一覧には表示されません）</span></div>';
+    }
+
+    const catClass = getGenreClass(post.genre);
       const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
       const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
       return `
@@ -539,6 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <img class="p-article__cover" src="${imgSrc}" style="object-position: ${posX}% ${posY}%;">
       <div class="p-article__inner">
         <div class="p-article__meta"><span class="p-article__cat ${catClass ? 'p-article__cat--' + catClass : ''}">${post.genre || 'その他'}</span><span class="p-article__date">更新日：${post.displayDate || ''}</span></div>
+        ${noticeHtml}
         <h1 class="p-article__title">${post.title}</h1>
         ${tocHtml}
         <div class="p-article__content">${post.content || '<p>本文がありません。</p>'}</div>
