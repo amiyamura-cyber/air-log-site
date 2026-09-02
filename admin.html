@@ -371,7 +371,7 @@
       <!-- ② 目次から修正する -->
       <div class="ai-box alt">
         <div class="title">🟩 目次から修正する</div>
-        <div class="desc">既存の目次のHTMLコードを貼り付けてボタンを押すと、その目次に沿って記事を作成する指示書がコピーされます。</div>
+        <div class="desc">既存の目次のHTMLコードを貼り付けてボタンを押すと、その目次に沿って記事を作成する指示書がコピーされます。<br><span id="carryOverNote" style="color:#15803d;font-weight:700;"></span></div>
 
         <label for="toc">目次のHTMLコード</label>
         <textarea id="toc" placeholder="ここに目次のHTMLコード（<!-- parts start --> 〜 <!-- parts end -->）を貼り付けてください"></textarea>
@@ -1195,6 +1195,14 @@ function buildPromptFromToc() {
     ? `\n・追加の要望（備考）：${note} ※この要素・指示を必ず記事内に組み込んでください。`
     : '';
 
+  // 上の🔷ブロックに入力済みの条件があれば、そのまま引き継ぐ
+  const carry = [
+    ['対策キーワード', (document.getElementById('keyword').value || '').trim()],
+    ['ターゲット読者', (document.getElementById('target').value  || '').trim()],
+    ['記事の目的',     (document.getElementById('purpose').value || '').trim()]
+  ].filter(function (x) { return x[1]; });
+  const carryLines = carry.map(function (x) { return `\n・${x[0]}：${x[1]}`; }).join('');
+
   // 修正したい箇所が書かれているかどうかで、冒頭の指示を切り替える
   const lead = fix
     ? `あなたはプロのSEOライター兼Webマーケターです。
@@ -1217,7 +1225,7 @@ ${fix}
 【既存の目次${fix ? '（この構成をもとに、下の修正を反映すること）' : '（この構成に沿って執筆すること）'}】
 ${toc}${fixBlock}
 
-【基本条件】
+【基本条件】${carryLines}
 ・本文の文字数の目安：${length}（※目次やHTMLタグは含めず、純粋な本文の文章量だけでこの文字数を目指してください）
 ・トーン＆マナー：${tone}${noteLine}
 
@@ -1506,6 +1514,26 @@ async function generateAndOpenFromToc() {
     b.addEventListener('click', function () { applyColor(hex); closeColorPop(); });
     grid.appendChild(b);
   });
+  // 🔷に入力済みの条件を、緑のブロックの説明に表示する
+  (function () {
+    const note = document.getElementById('carryOverNote');
+    const ids = [['keyword', 'キーワード'], ['target', 'ターゲット'], ['purpose', '目的']];
+    function refresh() {
+      const filled = ids.filter(function (x) {
+        const el = document.getElementById(x[0]);
+        return el && el.value.trim();
+      }).map(function (x) { return x[1]; });
+      note.textContent = filled.length
+        ? '↑の🔷に入力した「' + filled.join('・') + '」も一緒に反映されます。'
+        : '';
+    }
+    ids.forEach(function (x) {
+      const el = document.getElementById(x[0]);
+      if (el) el.addEventListener('input', refresh);
+    });
+    refresh();
+  })();
+
   document.getElementById('colorCustom').addEventListener('change', function () {
     applyColor(this.value); closeColorPop();
   });
