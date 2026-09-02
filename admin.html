@@ -278,6 +278,17 @@
   .c-deldlg__btns { display: flex; gap: 10px; }
   .c-deldlg__btns .c-btn { margin-top: 0; }
   /* ▲ ここまで ▲ */
+
+  /* ▼ 拡大して編集しているときの「編集中」表示 ▼ */
+  .c-modal__inner.is-editing { box-shadow: 0 0 0 3px #f0b429, 0 10px 30px rgba(0,0,0,0.2); }
+  .c-modalhead { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 1; }
+  .c-modalhead__title { font-size: 1.3rem; color: #1a73e8; margin: 0; flex: none; }
+  .c-modalhead__sep { color: #ccc; flex: none; }
+  .c-modalhead__post {
+    font-size: 0.85rem; color: #6b5400; font-weight: bold; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -480,9 +491,13 @@
 <!-- TEXT EDITOR MODAL -->
 <div class="c-modal" id="textEditorModal">
   <div class="c-modal__inner" style="max-width: 900px; height: 85vh; display: flex; flex-direction: column; padding: 24px; overflow: hidden;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h2 id="textEditorModalTitle" style="font-size: 1.3rem; color: #1a73e8;">本文の編集</h2>
-      <button class="c-btn c-btn--primary" id="closeTextEditorModal" style="width: auto; padding: 10px 24px;">完了して閉じる</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 16px;">
+      <div class="c-modalhead">
+        <h2 id="textEditorModalTitle" class="c-modalhead__title">本文の編集</h2>
+        <span class="c-editing__label" id="modalEditingBadge" style="display:none;">編集中</span>
+        <span class="c-modalhead__post" id="modalEditingTitle"></span>
+      </div>
+      <button class="c-btn c-btn--primary" id="closeTextEditorModal" style="width: auto; padding: 10px 24px; flex: none;">完了して閉じる</button>
     </div>
     <div class="c-toolbar" style="margin-bottom: 12px;">
       <button type="button" class="c-toolbar-btn btn-link" data-target="modalPostContent">🔗 リンク挿入/編集</button>
@@ -832,6 +847,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const editorHeading= document.getElementById('editorHeading');
   const btnSubmit    = document.getElementById('btnSubmit');
   const editorPanel  = document.querySelector('.l-editor');
+  const modalBadge      = document.getElementById('modalEditingBadge');
+  const modalPostTitle  = document.getElementById('modalEditingTitle');
+  const textEditorInner = document.querySelector('#textEditorModal .c-modal__inner');
+  const btnPreviewInput = document.getElementById('btnPreviewInput');
 
   function setEditing(post) {
     editingId = post ? post.id : null;
@@ -842,6 +861,10 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSubmit.textContent = 'この記事を更新する';
       editorPanel.classList.add('is-editing');
       document.title = '【編集中】' + (post.title || '') + ' - エアログ管理画面';
+      modalBadge.style.display = '';
+      modalPostTitle.textContent = post.title || '（タイトル未入力）';
+      textEditorInner.classList.add('is-editing');
+      btnPreviewInput.textContent = 'キャンセル（保存せず戻る）';
     } else {
       editingBar.style.display = 'none';
       editingTitle.textContent = '';
@@ -849,6 +872,10 @@ document.addEventListener('DOMContentLoaded', () => {
       btnSubmit.textContent = '保存する';
       editorPanel.classList.remove('is-editing');
       document.title = 'エアログ管理画面';
+      modalBadge.style.display = 'none';
+      modalPostTitle.textContent = '';
+      textEditorInner.classList.remove('is-editing');
+      btnPreviewInput.textContent = 'プレビュー';
     }
     markEditingCard();
   }
@@ -952,6 +979,12 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnClear').addEventListener('click', clearForm);
 
   document.getElementById('btnPreviewInput').addEventListener('click', () => {
+    // 編集中はこのボタンが「キャンセル」になる（保存せず新規作成に戻る）
+    if (editingId) {
+      if (!confirm('保存せずに編集をやめます。入力中の内容は失われます。よろしいですか？')) return;
+      clearForm();
+      return;
+    }
     const dummyPost = {
       title: inputs.title.value || '（タイトル未入力）', genre: inputs.genre.value || 'その他',
       tags: inputs.tags.value.split(',').map(t => t.trim()).filter(t => t !== ''),
