@@ -221,7 +221,7 @@
   .c-authgate__btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 14px; border: 1px solid #ddd; border-radius: 6px; background: #fff; font-size: 1rem; font-weight: bold; color: #333; cursor: pointer; transition: background 0.2s; }
   .c-authgate__btn:hover { background: #f8f9fa; }
   .c-authgate__note { font-size: 0.78rem; color: #888; margin-top: 20px; line-height: 1.7; }
-  .c-authgate__error { display: none; background: #fdecea; border: 1px solid #f5c6c2; color: #b3261e; font-size: 0.85rem; border-radius: 6px; padding: 12px; margin-bottom: 20px; text-align: left; line-height: 1.7; }
+  .c-authgate__error { white-space: pre-line; display: none; background: #fdecea; border: 1px solid #f5c6c2; color: #b3261e; font-size: 0.85rem; border-radius: 6px; padding: 12px; margin-bottom: 20px; text-align: left; line-height: 1.7; }
   .c-authgate__error.is-shown { display: block; }
   .l-header__user { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; color: #555; }
   .l-header__logout { background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; }
@@ -594,22 +594,52 @@ function showAuthError(msg) {
   authError.classList.add('is-shown');
 }
 
+function makeProvider() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  // hd はヒントなので、会社アカウント以外も選べる状態にしておく（弾くのはログイン後の判定側）
+  provider.setCustomParameters({ prompt: 'select_account' });
+  return provider;
+}
+
+// エラー内容を分かる言葉に置き換える。原因追跡用にコードも出す
+function explainAuthError(err) {
+  const code = err && err.code ? err.code : '不明';
+  const map = {
+    'auth/unauthorized-domain': 'このURLからのログインが許可されていません。Firebaseの「承認済みドメイン」に amiyamura-cyber.github.io を追加してください。',
+    'auth/operation-not-allowed': 'Googleログインが有効になっていません。Firebaseの「Authentication」でGoogleを有効にしてください。',
+    'auth/api-key-not-valid.-please-pass-a-valid-api-key.': 'APIキーが正しくありません。ページの firebaseConfig を確認してください。',
+    'auth/requests-from-referer-are-blocked': 'APIキーの参照元制限で弾かれています。許可リストに air-log-db.firebaseapp.com を追加してください。',
+    'auth/network-request-failed': 'ネットワークに繋がりませんでした。通信環境を確認して、もう一度お試しください。',
+    'auth/web-storage-unsupported': 'ブラウザのCookie（サイトデータ）が無効になっています。設定で許可してから再度お試しください。',
+    'auth/internal-error': '内部エラーが発生しました。ページを再読み込みしてもう一度お試しください。'
+  };
+  return (map[code] || 'ログインに失敗しました。') + '\n（エラーコード：' + code + '）';
+}
+
+// ポップアップが使えない環境では画面遷移方式に切り替える
+const REDIRECT_CODES = [
+  'auth/popup-blocked',
+  'auth/operation-not-supported-in-this-environment',
+  'auth/web-storage-unsupported',
+  'auth/internal-error'
+];
+
 document.getElementById('btnGoogleLogin').addEventListener('click', () => {
   authError.classList.remove('is-shown');
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.setCustomParameters({ hd: ALLOWED_DOMAIN, prompt: 'select_account' });
-  auth.signInWithPopup(provider).catch((err) => {
+  auth.signInWithPopup(makeProvider()).catch((err) => {
     if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') return;
-    if (err.code === 'auth/unauthorized-domain') {
-      showAuthError('このURLからのログインが許可されていません。Firebaseの「承認済みドメイン」に amiyamura-cyber.github.io を追加してください。');
+    if (REDIRECT_CODES.indexOf(err.code) !== -1) {
+      // ポップアップが開けないので、このページごとGoogleのログイン画面へ移動する
+      auth.signInWithRedirect(makeProvider()).catch((e2) => showAuthError(explainAuthError(e2)));
       return;
     }
-    if (err.code === 'auth/operation-not-allowed') {
-      showAuthError('Googleログインが有効になっていません。Firebaseの「Authentication」でGoogleを有効にしてください。');
-      return;
-    }
-    showAuthError('ログインに失敗しました：' + (err.message || err.code));
+    showAuthError(explainAuthError(err));
   });
+});
+
+// 画面遷移方式で戻ってきたときの結果を受け取る
+auth.getRedirectResult().catch((err) => {
+  if (err && err.code) showAuthError(explainAuthError(err));
 });
 
 auth.onAuthStateChanged((user) => {
@@ -622,7 +652,7 @@ auth.onAuthStateChanged((user) => {
     // 社外アカウントで入られた場合は即サインアウト
     auth.signOut().then(() => {
       authGate.classList.remove('is-hidden');
-      showAuthError(email + ' ではログインできません。@' + ALLOWED_DOMAIN + ' のアカウントを選んでください。');
+      showAuthError(email + ' ではログインできません。\n@' + ALLOWED_DOMAIN + ' のアカウントを選び直してください。');
     });
     return;
   }
