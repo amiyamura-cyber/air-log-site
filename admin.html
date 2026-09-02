@@ -227,6 +227,57 @@
   .l-header__logout { background: #f0f0f0; border: 1px solid #ddd; border-radius: 4px; padding: 6px 14px; font-size: 0.8rem; cursor: pointer; }
   .l-header__logout:hover { background: #e8e8e8; }
   /* ▲ ここまで ▲ */
+
+  /* ▼ 編集中の表示・削除の確認 ▼ */
+  .l-editor.is-editing { box-shadow: 0 0 0 2px #f9a825, 0 2px 8px rgba(0,0,0,0.06); }
+  .c-editing {
+    display: flex; align-items: center; gap: 12px;
+    background: #fff8e1; border: 1px solid #f0b429; border-radius: 8px;
+    padding: 12px 14px; margin-bottom: 20px;
+  }
+  .c-editing__label {
+    background: #f0b429; color: #fff; font-size: 0.72rem; font-weight: bold;
+    border-radius: 4px; padding: 3px 9px; flex: none; letter-spacing: .04em;
+  }
+  .c-editing__title {
+    font-size: 0.85rem; font-weight: bold; color: #4a3a00; flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .c-editing__cancel {
+    flex: none; background: #fff; border: 1px solid #d9bd77; border-radius: 5px;
+    padding: 6px 11px; font-size: 0.75rem; cursor: pointer; color: #6b5400; font-weight: bold;
+  }
+  .c-editing__cancel:hover { background: #fdf6e3; }
+
+  .p-card.is-editing { border-color: #f0b429; box-shadow: 0 0 0 3px rgba(240,180,41,.3); }
+  .p-card__editing {
+    position: absolute; top: 10px; left: 10px; z-index: 2;
+    background: #f0b429; color: #fff; font-size: 0.7rem; font-weight: bold;
+    padding: 3px 9px; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.2);
+  }
+
+  .c-btn--danger { background: #e53935; color: #fff; }
+  .c-btn--danger:hover { background: #c62828; }
+  #deleteDialog { z-index: 1100; }
+  #deleteDialog .c-modal__inner { max-width: 440px; padding: 26px; }
+  .c-deldlg__title { font-size: 1.15rem; font-weight: bold; color: #c62828; margin-bottom: 14px; }
+  .c-deldlg__lead { font-size: 0.88rem; color: #555; line-height: 1.8; margin-bottom: 18px; }
+  .c-deldlg__target {
+    background: #fafafa; border: 1px solid #e0e0e0; border-left: 4px solid #e53935;
+    border-radius: 6px; padding: 14px; margin-bottom: 20px;
+  }
+  .c-deldlg__name { font-size: 0.95rem; font-weight: bold; color: #222; line-height: 1.6; }
+  .c-deldlg__meta { font-size: 0.78rem; color: #777; margin-top: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .c-deldlg__status { font-size: 0.72rem; font-weight: bold; border-radius: 4px; padding: 2px 8px; }
+  .c-deldlg__status--public { background: #e8f5e9; color: #2e7d32; }
+  .c-deldlg__status--draft { background: #eeeeee; color: #666; }
+  .c-deldlg__warn {
+    font-size: 0.8rem; color: #b3261e; background: #fdecea; border: 1px solid #f5c6c2;
+    border-radius: 6px; padding: 10px 12px; margin-bottom: 20px; line-height: 1.7;
+  }
+  .c-deldlg__btns { display: flex; gap: 10px; }
+  .c-deldlg__btns .c-btn { margin-top: 0; }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -255,7 +306,7 @@
 
 <div class="l-container">
   <aside class="l-editor">
-    <h2 style="font-size: 1.2rem; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">記事を編集</h2>
+    <h2 id="editorHeading" style="font-size: 1.2rem; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px;">新しい記事を作る</h2>
     
     <!-- ▼ 記事作成ツール（kizisakusei をそのまま移植） ▼ -->
     <div class="kizi-tool">
@@ -331,6 +382,12 @@
     </div>
     <!-- ▲ ここまで ▲ -->
 
+    <div class="c-editing" id="editingBar" style="display:none;">
+      <span class="c-editing__label">編集中</span>
+      <span class="c-editing__title" id="editingTitle"></span>
+      <button type="button" class="c-editing__cancel" id="btnCancelEdit">編集をやめる</button>
+    </div>
+
     <form id="postForm">
       <input type="hidden" id="postId">
       <div class="c-form-group">
@@ -404,7 +461,7 @@
         <textarea id="postContent" class="c-textarea" placeholder="<p>ここに記事のHTMLを記述します。</p>"></textarea>
       </div>
       <div class="c-btn-group">
-        <button type="submit" class="c-btn c-btn--primary">保存する</button>
+        <button type="submit" class="c-btn c-btn--primary" id="btnSubmit">保存する</button>
         <button type="button" id="btnPreviewInput" class="c-btn c-btn--secondary">プレビュー</button>
       </div>
       <button type="button" id="btnClear" class="c-btn c-btn--secondary">新規作成（クリア）</button>
@@ -700,6 +757,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const grid = document.createElement('div'); grid.className = 'p-grid';
       group.forEach(post => {
         const card = document.createElement('div');
+        card.dataset.postId = post.id;
         card.className = `p-card ${post.status === 'private' ? 'p-card--private' : ''}`;
         const tagsHtml = post.tags && post.tags.length > 0 ? `<div class="p-card__tags">${post.tags.map(t => `<span class="p-card__tag">#${t}</span>`).join('')}</div>` : '';
         const defaultImg = `https://via.placeholder.com/400x200/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre)}`;
@@ -727,6 +785,7 @@ document.addEventListener('DOMContentLoaded', () => {
         grid.appendChild(card);
       });
       content.appendChild(grid); details.appendChild(content); articleGrid.appendChild(details);
+      markEditingCard();
     });
   }
 
@@ -766,6 +825,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ▼ 編集中かどうかの表示をまとめて切り替える ▼
+  let editingId = null;
+  const editingBar   = document.getElementById('editingBar');
+  const editingTitle = document.getElementById('editingTitle');
+  const editorHeading= document.getElementById('editorHeading');
+  const btnSubmit    = document.getElementById('btnSubmit');
+  const editorPanel  = document.querySelector('.l-editor');
+
+  function setEditing(post) {
+    editingId = post ? post.id : null;
+    if (post) {
+      editingBar.style.display = 'flex';
+      editingTitle.textContent = post.title || '（タイトル未入力）';
+      editorHeading.textContent = '記事を編集';
+      btnSubmit.textContent = 'この記事を更新する';
+      editorPanel.classList.add('is-editing');
+      document.title = '【編集中】' + (post.title || '') + ' - エアログ管理画面';
+    } else {
+      editingBar.style.display = 'none';
+      editingTitle.textContent = '';
+      editorHeading.textContent = '新しい記事を作る';
+      btnSubmit.textContent = '保存する';
+      editorPanel.classList.remove('is-editing');
+      document.title = 'エアログ管理画面';
+    }
+    markEditingCard();
+  }
+
+  function markEditingCard() {
+    document.querySelectorAll('.p-card').forEach(function (c) {
+      const on = editingId && c.dataset.postId === editingId;
+      c.classList.toggle('is-editing', !!on);
+      const badge = c.querySelector('.p-card__editing');
+      if (on && !badge) {
+        const b = document.createElement('span');
+        b.className = 'p-card__editing';
+        b.textContent = '編集中';
+        c.prepend(b);
+      } else if (!on && badge) {
+        badge.remove();
+      }
+    });
+  }
+
+  document.getElementById('btnCancelEdit').addEventListener('click', function () {
+    if (!confirm('編集をやめて新規作成に戻ります。入力中の内容は消えます。よろしいですか？')) return;
+    clearForm();
+  });
+  // ▲ ここまで ▲
+
   async function editPost(id) {
     const posts = await loadData();
     const post = posts.find(p => p.id === id); if (!post) return;
@@ -778,16 +887,68 @@ document.addEventListener('DOMContentLoaded', () => {
     imagePositionSliderY.value = post.coverPositionY !== undefined ? post.coverPositionY : 50;
     for (const radio of inputs.status) radio.checked = (radio.value === post.status);
     showImagePreview(post.coverImage || ''); window.scrollTo({ top: 0, behavior: 'smooth' });
+    setEditing(post);
   }
 
-  async function deletePost(id) { 
-    if (!confirm('本当に削除しますか？')) return; 
-    await db.collection('posts').doc(id).delete();
-    renderGrid(); 
-    clearForm(); 
+  // ▼ 削除は確認ダイアログを挟む ▼
+  const deleteDialog = document.getElementById('deleteDialog');
+  let pendingDeleteId = null;
+
+  async function deletePost(id) {
+    const posts = await loadData();
+    const post = posts.find(p => p.id === id);
+    if (!post) return;
+
+    pendingDeleteId = id;
+    document.getElementById('deleteName').textContent = post.title || '（タイトル未入力）';
+    const isPublic = (post.status === 'public' || post.status === '公開' || post.status === undefined);
+    const st = document.getElementById('deleteStatus');
+    st.textContent = isPublic ? '公開中' : '非公開（下書き）';
+    st.className = 'c-deldlg__status ' + (isPublic ? 'c-deldlg__status--public' : 'c-deldlg__status--draft');
+    document.getElementById('deleteDate').textContent = post.displayDate ? ('更新: ' + post.displayDate) : '';
+
+    const warn = document.getElementById('deleteWarn');
+    const msgs = [];
+    if (isPublic) msgs.push('この記事は公開中です。削除すると公開サイトからも消えます。');
+    if (editingId === id) msgs.push('いま編集中の記事です。削除すると入力内容も破棄されます。');
+    warn.innerHTML = msgs.join('<br>');
+    warn.style.display = msgs.length ? 'block' : 'none';
+
+    deleteDialog.classList.add('is-open');
+    setTimeout(function () { document.getElementById('btnDeleteCancel').focus(); }, 50);
   }
 
-  function clearForm() { form.reset(); inputs.id.value = ''; inputs.coverImageData.value = ''; imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview(''); inputs.status[0].checked = true; }
+  function closeDeleteDialog() {
+    deleteDialog.classList.remove('is-open');
+    pendingDeleteId = null;
+  }
+
+  document.getElementById('btnDeleteCancel').addEventListener('click', closeDeleteDialog);
+  deleteDialog.addEventListener('click', function (ev) { if (ev.target === deleteDialog) closeDeleteDialog(); });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && deleteDialog.classList.contains('is-open')) closeDeleteDialog();
+  });
+
+  document.getElementById('btnDeleteConfirm').addEventListener('click', async function () {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    const btn = this;
+    btn.disabled = true; btn.textContent = '削除しています…';
+    try {
+      await db.collection('posts').doc(id).delete();
+      closeDeleteDialog();
+      if (editingId === id) clearForm();
+      await renderGrid();
+      alert('記事を削除しました。');
+    } catch (err) {
+      alert('【エラー】削除に失敗しました: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '削除する';
+    }
+  });
+  // ▲ ここまで ▲
+
+  function clearForm() { form.reset(); inputs.id.value = ''; inputs.coverImageData.value = ''; imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview(''); inputs.status[0].checked = true; setEditing(null); }
   document.getElementById('btnClear').addEventListener('click', clearForm);
 
   document.getElementById('btnPreviewInput').addEventListener('click', () => {
@@ -1298,6 +1459,27 @@ async function generateAndOpenFromToc() {
   });
 })();
 </script>
+<!-- ▲ ここまで ▲ -->
+
+<!-- ▼ 削除の確認 ▼ -->
+<div class="c-modal" id="deleteDialog">
+  <div class="c-modal__inner">
+    <div class="c-deldlg__title">この記事を削除しますか？</div>
+    <p class="c-deldlg__lead">削除すると元に戻せません。下書きを含め、この記事のデータは完全に消えます。</p>
+    <div class="c-deldlg__target">
+      <div class="c-deldlg__name" id="deleteName"></div>
+      <div class="c-deldlg__meta">
+        <span class="c-deldlg__status" id="deleteStatus"></span>
+        <span id="deleteDate"></span>
+      </div>
+    </div>
+    <div class="c-deldlg__warn" id="deleteWarn" style="display:none;"></div>
+    <div class="c-deldlg__btns">
+      <button type="button" class="c-btn c-btn--secondary" id="btnDeleteCancel">キャンセル</button>
+      <button type="button" class="c-btn c-btn--danger" id="btnDeleteConfirm">削除する</button>
+    </div>
+  </div>
+</div>
 <!-- ▲ ここまで ▲ -->
 </body>
 </html>
