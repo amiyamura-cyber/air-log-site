@@ -298,6 +298,22 @@
   .p-card__period--before { background: #fff8e1; color: #8a6100; border: 1px solid #f0b429; }
   .p-card__period--after  { background: #f0f0f0; color: #666; border: 1px solid #ccc; }
   /* ▲ ここまで ▲ */
+
+  /* ▼ 一覧に対策キーワードを表示（管理画面だけ） ▼ */
+  .p-card__kw {
+    display: flex; align-items: center; gap: 6px;
+    background: #f1f5fb; border: 1px solid #d5e2f3; border-radius: 5px;
+    padding: 5px 8px; margin-bottom: 10px; min-width: 0;
+  }
+  .p-card__kw__label {
+    flex: none; font-size: 0.65rem; font-weight: bold; color: #fff;
+    background: #5b7fa6; border-radius: 3px; padding: 2px 5px; letter-spacing: .03em;
+  }
+  .p-card__kw__text {
+    font-size: 0.78rem; color: #33475b; font-weight: bold; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -433,6 +449,11 @@
       <div class="c-form-group">
         <label class="c-label"><span>タイトル</span></label>
         <input type="text" id="postTitle" class="c-input" placeholder="記事のタイトルを入力" required>
+      </div>
+      <div class="c-form-group">
+        <label class="c-label"><span>対策キーワード</span></label>
+        <input type="text" id="postKeyword" class="c-input" placeholder="例：採用面接 質問">
+        <p style="font-size:0.75rem;color:#888;margin-top:6px;">記事一覧に表示されます。公開サイトには出ません。上の🔷で指示書を作ると自動で入ります。</p>
       </div>
       <div class="c-form-group">
         <label class="c-label"><span>カバー画像</span></label>
@@ -629,6 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const inputs = {
     id: document.getElementById('postId'), title: document.getElementById('postTitle'),
+    keyword: document.getElementById('postKeyword'),
     genre: document.getElementById('postGenre'), tags: document.getElementById('postTags'),
     status: document.getElementsByName('status'), startDate: document.getElementById('startDate'),
     endDate: document.getElementById('endDate'), 
@@ -771,6 +793,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = new Date(str + 'T00:00:00');
     return isNaN(d) ? str : ((d.getMonth() + 1) + '/' + d.getDate());
   }
+  function keywordLine(post) {
+    const kw = (post.keyword || '').trim();
+    if (!kw) return '';
+    const esc = kw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return '<div class="p-card__kw" title="対策キーワード：' + esc + '">'
+         + '<span class="p-card__kw__label">対策KW</span>'
+         + '<span class="p-card__kw__text">' + esc + '</span></div>';
+  }
+
   function periodBadge(post) {
     const st = periodState(post);
     if (st === 'before') return '<span class="p-card__period p-card__period--before">公開前 ' + shortJpDate(post.startDate) + '〜</span>';
@@ -816,6 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-card__body">
             <span class="p-card__genre p-card__genre--${post.genre}">${post.genre}</span>
             <h3 class="p-card__title">${post.title}</h3>
+            ${keywordLine(post)}
             ${tagsHtml}
             <div class="p-card__footer">
               <span class="p-card__date">更新: ${post.displayDate}</span>${periodBadge(post)}
@@ -854,7 +886,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const postData = {
       id: isEdit ? inputs.id.value : generateId(), title: inputs.title.value, genre: inputs.genre.value,
-      tags: tagArray, status: statusVal, startDate: inputs.startDate.value, endDate: inputs.endDate.value,
+      tags: tagArray, status: statusVal, keyword: inputs.keyword.value.trim(),
+      startDate: inputs.startDate.value, endDate: inputs.endDate.value,
       toc: inputs.toc.value, 
       content: inputs.content.value, coverImage: inputs.coverImageData.value,
       coverPositionX: imagePositionSliderX.value, coverPositionY: imagePositionSliderY.value,
@@ -938,6 +971,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const posts = await loadData();
     const post = posts.find(p => p.id === id); if (!post) return;
     inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
+    inputs.keyword.value = post.keyword || '';
     inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
     inputs.endDate.value = post.endDate || ''; 
     inputs.toc.value = post.toc || '';
@@ -1305,6 +1339,10 @@ async function runCopyAndOpen(text) {
 }
 
 async function generateAndOpen() {
+  // 記事フォームの「対策キーワード」が空なら、ここで入れた値を写しておく
+  const kw = (document.getElementById('keyword').value || '').trim();
+  const target = document.getElementById('postKeyword');
+  if (kw && target && !target.value.trim()) target.value = kw;
   await runCopyAndOpen(buildPrompt());
 }
 
