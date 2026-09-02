@@ -516,22 +516,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     function createCard(post){
       const imgSrc = post.coverImage || `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
-      // 公開期間の外でもURLを知っていれば読めるが、状態が分かるようお知らせを出す
-    const state = periodState(post);
-    let noticeHtml = '';
-    if (state === 'before') {
-      noticeHtml = '<div class="p-article__notice p-article__notice--before">'
-        + '<span class="p-article__notice__icon">🕒</span>'
-        + '<span class="p-article__notice__body"><strong>この記事はまだ公開されていません</strong>'
-        + '公開予定日：' + formatJpDate(post.startDate) + '（この日まで記事一覧には表示されません）</span></div>';
-    } else if (state === 'after') {
-      noticeHtml = '<div class="p-article__notice p-article__notice--after">'
-        + '<span class="p-article__notice__icon">📁</span>'
-        + '<span class="p-article__notice__body"><strong>この記事の公開期間は終了しています</strong>'
-        + '掲載終了日：' + formatJpDate(post.endDate) + '（記事一覧には表示されません）</span></div>';
-    }
-
-    const catClass = getGenreClass(post.genre);
+      const catClass = getGenreClass(post.genre);
       const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
       const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
       return `
@@ -568,6 +553,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!post || (post.status !== 'public' && post.status !== '公開' && post.status !== undefined)) {
       container.innerHTML = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>'; return;
     }
+    // 公開期間の外でもURLを知っていれば読めるが、状態が分かるようお知らせを出す
+    const state = periodState(post);
+    let noticeHtml = '';
+    if (state === 'before') {
+      noticeHtml = '<div class="p-article__notice p-article__notice--before">'
+        + '<span class="p-article__notice__icon">🕒</span>'
+        + '<span class="p-article__notice__body"><strong>この記事はまだ公開されていません</strong>'
+        + '公開予定日：' + formatJpDate(post.startDate) + '（この日まで記事一覧には表示されません）</span></div>';
+    } else if (state === 'after') {
+      noticeHtml = '<div class="p-article__notice p-article__notice--after">'
+        + '<span class="p-article__notice__icon">📁</span>'
+        + '<span class="p-article__notice__body"><strong>この記事の公開期間は終了しています</strong>'
+        + '掲載終了日：' + formatJpDate(post.endDate) + '（記事一覧には表示されません）</span></div>';
+    }
+
     const catClass = getGenreClass(post.genre);
     const imgSrc = post.coverImage || `https://via.placeholder.com/1200x600/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre)}`;
     const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
