@@ -1447,12 +1447,34 @@ async function generateAndOpenFromToc() {
   }
 
   // --- 範囲を置き換えてカーソルを戻す ---
+  // 選択範囲を置き換える。
+  // ta.value をまるごと入れ替えるとテキストエリアのスクロール位置が先頭に戻り、
+  // さらに focus() でページごとその位置へ飛ぶため、次の3点で位置を保つ。
+  //   ① focus は preventScroll でページを動かさない
+  //   ② できる限り execCommand('insertText') を使う（Cmd+Z の取り消しも効く）
+  //   ③ 最後にテキストエリアのスクロール位置を戻す
   function replaceRange(start, end, text, caretOffset) {
-    var v = ta.value;
-    ta.value = v.slice(0, start) + text + v.slice(end);
+    var scroll = ta.scrollTop;
+    var pageY  = window.scrollY;
+
+    try { ta.focus({ preventScroll: true }); } catch (e) { ta.focus(); }
+    ta.setSelectionRange(start, end);
+
+    var done = false;
+    try { done = document.execCommand('insertText', false, text); } catch (e) { done = false; }
+    if (!done) {
+      if (typeof ta.setRangeText === 'function') {
+        ta.setRangeText(text, start, end, 'end');
+      } else {
+        var v = ta.value;
+        ta.value = v.slice(0, start) + text + v.slice(end);
+      }
+    }
+
     var pos = (caretOffset == null) ? start + text.length : start + caretOffset;
-    ta.focus();
     ta.setSelectionRange(pos, pos);
+    ta.scrollTop = scroll;
+    if (window.scrollY !== pageY) window.scrollTo(0, pageY);
     ta.dispatchEvent(new Event('input', { bubbles: true }));
   }
 
