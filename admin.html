@@ -442,8 +442,8 @@
       <div class="c-form-group">
         <label class="c-label"><span>ステータス</span></label>
         <div class="c-radio-group">
-          <label class="c-radio-label"><input type="radio" name="status" value="public" checked> 公開</label>
-          <label class="c-radio-label"><input type="radio" name="status" value="private"> 非公開 (下書き)</label>
+          <label class="c-radio-label"><input type="radio" name="status" value="public"> 公開</label>
+          <label class="c-radio-label"><input type="radio" name="status" value="private" checked> 非公開 (下書き)</label>
         </div>
       </div>
       <div class="c-form-group">
@@ -1108,7 +1108,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // ▲ ここまで ▲
 
-  function clearForm() { form.reset(); inputs.id.value = ''; inputs.coverImageData.value = ''; imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview(''); inputs.status[0].checked = true; setEditing(null); }
+  function clearForm() { form.reset(); inputs.id.value = ''; inputs.coverImageData.value = ''; imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview('');
+    // 新規作成の初期値は必ず「非公開（下書き）」。うっかり公開してしまうのを防ぐ
+    for (const radio of inputs.status) radio.checked = (radio.value === 'private');
+    setEditing(null); }
   document.getElementById('btnClear').addEventListener('click', clearForm);
 
   document.getElementById('btnPreviewInput').addEventListener('click', () => {
