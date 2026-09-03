@@ -326,12 +326,13 @@
   /* ▲ ここまで ▲ */
 
   /* ▼ 作業記録 ▼ */
-  .c-work { background: #f7f9fa; border: 1px solid #dde4e8; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
-  .c-work__title { font-size: 0.95rem; font-weight: bold; color: #37474f; margin-bottom: 14px; }
+  .c-work { background: #f6f2fb; border: 2px solid #7e57c2; border-radius: 8px; padding: 16px; margin-top: 24px; }
+  .c-work__title { font-size: 0.98rem; font-weight: bold; color: #5e35b1; margin-bottom: 6px; }
+  .c-work__lead { font-size: 0.76rem; color: #6b5b8a; margin: 0 0 14px; line-height: 1.7; }
   .c-work__checks { display: flex; flex-direction: column; gap: 8px; }
   .c-work__check {
     display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
-    background: #fff; border: 1px solid #dde4e8; border-radius: 6px; padding: 10px 12px;
+    background: #fff; border: 1px solid #d8cdea; border-radius: 6px; padding: 10px 12px;
   }
   .c-work__check input { width: 17px; height: 17px; margin: 2px 0 0; flex: none; accent-color: #2e7d32; }
   .c-work__check__body { min-width: 0; }
@@ -339,8 +340,8 @@
   .c-work__check__stamp { display: block; font-size: 0.72rem; color: #999; margin-top: 2px; }
   .c-work__check.is-done { border-color: #a5d6a7; background: #f1f8f2; }
   .c-work__check.is-done .c-work__check__stamp { color: #2e7d32; font-weight: bold; }
-  .c-work__note { font-size: 0.72rem; color: #888; margin: 10px 0 0; line-height: 1.7; }
-  .c-work__auto { font-size: 0.66rem; font-weight: bold; color: #fff; background: #78909c; border-radius: 3px; padding: 2px 6px; }
+  .c-work__note { font-size: 0.72rem; color: #7a6b96; margin: 10px 0 0; line-height: 1.7; }
+  .c-work__auto { font-size: 0.66rem; font-weight: bold; color: #fff; background: #7e57c2; border-radius: 3px; padding: 2px 6px; }
   /* ▲ ここまで ▲ */
 </style>
 </head>
@@ -532,10 +533,16 @@
         </div>
         <textarea id="postContent" class="c-textarea" placeholder="<p>ここに記事のHTMLを記述します。</p>"></textarea>
       </div>
+      <div class="c-btn-group">
+        <button type="submit" class="c-btn c-btn--primary" id="btnSubmit">保存する</button>
+        <button type="button" id="btnPreviewInput" class="c-btn c-btn--secondary">プレビュー</button>
+      </div>
+      <button type="button" id="btnClear" class="c-btn c-btn--secondary">新規作成（クリア）</button>
 
       <!-- ▼ 作業記録 ▼ -->
       <div class="c-work">
-        <div class="c-work__title">📋 作業記録</div>
+        <div class="c-work__title">📋 作業記録（記事の内容ではありません）</div>
+        <p class="c-work__lead">誰が・いつ・何をしたかの記録です。公開サイトには出ません。</p>
         <div class="c-form-group" style="margin-bottom:12px;">
           <label class="c-label"><span>誰が（担当者）</span><span class="c-work__auto">ログインから自動</span></label>
           <input type="text" id="workWho" class="c-input">
@@ -568,12 +575,6 @@
         <p class="c-work__note">上の3つは自動で入ります（手で書き換えてもかまいません）。チェックを入れると、ログイン中のアカウントと日時が記録されます。</p>
       </div>
       <!-- ▲ ここまで ▲ -->
-
-      <div class="c-btn-group">
-        <button type="submit" class="c-btn c-btn--primary" id="btnSubmit">保存する</button>
-        <button type="button" id="btnPreviewInput" class="c-btn c-btn--secondary">プレビュー</button>
-      </div>
-      <button type="button" id="btnClear" class="c-btn c-btn--secondary">新規作成（クリア）</button>
     </form>
   </aside>
 
