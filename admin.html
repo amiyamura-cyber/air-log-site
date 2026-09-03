@@ -510,6 +510,29 @@
           <input type="date" id="startDate" class="c-input"><span>〜</span><input type="date" id="endDate" class="c-input">
         </div>
       </div>
+      
+      <!-- 目次用の入力枠 -->
+      <div class="c-form-group">
+        <label class="c-label">
+          <span>目次 (HTMLソースコード)</span>
+          <button type="button" id="btnExpandTocEditor" class="c-btn c-btn--primary c-btn--small">拡大して編集</button>
+        </label>
+        <textarea id="postToc" class="c-textarea" style="height: 100px;" placeholder="<ul><li>見出し1...</li></ul>"></textarea>
+      </div>
+
+      <div class="c-form-group">
+        <label class="c-label">
+          <span>本文 (HTMLソースコード)</span>
+          <button type="button" id="btnExpandEditor" class="c-btn c-btn--primary c-btn--small">拡大して編集</button>
+        </label>
+        <div class="c-toolbar">
+          <button type="button" class="c-toolbar-btn btn-link" data-target="postContent">🔗 リンク挿入/編集</button>
+          <button type="button" class="c-toolbar-btn btn-bold" data-target="postContent"><span class="c-toolbar-btn__b">B</span> 太字</button>
+          <button type="button" class="c-toolbar-btn btn-color" data-target="postContent"><span class="c-toolbar-btn__chip" style="background:#e53935;"></span>文字色</button>
+        </div>
+        <textarea id="postContent" class="c-textarea" placeholder="<p>ここに記事のHTMLを記述します。</p>"></textarea>
+      </div>
+
       <!-- ▼ 作業記録 ▼ -->
       <div class="c-work">
         <div class="c-work__title">📋 作業記録</div>
@@ -545,28 +568,7 @@
         <p class="c-work__note">上の3つは自動で入ります（手で書き換えてもかまいません）。チェックを入れると、ログイン中のアカウントと日時が記録されます。</p>
       </div>
       <!-- ▲ ここまで ▲ -->
-      
-      <!-- 目次用の入力枠 -->
-      <div class="c-form-group">
-        <label class="c-label">
-          <span>目次 (HTMLソースコード)</span>
-          <button type="button" id="btnExpandTocEditor" class="c-btn c-btn--primary c-btn--small">拡大して編集</button>
-        </label>
-        <textarea id="postToc" class="c-textarea" style="height: 100px;" placeholder="<ul><li>見出し1...</li></ul>"></textarea>
-      </div>
 
-      <div class="c-form-group">
-        <label class="c-label">
-          <span>本文 (HTMLソースコード)</span>
-          <button type="button" id="btnExpandEditor" class="c-btn c-btn--primary c-btn--small">拡大して編集</button>
-        </label>
-        <div class="c-toolbar">
-          <button type="button" class="c-toolbar-btn btn-link" data-target="postContent">🔗 リンク挿入/編集</button>
-          <button type="button" class="c-toolbar-btn btn-bold" data-target="postContent"><span class="c-toolbar-btn__b">B</span> 太字</button>
-          <button type="button" class="c-toolbar-btn btn-color" data-target="postContent"><span class="c-toolbar-btn__chip" style="background:#e53935;"></span>文字色</button>
-        </div>
-        <textarea id="postContent" class="c-textarea" placeholder="<p>ここに記事のHTMLを記述します。</p>"></textarea>
-      </div>
       <div class="c-btn-group">
         <button type="submit" class="c-btn c-btn--primary" id="btnSubmit">保存する</button>
         <button type="button" id="btnPreviewInput" class="c-btn c-btn--secondary">プレビュー</button>
