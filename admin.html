@@ -342,16 +342,6 @@
   .c-work__note { font-size: 0.72rem; color: #888; margin: 10px 0 0; line-height: 1.7; }
   .c-work__auto { font-size: 0.66rem; font-weight: bold; color: #fff; background: #78909c; border-radius: 3px; padding: 2px 6px; }
   /* ▲ ここまで ▲ */
-
-  /* ▼ AIの出力をまるごと貼る ▼ */
-  .c-paste { background: #f3f8f4; border: 2px solid #43a047; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
-  .c-paste__title { font-size: 0.98rem; font-weight: bold; color: #2e7d32; margin-bottom: 8px; }
-  .c-paste__desc { font-size: 0.78rem; color: #4a5a4c; line-height: 1.75; margin: 0 0 12px; }
-  .c-paste__desc code { background: #e3f0e5; padding: 1px 5px; border-radius: 3px; font-size: 0.95em; }
-  .c-paste__result { font-size: 0.8rem; font-weight: bold; margin: 10px 0 0; line-height: 1.7; white-space: pre-line; }
-  .c-paste__result.is-ok { color: #2e7d32; }
-  .c-paste__result.is-ng { color: #c62828; }
-  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -467,26 +457,6 @@
 
     <form id="postForm">
       <input type="hidden" id="postId">
-      <!-- ▼ AIの出力をまるごと貼る ▼ -->
-      <div class="c-paste">
-        <div class="c-paste__title">📥 AIの出力をまるごと貼る</div>
-        <p class="c-paste__desc">Geminiの回答を全部コピーして貼り付け、ボタンを押すと<strong>タイトル・目次・本文</strong>を自動で振り分けます。<code>```html</code> の記号も自動で取り除きます。</p>
-        <textarea id="pasteAll" class="c-textarea" style="height:110px;font-size:0.85rem;" placeholder="■ 記事のタイトル
-〜〜〜
-
-■ 目次のHTMLコード
-```html
-〜〜〜
-```
-
-■ 記事本文のHTMLコード
-```html
-〜〜〜
-```"></textarea>
-        <button type="button" id="btnSplitPaste" class="c-btn c-btn--primary" style="margin-top:10px;">振り分ける</button>
-        <p class="c-paste__result" id="pasteResult"></p>
-      </div>
-      <!-- ▲ ここまで ▲ -->
       <div class="c-form-group">
         <label class="c-label"><span>ステータス</span></label>
         <div class="c-radio-group">
@@ -964,64 +934,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
-  // ▼ AIの出力をまるごと貼って振り分ける ▼
-  (function () {
-    const box    = document.getElementById('pasteAll');
-    const btn    = document.getElementById('btnSplitPaste');
-    const result = document.getElementById('pasteResult');
-    if (!box || !btn) return;
-
-    // ```html 〜 ``` の中身を取り出す。囲みが無ければ次の見出しまでを本文とみなす
-    function grabBlock(text, headings) {
-      for (const h of headings) {
-        const at = text.search(h);
-        if (at === -1) continue;
-        const rest = text.slice(at).replace(h, '');
-        const fence = rest.match(/```(?:html)?\s*([\s\S]*?)```/);
-        if (fence) return fence[1].trim();
-        const plain = rest.split(/\n\s*(?:■|▼|#{1,3}\s)/)[0];
-        return plain.trim();
-      }
-      return '';
-    }
-
-    btn.addEventListener('click', function () {
-      const raw = box.value;
-      if (!raw.trim()) {
-        result.className = 'c-paste__result is-ng';
-        result.textContent = 'まずAIの回答を貼り付けてください。';
-        return;
-      }
-
-      const title = grabBlock(raw, [/■\s*記事のタイトル[^\n]*\n/, /■\s*タイトル[^\n]*\n/])
-        .split('\n')[0].replace(/^[#\-*・\s]+/, '').trim();
-      const toc     = grabBlock(raw, [/■\s*目次のHTMLコード[^\n]*\n/, /■\s*目次[^\n]*\n/]);
-      const content = grabBlock(raw, [/■\s*記事本文のHTMLコード[^\n]*\n/, /■\s*記事本文[^\n]*\n/, /■\s*本文[^\n]*\n/]);
-
-      const done = [], miss = [];
-      if (title)   { inputs.title.value = title;     done.push('タイトル'); } else miss.push('タイトル');
-      if (toc)     { inputs.toc.value = toc;         done.push('目次');     } else miss.push('目次');
-      if (content) { inputs.content.value = content; done.push('本文');     } else miss.push('本文');
-
-      if (done.length) {
-        workFlags.toc = workFlags.toc || !!toc;
-        workFlags.content = workFlags.content || !!content;
-        refreshWorkFields();
-        // ハッシュタグが空なら対策キーワードから作る
-        const kw = (inputs.keyword.value || '').trim();
-        if (kw && !inputs.tags.value.trim()) {
-          inputs.tags.value = kw.split(/[\s　,、]+/).filter(Boolean).join(', ');
-          done.push('ハッシュタグ（対策キーワードから）');
-        }
-      }
-
-      result.className = 'c-paste__result ' + (miss.length && !done.length ? 'is-ng' : 'is-ok');
-      result.textContent = (done.length ? '振り分けました：' + done.join('・') : '')
-        + (miss.length ? (done.length ? '\n' : '') + '見つからなかったもの：' + miss.join('・') + '（見出しが「■ 記事のタイトル」の形になっているか確認してください）' : '');
-    });
-  })();
-  // ▲ ここまで ▲
-
   // ▼ 作業記録：誰が・何を・いつ を自動で埋める ▼
   window.airlogWork = window.airlogWork || { aiPrompt: false, tocFix: false };
   let workFlags = { isNew: true, content: false, toc: false, image: false, published: false };
@@ -1373,8 +1285,6 @@ document.addEventListener('DOMContentLoaded', () => {
     workFlags = { isNew: true, content: false, toc: false, image: false, published: false };
     window.airlogWork = { aiPrompt: false, tocFix: false };
     workWhatTouched = false;
-    const pa = document.getElementById('pasteAll'); if (pa) pa.value = '';
-    const pr = document.getElementById('pasteResult'); if (pr) pr.textContent = '';
     paintStamp('self'); paintStamp('double');
     refreshWorkFields();
     setEditing(null); }
