@@ -971,18 +971,46 @@ document.addEventListener('DOMContentLoaded', () => {
     const result = document.getElementById('pasteResult');
     if (!box || !btn) return;
 
-    // ```html 〜 ``` の中身を取り出す。囲みが無ければ次の見出しまでを本文とみなす
-    function grabBlock(text, headings) {
-      for (const h of headings) {
-        const at = text.search(h);
-        if (at === -1) continue;
-        const rest = text.slice(at).replace(h, '');
-        const fence = rest.match(/```(?:html)?\s*([\s\S]*?)```/);
-        if (fence) return fence[1].trim();
-        const plain = rest.split(/\n\s*(?:■|▼|#{1,3}\s)/)[0];
-        return plain.trim();
-      }
-      return '';
+    // 「■ 記事のタイトル」のような見出し行でまず区切り、その区間の中だけを見る。
+    // こうしないと、タイトルを探すときに下にある目次の ```html を拾ってしまう。
+    const KEYS = [
+      { key: 'title',   re: /タイトル/ },
+      { key: 'toc',     re: /目次/ },
+      { key: 'content', re: /本文/ },
+      { key: 'refs',    re: /参考記事/ }
+    ];
+
+    function splitSections(text) {
+      const lines = text.split('\n');
+      const marks = [];
+      lines.forEach(function (ln, i) {
+        const t = ln.trim();
+        if (!t) return;
+        // 見出しとして扱うのは ■ ▼ # ** で始まる行、または見出し語だけの行
+        const looksHeading = /^(?:■|▼|#{1,4}\s|\*\*)/.test(t)
+          || /^(?:記事のタイトル|タイトル|目次のHTMLコード|目次|記事本文のHTMLコード|記事本文|本文|参考記事リスト)\s*[:：]?\s*$/.test(t);
+        if (!looksHeading) return;
+        for (const k of KEYS) { if (k.re.test(t)) { marks.push({ key: k.key, line: i }); break; } }
+      });
+      const secs = {};
+      marks.forEach(function (m, idx) {
+        const to = idx + 1 < marks.length ? marks[idx + 1].line : lines.length;
+        if (!secs[m.key]) secs[m.key] = lines.slice(m.line + 1, to).join('\n');
+      });
+      return secs;
+    }
+
+    // ```html 〜 ``` の囲みがあれば中身だけにする
+    function unfence(t) {
+      if (!t) return '';
+      const m = t.match(/```(?:html)?\s*([\s\S]*?)```/);
+      return (m ? m[1] : t).trim();
+    }
+
+    function firstLine(t) {
+      const lines = (t || '').split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+      if (!lines.length) return '';
+      return lines[0].replace(/^[#\-*・>\s]+/, '').replace(/^[「『"']|[」』"']$/g, '').trim();
     }
 
     btn.addEventListener('click', function () {
@@ -993,10 +1021,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const title = grabBlock(raw, [/■\s*記事のタイトル[^\n]*\n/, /■\s*タイトル[^\n]*\n/])
-        .split('\n')[0].replace(/^[#\-*・\s]+/, '').trim();
-      const toc     = grabBlock(raw, [/■\s*目次のHTMLコード[^\n]*\n/, /■\s*目次[^\n]*\n/]);
-      const content = grabBlock(raw, [/■\s*記事本文のHTMLコード[^\n]*\n/, /■\s*記事本文[^\n]*\n/, /■\s*本文[^\n]*\n/]);
+      const secs    = splitSections(raw);
+      const title   = firstLine(secs.title);
+      const toc     = unfence(secs.toc);
+      const content = unfence(secs.content);
 
       const done = [], miss = [];
       if (title)   { inputs.title.value = title;     done.push('タイトル'); } else miss.push('タイトル');
