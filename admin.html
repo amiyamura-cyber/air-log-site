@@ -324,6 +324,23 @@
   }
   .p-card__meta__chips .p-card__tag { flex: none; }
   /* ▲ ここまで ▲ */
+
+  /* ▼ 作業記録 ▼ */
+  .c-work { background: #f7f9fa; border: 1px solid #dde4e8; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+  .c-work__title { font-size: 0.95rem; font-weight: bold; color: #37474f; margin-bottom: 14px; }
+  .c-work__checks { display: flex; flex-direction: column; gap: 8px; }
+  .c-work__check {
+    display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
+    background: #fff; border: 1px solid #dde4e8; border-radius: 6px; padding: 10px 12px;
+  }
+  .c-work__check input { width: 17px; height: 17px; margin: 2px 0 0; flex: none; accent-color: #2e7d32; }
+  .c-work__check__body { min-width: 0; }
+  .c-work__check__name { display: block; font-size: 0.85rem; font-weight: bold; color: #333; }
+  .c-work__check__stamp { display: block; font-size: 0.72rem; color: #999; margin-top: 2px; }
+  .c-work__check.is-done { border-color: #a5d6a7; background: #f1f8f2; }
+  .c-work__check.is-done .c-work__check__stamp { color: #2e7d32; font-weight: bold; }
+  .c-work__note { font-size: 0.72rem; color: #888; margin: 10px 0 0; line-height: 1.7; }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -492,6 +509,41 @@
           <input type="date" id="startDate" class="c-input"><span>〜</span><input type="date" id="endDate" class="c-input">
         </div>
       </div>
+      <!-- ▼ 作業記録 ▼ -->
+      <div class="c-work">
+        <div class="c-work__title">📋 作業記録</div>
+        <div class="c-form-group" style="margin-bottom:12px;">
+          <label class="c-label"><span>誰が（担当者）</span></label>
+          <input type="text" id="workWho" class="c-input" placeholder="例：宮村">
+        </div>
+        <div class="c-form-group" style="margin-bottom:12px;">
+          <label class="c-label"><span>何を（作業内容）</span></label>
+          <input type="text" id="workWhat" class="c-input" placeholder="例：AIで初稿作成、目次を修正">
+        </div>
+        <div class="c-form-group" style="margin-bottom:14px;">
+          <label class="c-label"><span>いつ（作業日）</span></label>
+          <input type="date" id="workWhen" class="c-input">
+        </div>
+
+        <div class="c-work__checks">
+          <label class="c-work__check">
+            <input type="checkbox" id="checkSelf">
+            <span class="c-work__check__body">
+              <span class="c-work__check__name">本人チェック</span>
+              <span class="c-work__check__stamp" id="checkSelfStamp">未チェック</span>
+            </span>
+          </label>
+          <label class="c-work__check">
+            <input type="checkbox" id="checkDouble">
+            <span class="c-work__check__body">
+              <span class="c-work__check__name">ダブルチェック</span>
+              <span class="c-work__check__stamp" id="checkDoubleStamp">未チェック</span>
+            </span>
+          </label>
+        </div>
+        <p class="c-work__note">チェックを入れると、ログイン中のアカウントと日時が自動で記録されます。</p>
+      </div>
+      <!-- ▲ ここまで ▲ -->
       
       <!-- 目次用の入力枠 -->
       <div class="c-form-group">
@@ -691,6 +743,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputs = {
     id: document.getElementById('postId'), title: document.getElementById('postTitle'),
     keyword: document.getElementById('postKeyword'),
+    workWho: document.getElementById('workWho'),
+    workWhat: document.getElementById('workWhat'),
+    workWhen: document.getElementById('workWhen'),
+    checkSelf: document.getElementById('checkSelf'),
+    checkDouble: document.getElementById('checkDouble'),
     genre: document.getElementById('postGenre'), tags: document.getElementById('postTags'),
     status: document.getElementsByName('status'), startDate: document.getElementById('startDate'),
     endDate: document.getElementById('endDate'), 
@@ -875,6 +932,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
+  // ▼ 作業記録のチェック（押した人と日時を自動で残す） ▼
+  let checkStamps = { self: null, double: null };   // { by, at } または null
+
+  function currentUserLabel() {
+    const u = firebase.auth().currentUser;
+    if (!u) return '（未ログイン）';
+    return (u.email || '').split('@')[0];
+  }
+  function stampNow() {
+    const d = new Date();
+    const p = (n) => ('0' + n).slice(-2);
+    return { by: currentUserLabel(), at: d.getFullYear() + '/' + p(d.getMonth()+1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) };
+  }
+  function paintStamp(kind) {
+    const box = document.getElementById(kind === 'self' ? 'checkSelf' : 'checkDouble');
+    const el  = document.getElementById(kind === 'self' ? 'checkSelfStamp' : 'checkDoubleStamp');
+    const st  = checkStamps[kind];
+    box.closest('.c-work__check').classList.toggle('is-done', !!st);
+    el.textContent = st ? (st.by + ' / ' + st.at) : '未チェック';
+  }
+  function bindCheck(kind, box) {
+    box.addEventListener('change', function () {
+      checkStamps[kind] = box.checked ? stampNow() : null;
+      paintStamp(kind);
+    });
+  }
+  bindCheck('self', document.getElementById('checkSelf'));
+  bindCheck('double', document.getElementById('checkDouble'));
+  // ▲ ここまで ▲
+
   async function renderGrid() {
     const posts = await loadData();
     posts.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -954,6 +1041,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const postData = {
       id: isEdit ? inputs.id.value : generateId(), title: inputs.title.value, genre: inputs.genre.value,
       tags: tagArray, status: statusVal, keyword: inputs.keyword.value.trim(),
+      workWho: inputs.workWho.value.trim(),
+      workWhat: inputs.workWhat.value.trim(),
+      workWhen: inputs.workWhen.value,
+      checkSelf: checkStamps.self,
+      checkDouble: checkStamps.double,
       startDate: inputs.startDate.value, endDate: inputs.endDate.value,
       toc: inputs.toc.value, 
       content: inputs.content.value, coverImage: inputs.coverImageData.value,
@@ -1039,6 +1131,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const post = posts.find(p => p.id === id); if (!post) return;
     inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
     inputs.keyword.value = post.keyword || '';
+    inputs.workWho.value  = post.workWho  || '';
+    inputs.workWhat.value = post.workWhat || '';
+    inputs.workWhen.value = post.workWhen || '';
+    checkStamps.self   = post.checkSelf   || null;
+    checkStamps.double = post.checkDouble || null;
+    inputs.checkSelf.checked   = !!checkStamps.self;
+    inputs.checkDouble.checked = !!checkStamps.double;
+    paintStamp('self'); paintStamp('double');
     inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
     inputs.endDate.value = post.endDate || ''; 
     inputs.toc.value = post.toc || '';
@@ -1111,6 +1211,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function clearForm() { form.reset(); inputs.id.value = ''; inputs.coverImageData.value = ''; imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview('');
     // 新規作成の初期値は必ず「非公開（下書き）」。うっかり公開してしまうのを防ぐ
     for (const radio of inputs.status) radio.checked = (radio.value === 'private');
+    checkStamps = { self: null, double: null };
+    paintStamp('self'); paintStamp('double');
     setEditing(null); }
   document.getElementById('btnClear').addEventListener('click', clearForm);
 
@@ -1161,6 +1263,20 @@ document.addEventListener('DOMContentLoaded', () => {
   previewModal.addEventListener('click', (e) => { if (e.target === previewModal) { previewModal.classList.remove('is-open'); document.body.style.overflow = ''; } });
   
   // 初期読み込み
+  // URLに ?id=... が付いていたら、その記事を開いた状態にする（ポータルからのワンクリック用）
+  (function () {
+    const wanted = new URLSearchParams(location.search).get('id');
+    if (!wanted) return;
+    let opened = false;
+    firebase.auth().onAuthStateChanged(function (user) {
+      if (!user || opened) return;
+      const email = (user.email || '').toLowerCase();
+      if (!email.endsWith('@rc-group.co.jp')) return;
+      opened = true;
+      setTimeout(function () { editPost(wanted); }, 500);
+    });
+  })();
+
   renderGrid();
 });
 </script>
