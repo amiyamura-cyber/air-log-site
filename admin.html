@@ -299,20 +299,30 @@
   .p-card__period--after  { background: #f0f0f0; color: #666; border: 1px solid #ccc; }
   /* ▲ ここまで ▲ */
 
-  /* ▼ 一覧に対策キーワードを表示（管理画面だけ） ▼ */
-  .p-card__kw {
-    display: flex; align-items: center; gap: 6px;
-    background: #f1f5fb; border: 1px solid #d5e2f3; border-radius: 5px;
-    padding: 5px 8px; margin-bottom: 10px; min-width: 0;
+  /* ▼ 一覧に対策キーワードとハッシュタグを表示（管理画面だけ） ▼ */
+  .p-card__metas { display: flex; flex-direction: column; gap: 6px; margin-top: auto; margin-bottom: 12px; }
+  .p-card__meta {
+    display: flex; align-items: center; gap: 6px; min-width: 0;
+    border-radius: 5px; padding: 5px 8px;
   }
-  .p-card__kw__label {
+  .p-card__meta--kw    { background: #f1f5fb; border: 1px solid #d5e2f3; }
+  .p-card__meta--tag   { background: #f4f7f5; border: 1px solid #dce6df; }
+  .p-card__meta--empty { background: #fafafa; border: 1px dashed #ddd; }
+  .p-card__meta__label {
     flex: none; font-size: 0.65rem; font-weight: bold; color: #fff;
-    background: #5b7fa6; border-radius: 3px; padding: 2px 5px; letter-spacing: .03em;
+    border-radius: 3px; padding: 2px 5px; letter-spacing: .03em; background: #9aa5ae;
   }
-  .p-card__kw__text {
+  .p-card__meta--kw  .p-card__meta__label { background: #5b7fa6; }
+  .p-card__meta--tag .p-card__meta__label { background: #6a917a; }
+  .p-card__meta__text {
     font-size: 0.78rem; color: #33475b; font-weight: bold; min-width: 0;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
+  .p-card__meta--empty .p-card__meta__text { color: #aaa; font-weight: normal; }
+  .p-card__meta__chips {
+    display: flex; gap: 5px; min-width: 0; overflow: hidden;
+  }
+  .p-card__meta__chips .p-card__tag { flex: none; }
   /* ▲ ここまで ▲ */
 </style>
 </head>
@@ -823,13 +833,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = new Date(str + 'T00:00:00');
     return isNaN(d) ? str : ((d.getMonth() + 1) + '/' + d.getDate());
   }
+  function esc(v) {
+    return String(v == null ? '' : v)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // 対策キーワードは全記事に表示する。空なら「未設定」と出して、抜けが分かるようにする
   function keywordLine(post) {
     const kw = (post.keyword || '').trim();
-    if (!kw) return '';
-    const esc = kw.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-    return '<div class="p-card__kw" title="対策キーワード：' + esc + '">'
-         + '<span class="p-card__kw__label">対策KW</span>'
-         + '<span class="p-card__kw__text">' + esc + '</span></div>';
+    if (!kw) {
+      return '<div class="p-card__meta p-card__meta--empty">'
+           + '<span class="p-card__meta__label">対策KW</span>'
+           + '<span class="p-card__meta__text">未設定</span></div>';
+    }
+    return '<div class="p-card__meta p-card__meta--kw" title="対策キーワード：' + esc(kw) + '">'
+         + '<span class="p-card__meta__label">対策KW</span>'
+         + '<span class="p-card__meta__text">' + esc(kw) + '</span></div>';
+  }
+
+  // ハッシュタグも全記事に表示する
+  function tagLine(post) {
+    const tags = (post.tags || []).filter(function (t) { return String(t).trim(); });
+    if (tags.length === 0) {
+      return '<div class="p-card__meta p-card__meta--empty">'
+           + '<span class="p-card__meta__label">タグ</span>'
+           + '<span class="p-card__meta__text">未設定</span></div>';
+    }
+    const chips = tags.map(function (t) {
+      return '<span class="p-card__tag">#' + esc(String(t).trim()) + '</span>';
+    }).join('');
+    return '<div class="p-card__meta p-card__meta--tag" title="ハッシュタグ：' + esc(tags.join(', ')) + '">'
+         + '<span class="p-card__meta__label">タグ</span>'
+         + '<span class="p-card__meta__chips">' + chips + '</span></div>';
   }
 
   function periodBadge(post) {
@@ -867,7 +903,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const card = document.createElement('div');
         card.dataset.postId = post.id;
         card.className = `p-card ${post.status === 'private' ? 'p-card--private' : ''}`;
-        const tagsHtml = post.tags && post.tags.length > 0 ? `<div class="p-card__tags">${post.tags.map(t => `<span class="p-card__tag">#${t}</span>`).join('')}</div>` : '';
         const defaultImg = `https://via.placeholder.com/400x200/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre)}`;
         const imgSrc = post.coverImage || defaultImg;
         const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
@@ -877,8 +912,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-card__body">
             <span class="p-card__genre p-card__genre--${post.genre}">${post.genre}</span>
             <h3 class="p-card__title">${post.title}</h3>
-            ${keywordLine(post)}
-            ${tagsHtml}
+            <div class="p-card__metas">
+              ${keywordLine(post)}
+              ${tagLine(post)}
+            </div>
             <div class="p-card__footer">
               <span class="p-card__date">更新: ${post.displayDate}</span>${periodBadge(post)}
               <div class="p-card__actions">
