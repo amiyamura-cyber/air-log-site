@@ -372,6 +372,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     return 'now';
   }
   function isPublishedNow(post) { return periodState(post) === 'now'; }
+
+  // サイトに出すかどうかの判定。
+  // ・掲載終了日を過ぎていたら出さない
+  // ・公開日が来ていれば、ステータスが非公開でも公開する（公開日を優先）
+  // ・公開日が未来ならまだ出さない
+  // ・公開日が入っていなければ、ステータスに従う
+  function startReached(post) {
+    if (!post.startDate) return false;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const s = new Date(post.startDate + 'T00:00:00');
+    return !isNaN(s) && today >= s;
+  }
+  function isVisible(post) {
+    if (periodState(post) === 'after') return false;
+    if (post.startDate) return startReached(post);
+    return post.status === 'public' || post.status === '公開' || post.status === undefined;
+  }
   function formatJpDate(str) {
     const d = new Date(str + 'T00:00:00');
     if (isNaN(d)) return str;
@@ -460,7 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderHeroSlider() {
-    let publicPosts = globalPosts.filter(p => (p.status === 'public' || p.status === '公開' || p.status === undefined) && isPublishedNow(p));
+    let publicPosts = globalPosts.filter(isVisible);
     
     const track = document.getElementById('heroTrack');
     track.innerHTML = '';
@@ -513,7 +530,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function renderGridList(){
-    const publicPosts = globalPosts.filter(p => (p.status === 'public' || p.status === '公開' || p.status === undefined) && isPublishedNow(p)).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
+    const publicPosts = globalPosts.filter(isVisible).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
     
     function createCard(post){
       const imgSrc = post.coverImage || `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
@@ -551,7 +568,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const post = globalPosts.find(p => p.id === id);
     const container = document.getElementById('articleContainer');
     
-    if (!post || (post.status !== 'public' && post.status !== '公開' && post.status !== undefined)) {
+    const isDraft = (post && post.status !== 'public' && post.status !== '公開' && post.status !== undefined);
+    if (!post || (isDraft && !startReached(post))) {
       container.innerHTML = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>'; return;
     }
     // 公開期間の外でもURLを知っていれば読めるが、状態が分かるようお知らせを出す

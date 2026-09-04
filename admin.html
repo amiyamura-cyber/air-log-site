@@ -350,6 +350,9 @@
   }
   .c-sheet__badge--soon { background: #ffcdd2; color: #b3261e; }
   .c-sheet__badge--none { background: #eee; color: #999; }
+  .c-sheet__badge--live { background: #e8f5e9; color: #2e7d32; }
+  .c-sheet__badge--ended{ background: #ececec; color: #777; }
+  .c-sheet__state { display: block; font-size: 0.68rem; color: #999; margin-top: 4px; }
   .c-sheet__title {
     color: #1a73e8; font-weight: bold; text-decoration: none; line-height: 1.5;
     display: inline-block; min-width: 160px;
@@ -920,6 +923,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e && !isNaN(e) && today > e) return 'after';
     return 'now';
   }
+
+  // いまサイトに出ているか。公開日が来ていれば非公開でも公開扱いにする
+  function isLive(post) {
+    const st = periodState(post);
+    if (st === 'after') return false;
+    if (post.startDate) return st === 'now';
+    return post.status === 'public' || post.status === '公開' || post.status === undefined;
+  }
   function shortJpDate(str) {
     const d = new Date(str + 'T00:00:00');
     return isNaN(d) ? str : ((d.getMonth() + 1) + '/' + d.getDate());
@@ -1056,9 +1067,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const tdDate = document.createElement('td');
       tdDate.className = 'c-sheet__date';
       const d = p.startDate || '';
-      tdDate.innerHTML = d
-        ? '<span class="c-sheet__badge c-sheet__badge--soon">' + d.slice(5).replace('-', '/') + '</span>'
-        : '<span class="c-sheet__badge c-sheet__badge--none">未設定</span>';
+      if (d) {
+        const st = periodState(p);
+        const cls = st === 'before' ? 'c-sheet__badge--soon'
+                  : st === 'after'  ? 'c-sheet__badge--ended'
+                  : 'c-sheet__badge--live';
+        tdDate.innerHTML = '<span class="c-sheet__badge ' + cls + '">' + d.slice(5).replace('-', '/') + '</span>'
+          + '<span class="c-sheet__state">' + (st === 'before' ? '公開前' : st === 'after' ? '掲載終了' : '公開中') + '</span>';
+      } else {
+        tdDate.innerHTML = isLive(p)
+          ? '<span class="c-sheet__badge c-sheet__badge--live">公開中</span>'
+          : '<span class="c-sheet__badge c-sheet__badge--none">未公開</span>';
+      }
 
       // 記事タイトル（クリックで記事へ）
       const tdTitle = document.createElement('td');
@@ -1069,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
       a.textContent = p.title || '（タイトル未入力）';
       const sub = document.createElement('span');
       sub.className = 'c-sheet__sub';
-      sub.textContent = (p.status === 'private' ? '非公開' : '公開') + '　更新: ' + (p.displayDate || '');
+      sub.textContent = (isLive(p) ? '公開中' : '未公開') + '　更新: ' + (p.displayDate || '');
       a.appendChild(sub);
       tdTitle.appendChild(a);
 
