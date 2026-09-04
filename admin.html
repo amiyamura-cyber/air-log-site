@@ -361,7 +361,11 @@
   .c-sheet__sub { display: block; font-size: 0.72rem; color: #999; font-weight: normal; margin-top: 3px; }
   .c-sheet__cr { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
   .c-sheet__chip { font-size: 0.72rem; font-weight: bold; border-radius: 4px; padding: 3px 8px; }
-  .c-sheet__chip--cat { background: #e8f0fe; color: #1a56c0; }
+  .c-sheet__chip--cat { background: #9aa5ae; color: #fff; text-align: center; }
+  .c-sheet__chip--cat.cat-採用支援     { background: #1a73e8; }
+  .c-sheet__chip--cat.cat-集客支援     { background: #8e24aa; }
+  .c-sheet__chip--cat.cat-お役立ち資料 { background: #43a047; }
+  .c-sheet__chip--cat.cat-セミナー情報 { background: #f57c00; }
   .c-sheet__chip--kw  { background: #f0ecfa; color: #5b3a8e; }
   .c-sheet__chip--none{ background: #f4f4f4; color: #aaa; font-weight: normal; }
   .c-sheet__fix { display: flex; gap: 8px; align-items: flex-start; min-width: 220px; }
@@ -596,6 +600,13 @@
       <div class="c-sheet__bar">
         <input type="text" id="sheetSearch" class="c-sheet__search" placeholder="🔍 記事タイトル・カテゴリー・対策キーワード・作成者・修正の内容で検索">
         <select id="sheetAuthor" class="c-sheet__filter"><option value="">作成者：すべて</option></select>
+        <select id="sheetGenre" class="c-sheet__filter">
+          <option value="">カテゴリー：すべて</option>
+          <option value="採用支援">採用支援</option>
+          <option value="集客支援">集客支援</option>
+          <option value="お役立ち資料">お役立ち資料</option>
+          <option value="セミナー情報">セミナー情報</option>
+        </select>
         <select id="sheetState" class="c-sheet__filter">
           <option value="">状態：すべて</option>
           <option value="fix1">第一修正が未</option>
@@ -1035,6 +1046,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = document.getElementById('sheetBody');
     const q = (document.getElementById('sheetSearch').value || '').trim().toLowerCase();
     const fa = document.getElementById('sheetAuthor').value;
+    const fg = document.getElementById('sheetGenre').value;
     const fs = document.getElementById('sheetState').value;
 
     // 作成者のプルダウンを作り直す
@@ -1051,6 +1063,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (blob.indexOf(q) === -1) return false;
       }
       if (fa && (p.author || '') !== fa) return false;
+      if (fg && (p.genre || '') !== fg) return false;
       if (fs === 'fix1' && fixDone(p, 'fix1')) return false;
       if (fs === 'fix2' && fixDone(p, 'fix2')) return false;
       if (fs === 'done' && !(fixDone(p, 'fix1') && fixDone(p, 'fix2'))) return false;
@@ -1113,7 +1126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const cr = document.createElement('div');
       cr.className = 'c-sheet__cr';
       cr.innerHTML =
-        '<span class="c-sheet__chip c-sheet__chip--cat">' + (p.genre || 'カテゴリー未設定') + '</span>'
+        '<span class="c-sheet__chip c-sheet__chip--cat cat-' + (p.genre || '') + '">' + (p.genre || 'カテゴリー未設定') + '</span>'
         + ((p.keyword || '').trim()
             ? '<span class="c-sheet__chip c-sheet__chip--kw">' + p.keyword + '</span>'
             : '');
@@ -1167,7 +1180,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  ['sheetSearch', 'sheetAuthor', 'sheetState'].forEach(function (id) {
+  ['sheetSearch', 'sheetAuthor', 'sheetGenre', 'sheetState'].forEach(function (id) {
     const el = document.getElementById(id);
     el.addEventListener(id === 'sheetSearch' ? 'input' : 'change', renderSheet);
   });
