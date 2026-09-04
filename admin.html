@@ -880,6 +880,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 + 'もう少し小さい画像か、写真の場合はJPEGで書き出したものをお使いください。');
             return;
           }
+          coverRemoved = false;
           inputs.coverImageData.value = out; showImagePreview(out);
         };
         img.src = event.target.result;
@@ -904,7 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updatePreviewPosition() { imagePreview.style.objectPosition = `${imagePositionSliderX.value}% ${imagePositionSliderY.value}%`; }
   imagePositionSliderX.addEventListener('input', updatePreviewPosition);
   imagePositionSliderY.addEventListener('input', updatePreviewPosition);
-  btnRemoveImage.addEventListener('click', () => showImagePreview(''));
+  btnRemoveImage.addEventListener('click', () => { coverRemoved = true; showImagePreview(''); });
 
   btnExpandEditor.addEventListener('click', () => { 
     currentEditingField = inputs.content;
@@ -1220,6 +1221,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   let existingAuthor = '';    // 編集中の記事に既に入っている作成者
   let existingKeyword = '';  // 同じく、既に記録されている対策キーワード
+  let existingCover = '';    // 編集中の記事に既に入っているカバー画像
+  let coverRemoved = false;  // 「画像を削除」を押したかどうか
 
   async function renderGrid() {
     const posts = await loadData();
@@ -1304,7 +1307,9 @@ document.addEventListener('DOMContentLoaded', () => {
       tags: tagArray, status: statusVal, keyword: existingKeyword || autoKeyword(),
       startDate: inputs.startDate.value, endDate: inputs.endDate.value,
       toc: inputs.toc.value, 
-      content: inputs.content.value, coverImage: inputs.coverImageData.value,
+      content: inputs.content.value,
+      // 画像を消したのでなければ、空になっていても元の画像を守る
+      coverImage: inputs.coverImageData.value || (coverRemoved ? '' : existingCover),
       coverPositionX: imagePositionSliderX.value, coverPositionY: imagePositionSliderY.value,
       date: originalDate, displayDate: formatDate(new Date(originalDate)),
       // 作業表に自動で記録する分
@@ -1392,6 +1397,8 @@ document.addEventListener('DOMContentLoaded', () => {
     inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
     existingAuthor = post.author || '';
     existingKeyword = post.keyword || '';
+    existingCover = post.coverImage || '';
+    coverRemoved = false;
     inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
     inputs.endDate.value = post.endDate || ''; 
     inputs.toc.value = post.toc || '';
@@ -1399,6 +1406,8 @@ document.addEventListener('DOMContentLoaded', () => {
     imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;
     imagePositionSliderY.value = post.coverPositionY !== undefined ? post.coverPositionY : 50;
     for (const radio of inputs.status) radio.checked = (radio.value === post.status);
+    // 保存用の隠し欄にも入れる。ここが空のままだと保存時に画像が消える
+    inputs.coverImageData.value = post.coverImage || '';
     showImagePreview(post.coverImage || ''); window.scrollTo({ top: 0, behavior: 'smooth' });
     setEditing(post);
   }
@@ -1465,6 +1474,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // 新規作成の初期値は必ず「非公開（下書き）」。うっかり公開してしまうのを防ぐ
     existingAuthor = '';
     existingKeyword = '';
+    existingCover = '';
+    coverRemoved = false;
     for (const radio of inputs.status) radio.checked = (radio.value === 'private');
     setEditing(null); }
   document.getElementById('btnClear').addEventListener('click', clearForm);
