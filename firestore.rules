@@ -17,6 +17,12 @@ service cloud.firestore {
       allow create, update, delete: if isStaff();
     }
 
+    // 作成者の一覧など、管理画面で使う設定
+    match /settings/{docId} {
+      allow read: if true;
+      allow create, update, delete: if isStaff();
+    }
+
     // 上記以外は全面的に禁止
     match /{document=**} {
       allow read, write: if false;

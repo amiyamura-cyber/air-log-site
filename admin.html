@@ -324,24 +324,62 @@
   }
   .p-card__meta__chips .p-card__tag { flex: none; }
   /* ▲ ここまで ▲ */
-
-  /* ▼ 作業記録 ▼ */
-  .c-work { background: #f6f2fb; border: 2px solid #7e57c2; border-radius: 8px; padding: 16px; margin-top: 24px; }
-  .c-work__title { font-size: 0.98rem; font-weight: bold; color: #5e35b1; margin-bottom: 6px; }
-  .c-work__lead { font-size: 0.76rem; color: #6b5b8a; margin: 0 0 14px; line-height: 1.7; }
-  .c-work__checks { display: flex; flex-direction: column; gap: 8px; }
-  .c-work__check {
-    display: flex; align-items: flex-start; gap: 10px; cursor: pointer;
-    background: #fff; border: 1px solid #d8cdea; border-radius: 6px; padding: 10px 12px;
+  /* ▼ 作業表（CR管理と同じ並び） ▼ */
+  .l-viewtabs { display: flex; gap: 8px; margin-bottom: 18px; }
+  .l-viewtab {
+    font: inherit; font-size: 0.88rem; font-weight: bold; cursor: pointer;
+    background: #fff; border: 1px solid #ddd; color: #666;
+    border-radius: 20px; padding: 8px 20px;
   }
-  .c-work__check input { width: 17px; height: 17px; margin: 2px 0 0; flex: none; accent-color: #2e7d32; }
-  .c-work__check__body { min-width: 0; }
-  .c-work__check__name { display: block; font-size: 0.85rem; font-weight: bold; color: #333; }
-  .c-work__check__stamp { display: block; font-size: 0.72rem; color: #999; margin-top: 2px; }
-  .c-work__check.is-done { border-color: #a5d6a7; background: #f1f8f2; }
-  .c-work__check.is-done .c-work__check__stamp { color: #2e7d32; font-weight: bold; }
-  .c-work__note { font-size: 0.72rem; color: #7a6b96; margin: 10px 0 0; line-height: 1.7; }
-  .c-work__auto { font-size: 0.66rem; font-weight: bold; color: #fff; background: #7e57c2; border-radius: 3px; padding: 2px 6px; }
+  .l-viewtab[aria-selected="true"] { background: #1a73e8; border-color: #1a73e8; color: #fff; }
+
+  .c-sheet__wrap { background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); overflow-x: auto; }
+  .c-sheet { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 980px; }
+  .c-sheet th {
+    background: #1e3a5f; color: #fff; font-weight: bold; padding: 12px 10px;
+    text-align: center; white-space: nowrap; position: sticky; top: 0; z-index: 2;
+  }
+  .c-sheet th.is-fix1 { background: #2b5070; }
+  .c-sheet th.is-fix2 { background: #37627f; }
+  .c-sheet td { border-bottom: 1px solid #eee; padding: 10px; vertical-align: top; }
+  .c-sheet tr:hover td { background: #fafbfc; }
+  .c-sheet__date { text-align: center; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .c-sheet__badge {
+    display: inline-block; font-size: 0.72rem; font-weight: bold;
+    border-radius: 12px; padding: 3px 10px; white-space: nowrap;
+  }
+  .c-sheet__badge--soon { background: #ffcdd2; color: #b3261e; }
+  .c-sheet__badge--none { background: #eee; color: #999; }
+  .c-sheet__title {
+    color: #1a73e8; font-weight: bold; text-decoration: none; line-height: 1.5;
+    display: inline-block; min-width: 160px;
+  }
+  .c-sheet__title:hover { text-decoration: underline; }
+  .c-sheet__sub { display: block; font-size: 0.72rem; color: #999; font-weight: normal; margin-top: 3px; }
+  .c-sheet__cr { display: flex; flex-direction: column; gap: 5px; min-width: 150px; }
+  .c-sheet__chip { font-size: 0.72rem; font-weight: bold; border-radius: 4px; padding: 3px 8px; }
+  .c-sheet__chip--cat { background: #e8f0fe; color: #1a56c0; }
+  .c-sheet__chip--kw  { background: #f0ecfa; color: #5b3a8e; }
+  .c-sheet__chip--none{ background: #f4f4f4; color: #aaa; font-weight: normal; }
+  .c-sheet__fix { display: flex; gap: 8px; align-items: flex-start; min-width: 220px; }
+  .c-sheet__fix textarea {
+    flex: 1; min-height: 62px; border: 1px solid #ddd; border-radius: 6px; padding: 8px;
+    font-family: inherit; font-size: 0.8rem; line-height: 1.6; resize: vertical; background: #fff;
+  }
+  .c-sheet__fix textarea:focus { border-color: #1a73e8; outline: none; }
+  .c-sheet__done { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
+  .c-sheet__done input { width: 17px; height: 17px; accent-color: #2e7d32; cursor: pointer; }
+  .c-sheet__done span { font-size: 0.66rem; color: #999; }
+  .c-sheet__fix.is-done textarea { background: #f2f8f3; border-color: #a5d6a7; }
+  .c-sheet__fix.is-done .c-sheet__done span { color: #2e7d32; font-weight: bold; }
+  .c-sheet__author { min-width: 110px; }
+  .c-sheet__author select { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 7px; font-family: inherit; font-size: 0.8rem; background: #fff; }
+  .c-sheet__saving { font-size: 0.7rem; color: #2e7d32; font-weight: bold; height: 14px; }
+  .c-sheet__bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+  .c-sheet__search { flex: 1; min-width: 200px; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; font-size: 0.85rem; }
+  .c-sheet__filter { padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-family: inherit; font-size: 0.85rem; background: #fff; }
+  .c-sheet__addauthor { font: inherit; font-size: 0.78rem; font-weight: bold; background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
+  .c-sheet__addauthor:hover { background: #e4e4e4; }
   /* ▲ ここまで ▲ */
 </style>
 </head>
@@ -539,52 +577,52 @@
         <button type="button" id="btnPreviewInput" class="c-btn c-btn--secondary">プレビュー</button>
       </div>
       <button type="button" id="btnClear" class="c-btn c-btn--secondary">新規作成（クリア）</button>
-
-      <!-- ▼ 作業記録 ▼ -->
-      <div class="c-work">
-        <div class="c-work__title">📋 作業記録（記事の内容ではありません）</div>
-        <p class="c-work__lead">誰が・いつ・何をしたかの記録です。公開サイトには出ません。</p>
-        <div class="c-form-group" style="margin-bottom:12px;">
-          <label class="c-label"><span>誰が（担当者）</span><span class="c-work__auto">ログインから自動</span></label>
-          <input type="text" id="workWho" class="c-input">
-        </div>
-        <div class="c-form-group" style="margin-bottom:12px;">
-          <label class="c-label"><span>何を（作業内容）</span><span class="c-work__auto">操作から自動</span></label>
-          <input type="text" id="workWhat" class="c-input">
-        </div>
-        <div class="c-form-group" style="margin-bottom:14px;">
-          <label class="c-label"><span>いつ（作業日）</span><span class="c-work__auto">当日を自動</span></label>
-          <input type="date" id="workWhen" class="c-input">
-        </div>
-
-        <div class="c-work__checks">
-          <label class="c-work__check">
-            <input type="checkbox" id="checkSelf">
-            <span class="c-work__check__body">
-              <span class="c-work__check__name">本人チェック</span>
-              <span class="c-work__check__stamp" id="checkSelfStamp">未チェック</span>
-            </span>
-          </label>
-          <label class="c-work__check">
-            <input type="checkbox" id="checkDouble">
-            <span class="c-work__check__body">
-              <span class="c-work__check__name">ダブルチェック</span>
-              <span class="c-work__check__stamp" id="checkDoubleStamp">未チェック</span>
-            </span>
-          </label>
-        </div>
-        <p class="c-work__note">上の3つは自動で入ります（手で書き換えてもかまいません）。チェックを入れると、ログイン中のアカウントと日時が記録されます。</p>
-      </div>
-      <!-- ▲ ここまで ▲ -->
     </form>
   </aside>
 
   <main class="l-list">
-    <div class="l-list__header">
-      <h2 class="l-list__title">記事一覧</h2>
-      <span style="font-size: 0.9rem; color: #666;" id="articleCount">全 0 件</span>
+    <div class="l-viewtabs">
+      <button type="button" class="l-viewtab" id="tabCards" aria-selected="true">🗂 記事一覧</button>
+      <button type="button" class="l-viewtab" id="tabSheet" aria-selected="false">📋 作業表</button>
     </div>
-    <div id="articleGrid"></div>
+
+    <div id="viewCards">
+      <div class="l-list__header">
+        <h2 class="l-list__title">記事一覧</h2>
+        <span style="font-size: 0.9rem; color: #666;" id="articleCount">全 0 件</span>
+      </div>
+      <div id="articleGrid"></div>
+    </div>
+
+    <div id="viewSheet" style="display:none;">
+      <div class="c-sheet__bar">
+        <input type="text" id="sheetSearch" class="c-sheet__search" placeholder="🔍 記事タイトル・カテゴリー・対策キーワード・作成者・修正の内容で検索">
+        <select id="sheetAuthor" class="c-sheet__filter"><option value="">作成者：すべて</option></select>
+        <select id="sheetState" class="c-sheet__filter">
+          <option value="">状態：すべて</option>
+          <option value="fix1">第一修正が未</option>
+          <option value="fix2">第二修正が未</option>
+          <option value="done">両方とも済</option>
+        </select>
+        <button type="button" class="c-sheet__addauthor" id="btnAddAuthor">＋ 作成者を登録</button>
+        <span style="font-size:0.85rem;color:#666;" id="sheetCount"></span>
+      </div>
+      <div class="c-sheet__wrap">
+        <table class="c-sheet">
+          <thead>
+            <tr>
+              <th style="width:96px;">公開日</th>
+              <th>記事タイトル</th>
+              <th style="width:120px;">作成者</th>
+              <th style="width:170px;">カテゴリー・対策KW</th>
+              <th class="is-fix1">第一修正</th>
+              <th class="is-fix2">第二修正</th>
+            </tr>
+          </thead>
+          <tbody id="sheetBody"></tbody>
+        </table>
+      </div>
+    </div>
   </main>
 </div>
 
@@ -725,7 +763,7 @@ auth.onAuthStateChanged((user) => {
     return;
   }
   authGate.classList.add('is-hidden');
-  if (typeof window.airlogFillWork === 'function') window.airlogFillWork();
+  if (typeof window.airlogLoadAuthors === 'function') window.airlogLoadAuthors();
   const box = document.getElementById('headerUser');
   if (box) {
     document.getElementById('headerUserMail').textContent = user.email;
@@ -750,11 +788,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const inputs = {
     id: document.getElementById('postId'), title: document.getElementById('postTitle'),
     keyword: document.getElementById('postKeyword'),
-    workWho: document.getElementById('workWho'),
-    workWhat: document.getElementById('workWhat'),
-    workWhen: document.getElementById('workWhen'),
-    checkSelf: document.getElementById('checkSelf'),
-    checkDouble: document.getElementById('checkDouble'),
     genre: document.getElementById('postGenre'), tags: document.getElementById('postTags'),
     status: document.getElementsByName('status'), startDate: document.getElementById('startDate'),
     endDate: document.getElementById('endDate'), 
@@ -939,103 +972,212 @@ document.addEventListener('DOMContentLoaded', () => {
     return '';
   }
 
-  // ▼ 作業記録：誰が・何を・いつ を自動で埋める ▼
-  window.airlogWork = window.airlogWork || { aiPrompt: false, tocFix: false };
-  let workFlags = { isNew: true, content: false, toc: false, image: false, published: false };
-  let workWhatTouched = false;   // 手で書き換えたら自動更新をやめる
+  // ▼ 作業表（CR管理と同じ並び） ▼
+  let authors = [];              // 登録された作成者
+  let sheetPosts = [];
 
-  function todayValue() {
-    const d = new Date(), p = (n) => ('0' + n).slice(-2);
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  const viewCards = document.getElementById('viewCards');
+  const viewSheet = document.getElementById('viewSheet');
+  const tabCards  = document.getElementById('tabCards');
+  const tabSheet  = document.getElementById('tabSheet');
+
+  function switchView(toSheet) {
+    viewCards.style.display = toSheet ? 'none' : '';
+    viewSheet.style.display = toSheet ? '' : 'none';
+    tabCards.setAttribute('aria-selected', String(!toSheet));
+    tabSheet.setAttribute('aria-selected', String(toSheet));
+    if (toSheet) renderSheet();
+  }
+  tabCards.addEventListener('click', function () { switchView(false); });
+  tabSheet.addEventListener('click', function () { switchView(true); });
+
+  window.airlogLoadAuthors = async function () { await loadAuthors(); renderSheet(); };
+  async function loadAuthors() {
+    try {
+      const d = await db.collection('settings').doc('authors').get();
+      authors = (d.exists && d.data().list) ? d.data().list : [];
+    } catch (e) { authors = []; }
+  }
+  async function saveAuthors() {
+    await db.collection('settings').doc('authors').set({ list: authors });
   }
 
-  // ログイン中のアカウント名（メールの@より前）
-  function loginName() {
+  document.getElementById('btnAddAuthor').addEventListener('click', async function () {
+    const name = (prompt('登録する作成者の名前を入力してください。') || '').trim();
+    if (!name) return;
+    if (authors.indexOf(name) !== -1) { alert('すでに登録されています。'); return; }
+    authors.push(name);
+    try { await saveAuthors(); renderSheet(); }
+    catch (e) { alert('【エラー】保存に失敗しました：' + e.message); }
+  });
+
+  // 1件だけ更新する（表の中で直接書き換えるため）
+  async function patchPost(id, patch, statusEl) {
+    if (statusEl) statusEl.textContent = '保存中…';
+    try {
+      await db.collection('posts').doc(id).update(patch);
+      const p = sheetPosts.find(x => x.id === id);
+      if (p) Object.assign(p, patch);
+      if (statusEl) { statusEl.textContent = '保存しました'; setTimeout(function () { statusEl.textContent = ''; }, 1500); }
+    } catch (e) {
+      if (statusEl) statusEl.textContent = '';
+      alert('【エラー】保存に失敗しました：' + e.message);
+    }
+  }
+
+  function fixDone(p, key) {
+    const v = p[key];
+    return !!(v && v.done);
+  }
+
+  function renderSheet() {
+    const body = document.getElementById('sheetBody');
+    const q = (document.getElementById('sheetSearch').value || '').trim().toLowerCase();
+    const fa = document.getElementById('sheetAuthor').value;
+    const fs = document.getElementById('sheetState').value;
+
+    // 作成者のプルダウンを作り直す
+    const sel = document.getElementById('sheetAuthor');
+    const keep = sel.value;
+    sel.innerHTML = '<option value="">作成者：すべて</option>'
+      + authors.map(function (a) { return '<option>' + a + '</option>'; }).join('');
+    sel.value = keep;
+
+    const rows = sheetPosts.filter(function (p) {
+      if (q) {
+        const blob = [p.title, p.genre, p.keyword, p.author,
+          (p.fix1 || {}).text, (p.fix2 || {}).text].join(' ').toLowerCase();
+        if (blob.indexOf(q) === -1) return false;
+      }
+      if (fa && (p.author || '') !== fa) return false;
+      if (fs === 'fix1' && fixDone(p, 'fix1')) return false;
+      if (fs === 'fix2' && fixDone(p, 'fix2')) return false;
+      if (fs === 'done' && !(fixDone(p, 'fix1') && fixDone(p, 'fix2'))) return false;
+      return true;
+    });
+
+    document.getElementById('sheetCount').textContent = rows.length + ' 件 / 全 ' + sheetPosts.length + ' 件';
+    body.innerHTML = '';
+
+    rows.forEach(function (p) {
+      const tr = document.createElement('tr');
+
+      // 公開日
+      const tdDate = document.createElement('td');
+      tdDate.className = 'c-sheet__date';
+      const d = p.startDate || '';
+      tdDate.innerHTML = d
+        ? '<span class="c-sheet__badge c-sheet__badge--soon">' + d.slice(5).replace('-', '/') + '</span>'
+        : '<span class="c-sheet__badge c-sheet__badge--none">未設定</span>';
+
+      // 記事タイトル（クリックで記事へ）
+      const tdTitle = document.createElement('td');
+      const a = document.createElement('a');
+      a.className = 'c-sheet__title';
+      a.href = '/air-log-site/?id=' + encodeURIComponent(p.id);
+      a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = p.title || '（タイトル未入力）';
+      const sub = document.createElement('span');
+      sub.className = 'c-sheet__sub';
+      sub.textContent = (p.status === 'private' ? '非公開' : '公開') + '　更新: ' + (p.displayDate || '');
+      a.appendChild(sub);
+      tdTitle.appendChild(a);
+
+      // 作成者
+      const tdAuthor = document.createElement('td');
+      tdAuthor.className = 'c-sheet__author';
+      const as = document.createElement('select');
+      // 保存時に自動で入った名前が未登録でも選べるようにしておく
+      const list = authors.slice();
+      if (p.author && list.indexOf(p.author) === -1) list.push(p.author);
+      as.innerHTML = '<option value="">—</option>'
+        + list.map(function (x) { return '<option>' + x + '</option>'; }).join('');
+      as.value = p.author || '';
+      const authorStatus = document.createElement('div');
+      authorStatus.className = 'c-sheet__saving';
+      as.addEventListener('change', function () { patchPost(p.id, { author: as.value }, authorStatus); });
+      tdAuthor.appendChild(as); tdAuthor.appendChild(authorStatus);
+
+      // カテゴリー・対策KW
+      const tdCr = document.createElement('td');
+      const cr = document.createElement('div');
+      cr.className = 'c-sheet__cr';
+      cr.innerHTML =
+        '<span class="c-sheet__chip c-sheet__chip--cat">' + (p.genre || 'カテゴリー未設定') + '</span>'
+        + (p.keyword
+            ? '<span class="c-sheet__chip c-sheet__chip--kw">' + p.keyword + '</span>'
+            : '<span class="c-sheet__chip c-sheet__chip--none">対策KW 未設定</span>');
+      tdCr.appendChild(cr);
+
+      // 第一修正・第二修正
+      function fixCell(key) {
+        const td = document.createElement('td');
+        const wrap = document.createElement('div');
+        wrap.className = 'c-sheet__fix' + (fixDone(p, key) ? ' is-done' : '');
+        const ta = document.createElement('textarea');
+        ta.placeholder = '修正内容';
+        ta.value = (p[key] || {}).text || '';
+        const done = document.createElement('label');
+        done.className = 'c-sheet__done';
+        const cb = document.createElement('input');
+        cb.type = 'checkbox'; cb.checked = fixDone(p, key);
+        const lb = document.createElement('span'); lb.textContent = '済';
+        done.appendChild(cb); done.appendChild(lb);
+        const st = document.createElement('div');
+        st.className = 'c-sheet__saving';
+
+        function save() {
+          const cur = p[key] || {};
+          const next = { text: ta.value, done: cb.checked };
+          if (cb.checked && !cur.done) {
+            const u = firebase.auth().currentUser;
+            const n = new Date(), pd = (x) => ('0' + x).slice(-2);
+            next.by = u && u.email ? u.email.split('@')[0] : '';
+            next.at = n.getFullYear() + '/' + pd(n.getMonth() + 1) + '/' + pd(n.getDate()) + ' ' + pd(n.getHours()) + ':' + pd(n.getMinutes());
+          } else if (cb.checked) {
+            next.by = cur.by || ''; next.at = cur.at || '';
+          }
+          wrap.classList.toggle('is-done', cb.checked);
+          lb.textContent = cb.checked && next.by ? next.by : '済';
+          const patch = {}; patch[key] = next;
+          patchPost(p.id, patch, st);
+        }
+        ta.addEventListener('change', save);
+        cb.addEventListener('change', save);
+        if (fixDone(p, key) && (p[key] || {}).by) lb.textContent = p[key].by;
+
+        wrap.appendChild(ta); wrap.appendChild(done);
+        td.appendChild(wrap); td.appendChild(st);
+        return td;
+      }
+
+      tr.appendChild(tdDate); tr.appendChild(tdTitle); tr.appendChild(tdAuthor);
+      tr.appendChild(tdCr); tr.appendChild(fixCell('fix1')); tr.appendChild(fixCell('fix2'));
+      body.appendChild(tr);
+    });
+  }
+
+  ['sheetSearch', 'sheetAuthor', 'sheetState'].forEach(function (id) {
+    const el = document.getElementById(id);
+    el.addEventListener(id === 'sheetSearch' ? 'input' : 'change', renderSheet);
+  });
+  // ▲ ここまで ▲
+
+  // 保存時に自動で入れる値
+  function autoAuthorName() {
     const u = firebase.auth().currentUser;
     return u && u.email ? u.email.split('@')[0] : '';
   }
-
-  // 実際にどの操作をしたかから「何を」の文章を組み立てる
-  function describeWork() {
-    const parts = [];
-    if (window.airlogWork.aiPrompt) parts.push('AIで初稿を作成');
-    if (window.airlogWork.tocFix)   parts.push('目次から修正');
-    if (workFlags.toc)     parts.push('目次を編集');
-    if (workFlags.content) parts.push('本文を編集');
-    if (workFlags.image)   parts.push('カバー画像を差し替え');
-    if (workFlags.published) parts.push('公開に変更');
-    const head = workFlags.isNew ? '新規作成' : '編集';
-    return parts.length ? (head + '（' + parts.join('、') + '）') : head;
+  function nowStamp() {
+    const d = new Date(), p = (n) => ('0' + n).slice(-2);
+    return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
-
-  window.airlogFillWork = function () { refreshWorkFields(); };
-  function refreshWorkFields() {
-    const who = document.getElementById('workWho');
-    const when = document.getElementById('workWhen');
-    const what = document.getElementById('workWhat');
-    if (who && !who.value.trim()) who.value = loginName();
-    if (when && !when.value) when.value = todayValue();
-    if (what && !workWhatTouched) what.value = describeWork();
-  }
-
-  // 操作を拾う
-  (function () {
-    const mark = (key) => () => { workFlags[key] = true; refreshWorkFields(); };
-    const c = document.getElementById('postContent'); if (c) c.addEventListener('input', mark('content'));
-    const t = document.getElementById('postToc');     if (t) t.addEventListener('input', mark('toc'));
-    const mc = document.getElementById('modalPostContent');
-    if (mc) mc.addEventListener('input', function () {
-      workFlags[document.getElementById('textEditorModalTitle').textContent.indexOf('目次') >= 0 ? 'toc' : 'content'] = true;
-      refreshWorkFields();
-    });
-    const img = document.getElementById('imageInput'); if (img) img.addEventListener('change', mark('image'));
-    for (const r of document.getElementsByName('status')) {
-      r.addEventListener('change', function () {
-        workFlags.published = (r.value === 'public' && r.checked);
-        refreshWorkFields();
-      });
-    }
-    const what = document.getElementById('workWhat');
-    if (what) what.addEventListener('input', function () { workWhatTouched = true; });
-    // 指示書ボタンは別のscriptにあるので、押されたかどうかを少し遅れて拾う
-    setInterval(function () {
-      if ((window.airlogWork.aiPrompt || window.airlogWork.tocFix) && !workWhatTouched) refreshWorkFields();
-    }, 1500);
-  })();
-  // ▲ ここまで ▲
-
-  // ▼ 作業記録のチェック（押した人と日時を自動で残す） ▼
-  let checkStamps = { self: null, double: null };   // { by, at } または null
-
-  function currentUserLabel() {
-    const u = firebase.auth().currentUser;
-    if (!u) return '（未ログイン）';
-    return (u.email || '').split('@')[0];
-  }
-  function stampNow() {
-    const d = new Date();
-    const p = (n) => ('0' + n).slice(-2);
-    return { by: currentUserLabel(), at: d.getFullYear() + '/' + p(d.getMonth()+1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) };
-  }
-  function paintStamp(kind) {
-    const box = document.getElementById(kind === 'self' ? 'checkSelf' : 'checkDouble');
-    const el  = document.getElementById(kind === 'self' ? 'checkSelfStamp' : 'checkDoubleStamp');
-    const st  = checkStamps[kind];
-    box.closest('.c-work__check').classList.toggle('is-done', !!st);
-    el.textContent = st ? (st.by + ' / ' + st.at) : '未チェック';
-  }
-  function bindCheck(kind, box) {
-    box.addEventListener('change', function () {
-      checkStamps[kind] = box.checked ? stampNow() : null;
-      paintStamp(kind);
-    });
-  }
-  bindCheck('self', document.getElementById('checkSelf'));
-  bindCheck('double', document.getElementById('checkDouble'));
-  // ▲ ここまで ▲
+  let existingAuthor = '';   // 編集中の記事に既に入っている作成者
 
   async function renderGrid() {
     const posts = await loadData();
+    sheetPosts = posts.slice();
+    if (viewSheet.style.display !== 'none') renderSheet();
     posts.sort((a, b) => new Date(b.date) - new Date(a.date));
     articleGrid.innerHTML = ''; articleCount.textContent = `全 ${posts.length} 件`;
     if (posts.length === 0) {
@@ -1113,16 +1255,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const postData = {
       id: isEdit ? inputs.id.value : generateId(), title: inputs.title.value, genre: inputs.genre.value,
       tags: tagArray, status: statusVal, keyword: inputs.keyword.value.trim(),
-      workWho: inputs.workWho.value.trim() || loginName(),
-      workWhat: inputs.workWhat.value.trim() || describeWork(),
-      workWhen: inputs.workWhen.value || todayValue(),
-      checkSelf: checkStamps.self,
-      checkDouble: checkStamps.double,
       startDate: inputs.startDate.value, endDate: inputs.endDate.value,
       toc: inputs.toc.value, 
       content: inputs.content.value, coverImage: inputs.coverImageData.value,
       coverPositionX: imagePositionSliderX.value, coverPositionY: imagePositionSliderY.value,
-      date: originalDate, displayDate: formatDate(new Date(originalDate))
+      date: originalDate, displayDate: formatDate(new Date(originalDate)),
+      // 作業表に自動で記録する分
+      author: (isEdit && existingAuthor) ? existingAuthor : autoAuthorName(),
+      updatedBy: autoAuthorName(),
+      updatedAt: nowStamp()
     };
     
     try {
@@ -1202,18 +1343,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const posts = await loadData();
     const post = posts.find(p => p.id === id); if (!post) return;
     inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
+    existingAuthor = post.author || '';
     inputs.keyword.value = post.keyword || '';
-    inputs.workWho.value  = post.workWho  || '';
-    inputs.workWhat.value = post.workWhat || '';
-    inputs.workWhen.value = post.workWhen || '';
-    workFlags = { isNew: false, content: false, toc: false, image: false, published: false };
-    window.airlogWork = { aiPrompt: false, tocFix: false };
-    workWhatTouched = !!(post.workWhat || '').trim();
-    checkStamps.self   = post.checkSelf   || null;
-    checkStamps.double = post.checkDouble || null;
-    inputs.checkSelf.checked   = !!checkStamps.self;
-    inputs.checkDouble.checked = !!checkStamps.double;
-    paintStamp('self'); paintStamp('double');
     inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
     inputs.endDate.value = post.endDate || ''; 
     inputs.toc.value = post.toc || '';
@@ -1285,13 +1416,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function clearForm() { form.reset(); inputs.id.value = ''; inputs.coverImageData.value = ''; imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview('');
     // 新規作成の初期値は必ず「非公開（下書き）」。うっかり公開してしまうのを防ぐ
+    existingAuthor = '';
     for (const radio of inputs.status) radio.checked = (radio.value === 'private');
-    checkStamps = { self: null, double: null };
-    workFlags = { isNew: true, content: false, toc: false, image: false, published: false };
-    window.airlogWork = { aiPrompt: false, tocFix: false };
-    workWhatTouched = false;
-    paintStamp('self'); paintStamp('double');
-    refreshWorkFields();
     setEditing(null); }
   document.getElementById('btnClear').addEventListener('click', clearForm);
 
@@ -1604,7 +1730,6 @@ async function runCopyAndOpen(text) {
 }
 
 async function generateAndOpen() {
-  window.airlogWork = window.airlogWork || {}; window.airlogWork.aiPrompt = true;
   // 記事フォームの「対策キーワード」が空なら、ここで入れた値を写しておく
   const kw = (document.getElementById('keyword').value || '').trim();
   const target = document.getElementById('postKeyword');
@@ -1613,7 +1738,6 @@ async function generateAndOpen() {
 }
 
 async function generateAndOpenFromToc() {
-  window.airlogWork = window.airlogWork || {}; window.airlogWork.tocFix = true;
   await runCopyAndOpen(buildPromptFromToc());
 }
 </script>
