@@ -530,6 +530,7 @@
           <button type="button" class="c-toolbar-btn btn-link" data-target="postContent">🔗 リンク挿入/編集</button>
           <button type="button" class="c-toolbar-btn btn-bold" data-target="postContent"><span class="c-toolbar-btn__b">B</span> 太字</button>
           <button type="button" class="c-toolbar-btn btn-color" data-target="postContent"><span class="c-toolbar-btn__chip" style="background:#e53935;"></span>文字色</button>
+          <button type="button" class="c-toolbar-btn btn-marker" data-target="postContent"><span class="c-toolbar-btn__chip" style="background:#fff176;"></span>マーカー</button>
         </div>
         <textarea id="postContent" class="c-textarea" placeholder="<p>ここに記事のHTMLを記述します。</p>"></textarea>
       </div>
@@ -602,6 +603,7 @@
       <button type="button" class="c-toolbar-btn btn-link" data-target="modalPostContent">🔗 リンク挿入/編集</button>
       <button type="button" class="c-toolbar-btn btn-bold" data-target="modalPostContent"><span class="c-toolbar-btn__b">B</span> 太字</button>
       <button type="button" class="c-toolbar-btn btn-color" data-target="modalPostContent"><span class="c-toolbar-btn__chip" style="background:#e53935;"></span>文字色</button>
+      <button type="button" class="c-toolbar-btn btn-marker" data-target="modalPostContent"><span class="c-toolbar-btn__chip" style="background:#fff176;"></span>マーカー</button>
     </div>
     <textarea id="modalPostContent" class="c-textarea" style="flex: 1; height: auto; resize: none; font-size: 1rem; padding: 16px; border-color: #ccc;"></textarea>
   </div>
@@ -1644,6 +1646,15 @@ async function generateAndOpenFromToc() {
   </div>
 </div>
 
+<div class="c-colorpop" id="markerPop">
+  <div class="c-colorpop__grid" id="markerSwatches"></div>
+  <div class="c-colorpop__row">
+    <span>その他</span>
+    <input type="color" id="markerCustom" value="#fff176">
+    <button type="button" class="c-colorpop__clear" id="markerClear">マーカーを消す</button>
+  </div>
+</div>
+
 <div class="c-colorpop" id="colorPop">
   <div class="c-colorpop__grid" id="colorSwatches"></div>
   <div class="c-colorpop__row">
@@ -1820,6 +1831,59 @@ async function generateAndOpenFromToc() {
     alert('色を消したい文字を、<span ...> から </span> まで含めて選択してください。');
   }
 
+  // ===== マーカー（べた塗り） =====
+  var MARKERS = ['#fff176', '#f8bbd0', '#b3e5fc', '#c5e1a5', '#ffe0b2'];
+  var markerPop = document.getElementById('markerPop');
+
+  function markerOpenTag(hex) {
+    return '<span style="background-color:' + hex + '; padding:2px 4px; border-radius:3px;">';
+  }
+  function applyMarker(hex) {
+    var s = selStart, e = selEnd, inner = ta.value.slice(s, e);
+    var open = markerOpenTag(hex);
+    if (s === e) replaceRange(s, e, open + '</span>', open.length);
+    else         replaceRange(s, e, open + inner + '</span>');
+  }
+  // 選択範囲を包んでいるマーカー用 <span> を外す
+  function clearMarker() {
+    var v = ta.value, s = selStart, e = selEnd, inner = v.slice(s, e);
+    var m = inner.match(/^<span style="background-color:[^"]*">([\s\S]*)<\/span>$/);
+    if (m) { replaceRange(s, e, m[1]); return; }
+    var before = v.slice(0, s), after = v.slice(e);
+    var mb = before.match(/<span style="background-color:[^"]*">$/);
+    if (mb && after.indexOf('</span>') === 0) {
+      replaceRange(s - mb[0].length, e + 7, inner);
+      return;
+    }
+    alert('マーカーを消したい文字を、<span ...> から </span> まで含めて選択してください。');
+  }
+  function openMarkerPop(btn) {
+    var r = btn.getBoundingClientRect();
+    markerPop.style.top  = (r.bottom + window.scrollY + 6) + 'px';
+    markerPop.style.left = (r.left + window.scrollX) + 'px';
+    markerPop.classList.add('is-open');
+  }
+  function closeMarkerPop() { markerPop.classList.remove('is-open'); }
+
+  (function () {
+    var grid = document.getElementById('markerSwatches');
+    MARKERS.forEach(function (hex) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'c-colorpop__sw';
+      b.style.background = hex;
+      b.title = hex;
+      b.addEventListener('click', function () { applyMarker(hex); closeMarkerPop(); });
+      grid.appendChild(b);
+    });
+    document.getElementById('markerCustom').addEventListener('change', function () {
+      applyMarker(this.value); closeMarkerPop();
+    });
+    document.getElementById('markerClear').addEventListener('click', function () {
+      clearMarker(); closeMarkerPop();
+    });
+  })();
+
   function openColorPop(btn) {
     var r = btn.getBoundingClientRect();
     pop.style.top  = (r.bottom + window.scrollY + 6) + 'px';
@@ -1875,12 +1939,14 @@ async function generateAndOpenFromToc() {
     var btn = ev.target.closest ? ev.target.closest('.c-toolbar-btn') : null;
     if (!btn) {
       if (pop.classList.contains('is-open') && !pop.contains(ev.target)) closeColorPop();
+      if (markerPop.classList.contains('is-open') && !markerPop.contains(ev.target)) closeMarkerPop();
       return;
     }
     if (!ta && !capture(btn)) return;
-    if (btn.classList.contains('btn-link'))  { closeColorPop(); openLinkDialog(); }
-    else if (btn.classList.contains('btn-bold'))  { closeColorPop(); applyBold(); }
-    else if (btn.classList.contains('btn-color')) { openColorPop(btn); }
+    if (btn.classList.contains('btn-link'))  { closeColorPop(); closeMarkerPop(); openLinkDialog(); }
+    else if (btn.classList.contains('btn-bold'))  { closeColorPop(); closeMarkerPop(); applyBold(); }
+    else if (btn.classList.contains('btn-color')) { closeMarkerPop(); openColorPop(btn); }
+    else if (btn.classList.contains('btn-marker')){ closeColorPop(); openMarkerPop(btn); }
   });
 
   document.getElementById('linkSave').addEventListener('click', saveLink);
@@ -1890,7 +1956,7 @@ async function generateAndOpenFromToc() {
   fUrl.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); saveLink(); } });
   fText.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); saveLink(); } });
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape') { closeLinkDialog(); closeColorPop(); }
+    if (ev.key === 'Escape') { closeLinkDialog(); closeColorPop(); closeMarkerPop(); }
   });
 })();
 </script>
