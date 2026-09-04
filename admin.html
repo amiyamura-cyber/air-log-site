@@ -607,6 +607,12 @@
           <option value="お役立ち資料">お役立ち資料</option>
           <option value="セミナー情報">セミナー情報</option>
         </select>
+        <select id="sheetSort" class="c-sheet__filter">
+          <option value="pubDesc">公開日が新しい順</option>
+          <option value="pubAsc">公開日が古い順</option>
+          <option value="updDesc">更新が新しい順</option>
+          <option value="title">タイトル順</option>
+        </select>
         <select id="sheetState" class="c-sheet__filter">
           <option value="">状態：すべて</option>
           <option value="fix1">第一修正が未</option>
@@ -1070,6 +1076,18 @@ document.addEventListener('DOMContentLoaded', () => {
       return true;
     });
 
+    // 並べ替え。公開日が入っていないものは最後にまとめる
+    const sort = document.getElementById('sheetSort').value;
+    rows.sort(function (a, b) {
+      if (sort === 'title') return String(a.title || '').localeCompare(String(b.title || ''), 'ja');
+      if (sort === 'updDesc') return String(b.date || '').localeCompare(String(a.date || ''));
+      const da = a.startDate || '', dbb = b.startDate || '';
+      if (!da && !dbb) return String(b.date || '').localeCompare(String(a.date || ''));
+      if (!da) return 1;
+      if (!dbb) return -1;
+      return sort === 'pubAsc' ? da.localeCompare(dbb) : dbb.localeCompare(da);
+    });
+
     document.getElementById('sheetCount').textContent = rows.length + ' 件 / 全 ' + sheetPosts.length + ' 件';
     body.innerHTML = '';
 
@@ -1180,7 +1198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  ['sheetSearch', 'sheetAuthor', 'sheetGenre', 'sheetState'].forEach(function (id) {
+  ['sheetSearch', 'sheetAuthor', 'sheetGenre', 'sheetSort', 'sheetState'].forEach(function (id) {
     const el = document.getElementById(id);
     el.addEventListener(id === 'sheetSearch' ? 'input' : 'change', renderSheet);
   });
