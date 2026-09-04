@@ -518,11 +518,6 @@
         <input type="text" id="postTitle" class="c-input" placeholder="記事のタイトルを入力" required>
       </div>
       <div class="c-form-group">
-        <label class="c-label"><span>対策キーワード</span></label>
-        <input type="text" id="postKeyword" class="c-input" placeholder="例：採用面接 質問">
-        <p style="font-size:0.75rem;color:#888;margin-top:6px;">記事一覧に表示されます。公開サイトには出ません。上の🔷で指示書を作ると自動で入ります。</p>
-      </div>
-      <div class="c-form-group">
         <label class="c-label"><span>カバー画像</span></label>
         <div class="c-image-upload" id="imageUploadArea">
           <img id="imagePreview" class="c-image-upload__preview" src="" alt="Preview">
@@ -787,7 +782,6 @@ document.addEventListener('DOMContentLoaded', () => {
   
   const inputs = {
     id: document.getElementById('postId'), title: document.getElementById('postTitle'),
-    keyword: document.getElementById('postKeyword'),
     genre: document.getElementById('postGenre'), tags: document.getElementById('postTags'),
     status: document.getElementsByName('status'), startDate: document.getElementById('startDate'),
     endDate: document.getElementById('endDate'), 
@@ -1160,6 +1154,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // ▲ ここまで ▲
 
   // 保存時に自動で入れる値
+  // 🔷「AIに記事を書いてもらう」に入力された対策キーワード
+  function autoKeyword() {
+    const el = document.getElementById('keyword');
+    return el ? (el.value || '').trim() : '';
+  }
   function autoAuthorName() {
     const u = firebase.auth().currentUser;
     return u && u.email ? u.email.split('@')[0] : '';
@@ -1168,7 +1167,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const d = new Date(), p = (n) => ('0' + n).slice(-2);
     return d.getFullYear() + '/' + p(d.getMonth() + 1) + '/' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
-  let existingAuthor = '';   // 編集中の記事に既に入っている作成者
+  let existingAuthor = '';    // 編集中の記事に既に入っている作成者
+  let existingKeyword = '';  // 同じく、既に記録されている対策キーワード
 
   async function renderGrid() {
     const posts = await loadData();
@@ -1250,7 +1250,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const postData = {
       id: isEdit ? inputs.id.value : generateId(), title: inputs.title.value, genre: inputs.genre.value,
-      tags: tagArray, status: statusVal, keyword: inputs.keyword.value.trim(),
+      tags: tagArray, status: statusVal, keyword: existingKeyword || autoKeyword(),
       startDate: inputs.startDate.value, endDate: inputs.endDate.value,
       toc: inputs.toc.value, 
       content: inputs.content.value, coverImage: inputs.coverImageData.value,
@@ -1340,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const post = posts.find(p => p.id === id); if (!post) return;
     inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
     existingAuthor = post.author || '';
-    inputs.keyword.value = post.keyword || '';
+    existingKeyword = post.keyword || '';
     inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
     inputs.endDate.value = post.endDate || ''; 
     inputs.toc.value = post.toc || '';
@@ -1413,6 +1413,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function clearForm() { form.reset(); inputs.id.value = ''; inputs.coverImageData.value = ''; imagePositionSliderX.value = 50; imagePositionSliderY.value = 50; showImagePreview('');
     // 新規作成の初期値は必ず「非公開（下書き）」。うっかり公開してしまうのを防ぐ
     existingAuthor = '';
+    existingKeyword = '';
     for (const radio of inputs.status) radio.checked = (radio.value === 'private');
     setEditing(null); }
   document.getElementById('btnClear').addEventListener('click', clearForm);
@@ -1726,10 +1727,6 @@ async function runCopyAndOpen(text) {
 }
 
 async function generateAndOpen() {
-  // 記事フォームの「対策キーワード」が空なら、ここで入れた値を写しておく
-  const kw = (document.getElementById('keyword').value || '').trim();
-  const target = document.getElementById('postKeyword');
-  if (kw && target && !target.value.trim()) target.value = kw;
   await runCopyAndOpen(buildPrompt());
 }
 
