@@ -936,14 +936,10 @@ document.addEventListener('DOMContentLoaded', () => {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // 対策キーワードは全記事に表示する。空なら「未設定」と出して、抜けが分かるようにする
+  // 対策キーワードは🔷で入力された値。記録が無い記事では推測せず、行ごと出さない
   function keywordLine(post) {
     const kw = (post.keyword || '').trim();
-    if (!kw) {
-      return '<div class="p-card__meta p-card__meta--empty">'
-           + '<span class="p-card__meta__label">対策KW</span>'
-           + '<span class="p-card__meta__text">未設定</span></div>';
-    }
+    if (!kw) return '';
     return '<div class="p-card__meta p-card__meta--kw" title="対策キーワード：' + esc(kw) + '">'
          + '<span class="p-card__meta__label">対策KW</span>'
          + '<span class="p-card__meta__text">' + esc(kw) + '</span></div>';
@@ -1104,9 +1100,9 @@ document.addEventListener('DOMContentLoaded', () => {
       cr.className = 'c-sheet__cr';
       cr.innerHTML =
         '<span class="c-sheet__chip c-sheet__chip--cat">' + (p.genre || 'カテゴリー未設定') + '</span>'
-        + (p.keyword
+        + ((p.keyword || '').trim()
             ? '<span class="c-sheet__chip c-sheet__chip--kw">' + p.keyword + '</span>'
-            : '<span class="c-sheet__chip c-sheet__chip--none">対策KW 未設定</span>');
+            : '');
       tdCr.appendChild(cr);
 
       // 第一修正・第二修正
