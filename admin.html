@@ -35,6 +35,12 @@
   
   .c-date-group { display: flex; gap: 12px; align-items: center; }
   .c-date-group span { color: #888; }
+  .c-period { display: flex; flex-direction: column; gap: 8px; }
+  .c-period__row { display: flex; align-items: center; gap: 8px; }
+  .c-period__label { flex: none; width: 34px; font-size: 0.8rem; font-weight: bold; color: #666; }
+  .c-period__date { flex: 1 1 auto; min-width: 0; }
+  .c-period__time { flex: 0 0 108px; }
+  .c-period__note { font-size: 0.72rem; color: #999; margin: 4px 0 0; line-height: 1.7; }
 
   /* Toolbar */
   .c-toolbar { display: flex; gap: 8px; margin-bottom: 8px; background: #f8f9fa; padding: 8px; border-radius: 6px; border: 1px solid #ddd; }
@@ -547,8 +553,18 @@
       </div>
       <div class="c-form-group">
         <label class="c-label"><span>公開期間</span></label>
-        <div class="c-date-group">
-          <input type="datetime-local" id="startDate" class="c-input"><span>〜</span><input type="datetime-local" id="endDate" class="c-input">
+        <div class="c-period">
+          <div class="c-period__row">
+            <span class="c-period__label">公開</span>
+            <input type="date" id="startDate" class="c-input c-period__date">
+            <input type="time" id="startTime" class="c-input c-period__time">
+          </div>
+          <div class="c-period__row">
+            <span class="c-period__label">終了</span>
+            <input type="date" id="endDate" class="c-input c-period__date">
+            <input type="time" id="endTime" class="c-input c-period__time">
+          </div>
+          <p class="c-period__note">時間を空けたままにすると、公開はその日の0時、終了はその日いっぱいとして扱います。</p>
         </div>
       </div>
       
@@ -804,7 +820,9 @@ document.addEventListener('DOMContentLoaded', () => {
     id: document.getElementById('postId'), title: document.getElementById('postTitle'),
     genre: document.getElementById('postGenre'), tags: document.getElementById('postTags'),
     status: document.getElementsByName('status'), startDate: document.getElementById('startDate'),
-    endDate: document.getElementById('endDate'), 
+    endDate: document.getElementById('endDate'),
+    startTime: document.getElementById('startTime'),
+    endTime: document.getElementById('endTime'), 
     toc: document.getElementById('postToc'), 
     content: document.getElementById('postContent'),
     coverImageData: document.getElementById('coverImageData')
@@ -935,11 +953,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // 公開期間の状態。開始日が空なら「すぐ公開」、終了日が空なら「終了しない」
   // 公開日・終了日を日時として読む。
   // 時刻が入っていない古いデータは、開始＝その日の0時、終了＝その日の23:59:59として扱う
-  // datetime-local の入力欄に入れられる形（YYYY-MM-DDTHH:MM）に整える
-  function toInputValue(v) {
-    if (!v) return '';
-    return String(v).indexOf('T') !== -1 ? String(v).slice(0, 16) : (v + 'T00:00');
+  // 日付の欄と時刻の欄を、保存用の1つの値にまとめる（時刻が空なら日付だけ）
+  function joinWhen(dateVal, timeVal) {
+    if (!dateVal) return '';
+    return timeVal ? (dateVal + 'T' + timeVal) : dateVal;
   }
+  // 保存されている値を、日付の欄と時刻の欄に分ける
+  function splitWhen(v) {
+    if (!v) return { date: '', time: '' };
+    const str = String(v);
+    const at = str.indexOf('T');
+    return at === -1 ? { date: str, time: '' } : { date: str.slice(0, at), time: str.slice(at + 1, at + 6) };
+  }
+
   function parseWhen(v, isEnd) {
     if (!v) return null;
     const hasTime = String(v).indexOf('T') !== -1;
@@ -1321,7 +1347,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const postData = {
       id: isEdit ? inputs.id.value : generateId(), title: inputs.title.value, genre: inputs.genre.value,
       tags: tagArray, status: statusVal, keyword: existingKeyword || autoKeyword(),
-      startDate: inputs.startDate.value, endDate: inputs.endDate.value,
+      startDate: joinWhen(inputs.startDate.value, inputs.startTime.value),
+      endDate: joinWhen(inputs.endDate.value, inputs.endTime.value),
       toc: inputs.toc.value, 
       content: inputs.content.value,
       // 画像を消したのでなければ、空になっていても元の画像を守る
@@ -1415,8 +1442,8 @@ document.addEventListener('DOMContentLoaded', () => {
     existingKeyword = post.keyword || '';
     existingCover = post.coverImage || '';
     coverRemoved = false;
-    inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = toInputValue(post.startDate);
-    inputs.endDate.value = toInputValue(post.endDate); 
+    inputs.tags.value = (post.tags || []).join(', '); const sw = splitWhen(post.startDate); inputs.startDate.value = sw.date; inputs.startTime.value = sw.time;
+    const ew = splitWhen(post.endDate); inputs.endDate.value = ew.date; inputs.endTime.value = ew.time; 
     inputs.toc.value = post.toc || '';
     inputs.content.value = post.content || '';
     imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;
