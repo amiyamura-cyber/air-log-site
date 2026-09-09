@@ -399,13 +399,12 @@
   .c-tw__btn {
     width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px;
     background: #fff; color: #333; font: inherit; font-size: 0.95rem; cursor: pointer;
-    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    display: flex; align-items: center; justify-content: center;
     font-variant-numeric: tabular-nums;
   }
   .c-tw__btn:hover { border-color: #bbb; }
   .c-tw__btn.is-open { border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,.15); }
   .c-tw__btn.is-empty { color: #aaa; }
-  .c-tw__ico { color: #aaa; font-size: 0.85rem; }
 
   /* パネルは画面に固定して出す（エディタ枠が overflow なので中に置くと切れる） */
   .c-tw__pop {
@@ -2398,7 +2397,7 @@ async function generateAndOpenFromToc() {
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'c-tw__btn is-empty';
-    btn.innerHTML = '<span class="c-tw__val">時刻</span><span class="c-tw__ico">🕒</span>';
+    btn.innerHTML = '<span class="c-tw__val">時刻</span>';
     host.appendChild(btn);
 
     // パネルは body に置く（エディタ枠の overflow で切れないように）
