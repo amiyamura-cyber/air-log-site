@@ -2278,6 +2278,7 @@ async function generateAndOpenFromToc() {
   var SENS = 1.7;       // ホイールを回したときの進み具合（大きいほど短い操作で動く）
   var EASE = 0.22;      // 目指す位置へ近づく速さ
   var DETENT = 0.10;    // 1コマごとの手応えの強さ
+  var WHEEL_CLICK = 90; // これ以上の入力はマウスホイールの1目盛りとみなす
   var STEP = 15;        // 分の刻み
   var openPop = null;
 
@@ -2334,7 +2335,13 @@ async function generateAndOpenFromToc() {
     el.addEventListener('wheel', function (e) {
       e.preventDefault();
       var d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-      target += d / ITEM * SENS;
+      if (Math.abs(d) >= WHEEL_CLICK) {
+        // マウスのホイールは1目盛りにつき1コマ動かす（カチッとした手応え）
+        target = Math.round(target) + (d > 0 ? 1 : -1);
+      } else {
+        // トラックパッドは細かい量をそのまま受け取り、なめらかに動かす
+        target += d / ITEM * SENS;
+      }
       clamp(); kick(); settle(110);
     }, { passive: false });
 
