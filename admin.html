@@ -2275,6 +2275,9 @@ async function generateAndOpenFromToc() {
   'use strict';
   var p2 = function (n) { return ('0' + n).slice(-2); };
   var ITEM = 44;        // 1コマの高さ
+  var SENS = 1.7;       // ホイールを回したときの進み具合（大きいほど短い操作で動く）
+  var EASE = 0.22;      // 目指す位置へ近づく速さ
+  var DETENT = 0.10;    // 1コマごとの手応えの強さ
   var STEP = 15;        // 分の刻み
   var openPop = null;
 
@@ -2308,8 +2311,14 @@ async function generateAndOpenFromToc() {
     }
     function loop() {
       var diff = target - pos;
-      if (Math.abs(diff) < 0.0015) { pos = target; render(); raf = null; return; }
-      pos += diff * 0.22;
+      var notch = Math.round(pos) - pos;          // いちばん近いコマまでの距離
+      if (Math.abs(diff) < 0.0015 && Math.abs(notch) < 0.0015) {
+        pos = target; render(); raf = null; return;
+      }
+      pos += diff * EASE;
+      // コマの中心へ弱く引き寄せる。回している間はわずかな抵抗として感じ、
+      // 止まりぎわは自然に1コマへ収まる（1時間ごとの手応え）
+      if (!dragging) pos += notch * DETENT;
       render();
       raf = requestAnimationFrame(loop);
     }
@@ -2325,7 +2334,7 @@ async function generateAndOpenFromToc() {
     el.addEventListener('wheel', function (e) {
       e.preventDefault();
       var d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
-      target += d / ITEM * 0.9;
+      target += d / ITEM * SENS;
       clamp(); kick(); settle(110);
     }, { passive: false });
 
