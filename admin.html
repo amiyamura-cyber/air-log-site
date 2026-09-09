@@ -39,7 +39,6 @@
   .c-period__row { display: flex; align-items: center; gap: 8px; }
   .c-period__label { flex: none; width: 34px; font-size: 0.8rem; font-weight: bold; color: #666; }
   .c-period__date { flex: 1 1 auto; min-width: 0; }
-  .c-period__time { flex: 0 0 108px; }
   .c-period__note { font-size: 0.72rem; color: #999; margin: 4px 0 0; line-height: 1.7; }
 
   /* Toolbar */
@@ -394,6 +393,64 @@
   .c-sheet__addauthor { font: inherit; font-size: 0.78rem; font-weight: bold; background: #f0f0f0; border: 1px solid #ddd; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
   .c-sheet__addauthor:hover { background: #e4e4e4; }
   /* ▲ ここまで ▲ */
+
+  /* ▼ 時刻をくるくる回して選ぶ（スクロールも吸い付きも使わない） ▼ */
+  .c-tw { position: relative; flex: 0 0 108px; }
+  .c-tw__btn {
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px;
+    background: #fff; color: #333; font: inherit; font-size: 0.95rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: space-between; gap: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .c-tw__btn:hover { border-color: #bbb; }
+  .c-tw__btn.is-open { border-color: #1a73e8; box-shadow: 0 0 0 3px rgba(26,115,232,.15); }
+  .c-tw__btn.is-empty { color: #aaa; }
+  .c-tw__ico { color: #aaa; font-size: 0.85rem; }
+
+  /* パネルは画面に固定して出す（エディタ枠が overflow なので中に置くと切れる） */
+  .c-tw__pop {
+    position: fixed; z-index: 1300; width: 228px;
+    background: #fff; border: 1px solid #e2e2e2; border-radius: 16px;
+    box-shadow: 0 12px 36px rgba(0,0,0,.18); padding: 12px 12px 10px;
+    display: none;
+  }
+  .c-tw__pop.is-open { display: block; }
+
+  .c-tw__wheel { position: relative; height: 198px; display: flex; }
+  .c-tw__band {
+    position: absolute; left: 4px; right: 4px; top: 50%; height: 44px;
+    transform: translateY(-50%); border-radius: 10px;
+    background: rgba(26,115,232,.08); box-shadow: inset 0 0 0 1px rgba(26,115,232,.26);
+    pointer-events: none; z-index: 1;
+  }
+  .c-tw__fade { position: absolute; left: 0; right: 0; height: 66px; pointer-events: none; z-index: 4; }
+  .c-tw__fade--t { top: 0;    background: linear-gradient(#fff 8%, rgba(255,255,255,0)); border-radius: 12px 12px 0 0; }
+  .c-tw__fade--b { bottom: 0; background: linear-gradient(rgba(255,255,255,0), #fff 92%); border-radius: 0 0 12px 12px; }
+
+  .c-tw__col {
+    flex: 1; height: 100%; position: relative; z-index: 3;
+    overflow: hidden; cursor: grab; touch-action: none;
+    perspective: 640px; perspective-origin: 50% 50%;
+  }
+  .c-tw__col.is-drag { cursor: grabbing; }
+  .c-tw__list { position: absolute; left: 0; right: 0; top: 50%; transform-style: preserve-3d; will-change: transform; }
+  .c-tw__item {
+    height: 44px; margin-top: -22px; position: absolute; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; color: #2a2a2a; font-variant-numeric: tabular-nums;
+    user-select: none; will-change: transform, opacity; backface-visibility: hidden;
+  }
+  .c-tw__item.is-sel { font-weight: 700; color: #111; }
+  .c-tw__colon { flex: none; width: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 700; color: #aaa; z-index: 3; }
+
+  .c-tw__foot { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
+  .c-tw__clear { font: inherit; font-size: 0.75rem; background: none; border: 0; color: #999; cursor: pointer; text-decoration: underline; padding: 0; }
+  .c-tw__ok {
+    font: inherit; font-size: 0.8rem; font-weight: bold; cursor: pointer;
+    background: #1a73e8; border: 1px solid #1a73e8; color: #fff; border-radius: 8px; padding: 8px 20px;
+  }
+  .c-tw__ok:hover { background: #1557b0; }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -557,12 +614,14 @@
           <div class="c-period__row">
             <span class="c-period__label">公開</span>
             <input type="date" id="startDate" class="c-input c-period__date">
-            <input type="time" id="startTime" class="c-input c-period__time">
+            <div class="c-tw" id="twStart"></div>
+            <input type="hidden" id="startTime">
           </div>
           <div class="c-period__row">
             <span class="c-period__label">終了</span>
             <input type="date" id="endDate" class="c-input c-period__date">
-            <input type="time" id="endTime" class="c-input c-period__time">
+            <div class="c-tw" id="twEnd"></div>
+            <input type="hidden" id="endTime">
           </div>
           <p class="c-period__note">時間を空けたままにすると、公開はその日の0時、終了はその日いっぱいとして扱います。</p>
         </div>
@@ -1442,8 +1501,10 @@ document.addEventListener('DOMContentLoaded', () => {
     existingKeyword = post.keyword || '';
     existingCover = post.coverImage || '';
     coverRemoved = false;
-    inputs.tags.value = (post.tags || []).join(', '); const sw = splitWhen(post.startDate); inputs.startDate.value = sw.date; inputs.startTime.value = sw.time;
-    const ew = splitWhen(post.endDate); inputs.endDate.value = ew.date; inputs.endTime.value = ew.time; 
+    inputs.tags.value = (post.tags || []).join(', '); const sw = splitWhen(post.startDate); inputs.startDate.value = sw.date;
+    const ew = splitWhen(post.endDate); inputs.endDate.value = ew.date;
+    if (window.airlogTime) { window.airlogTime.start.set(sw.time); window.airlogTime.end.set(ew.time); }
+    else { inputs.startTime.value = sw.time; inputs.endTime.value = ew.time; } 
     inputs.toc.value = post.toc || '';
     inputs.content.value = post.content || '';
     imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;
@@ -1519,6 +1580,7 @@ document.addEventListener('DOMContentLoaded', () => {
     existingKeyword = '';
     existingCover = '';
     coverRemoved = false;
+    if (window.airlogTime) { window.airlogTime.start.set(''); window.airlogTime.end.set(''); }
     for (const radio of inputs.status) radio.checked = (radio.value === 'private');
     setEditing(null); }
   document.getElementById('btnClear').addEventListener('click', clearForm);
@@ -2204,5 +2266,206 @@ async function generateAndOpenFromToc() {
   </div>
 </div>
 <!-- ▲ ここまで ▲ -->
+
+<script>
+/* 時刻をくるくる回して選ぶ部品。
+   ブラウザのスクロールと吸い付き（scroll-snap）は使わず、位置を自分で計算する。
+   選んだ値は、隠しの input（#startTime / #endTime）へ書き込むので、保存の仕組みは変えない。 */
+(function () {
+  'use strict';
+  var p2 = function (n) { return ('0' + n).slice(-2); };
+  var ITEM = 44;        // 1コマの高さ
+  var STEP = 15;        // 分の刻み
+  var openPop = null;
+
+  function hours() { var a = []; for (var h = 0; h < 24; h++) a.push(p2(h)); return a; }
+  function minutes() { var a = []; for (var m = 0; m < 60; m += STEP) a.push(p2(m)); return a; }
+
+  function makeColumn(el, onSettle) {
+    var items = [], pos = 0, target = 0, vel = 0, dragging = false, raf = null, idle = null;
+    var startY = 0, startPos = 0, lastY = 0, lastT = 0;
+
+    var list = document.createElement('div');
+    list.className = 'c-tw__list';
+    el.appendChild(list);
+
+    function max() { return Math.max(0, items.length - 1); }
+    function clamp() {
+      target = Math.max(0, Math.min(max(), target));
+      pos = Math.max(-0.6, Math.min(max() + 0.6, pos));
+    }
+    function render() {
+      for (var i = 0; i < items.length; i++) {
+        var d = i - pos, ad = Math.abs(d);
+        var scale = Math.max(0.72, 1 - ad * 0.115);
+        var op = ad > 3.2 ? 0 : Math.max(0.22, 1 - ad * 0.30);
+        var rot = Math.max(-62, Math.min(62, d * 21));
+        var s = items[i].style;
+        s.transform = 'translateY(' + (d * ITEM).toFixed(2) + 'px) rotateX(' + rot.toFixed(1) + 'deg) scale(' + scale.toFixed(3) + ')';
+        s.opacity = op.toFixed(3);
+        if (ad < 0.5) items[i].classList.add('is-sel'); else items[i].classList.remove('is-sel');
+      }
+    }
+    function loop() {
+      var diff = target - pos;
+      if (Math.abs(diff) < 0.0015) { pos = target; render(); raf = null; return; }
+      pos += diff * 0.22;
+      render();
+      raf = requestAnimationFrame(loop);
+    }
+    function kick() { if (!raf) raf = requestAnimationFrame(loop); }
+    function settle(delay) {
+      clearTimeout(idle);
+      idle = setTimeout(function () {
+        target = Math.round(target); clamp(); kick();
+        setTimeout(function () { if (onSettle) onSettle(); }, 120);
+      }, delay);
+    }
+
+    el.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var d = e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY;
+      target += d / ITEM * 0.9;
+      clamp(); kick(); settle(110);
+    }, { passive: false });
+
+    el.addEventListener('pointerdown', function (e) {
+      dragging = true; vel = 0;
+      startY = lastY = e.clientY; startPos = pos; lastT = performance.now();
+      el.classList.add('is-drag');
+      el.setPointerCapture(e.pointerId);
+      clearTimeout(idle);
+    });
+    el.addEventListener('pointermove', function (e) {
+      if (!dragging) return;
+      var now = performance.now(), dy = e.clientY - lastY;
+      if (now > lastT) vel = dy / (now - lastT);
+      lastY = e.clientY; lastT = now;
+      target = startPos - (e.clientY - startY) / ITEM;
+      pos = target; clamp(); render();
+    });
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove('is-drag');
+      target = pos - vel * 8; clamp(); kick(); settle(60);
+    }
+    el.addEventListener('pointerup', endDrag);
+    el.addEventListener('pointercancel', endDrag);
+
+    el.addEventListener('click', function (e) {
+      if (Math.abs(e.clientY - startY) > 4) return;
+      var it = e.target.closest ? e.target.closest('.c-tw__item') : null;
+      if (!it) return;
+      target = Number(it.dataset.i); clamp(); kick();
+      setTimeout(function () { if (onSettle) onSettle(); }, 240);
+    });
+
+    return {
+      setValues: function (values) {
+        list.innerHTML = values.map(function (v, i) {
+          return '<div class="c-tw__item" data-i="' + i + '">' + v + '</div>';
+        }).join('');
+        items = list.querySelectorAll('.c-tw__item');
+        clamp(); render();
+      },
+      get index() { return Math.max(0, Math.min(max(), Math.round(target))); },
+      set index(i) { target = i; pos = i; clamp(); render(); }
+    };
+  }
+
+  function makePicker(hostId, hiddenId) {
+    var host = document.getElementById(hostId);
+    var hidden = document.getElementById(hiddenId);
+    if (!host || !hidden) return null;
+
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'c-tw__btn is-empty';
+    btn.innerHTML = '<span class="c-tw__val">時刻</span><span class="c-tw__ico">🕒</span>';
+    host.appendChild(btn);
+
+    // パネルは body に置く（エディタ枠の overflow で切れないように）
+    var pop = document.createElement('div');
+    pop.className = 'c-tw__pop';
+    pop.innerHTML =
+      '<div class="c-tw__wheel">'
+      + '<div class="c-tw__band"></div>'
+      + '<div class="c-tw__col" data-kind="h"></div>'
+      + '<div class="c-tw__colon">:</div>'
+      + '<div class="c-tw__col" data-kind="m"></div>'
+      + '<div class="c-tw__fade c-tw__fade--t"></div>'
+      + '<div class="c-tw__fade c-tw__fade--b"></div>'
+      + '</div>'
+      + '<div class="c-tw__foot">'
+      + '<button type="button" class="c-tw__clear">時刻を消す</button>'
+      + '<button type="button" class="c-tw__ok">決定</button>'
+      + '</div>';
+    document.body.appendChild(pop);
+
+    var colH = makeColumn(pop.querySelector('[data-kind="h"]'), commit);
+    var colM = makeColumn(pop.querySelector('[data-kind="m"]'), commit);
+    colH.setValues(hours());
+    colM.setValues(minutes());
+    colH.index = 9; colM.index = 0;
+
+    function commit() {
+      var hs = hours(), ms = minutes();
+      hidden.value = hs[colH.index] + ':' + ms[colM.index];
+      paint();
+    }
+    function paint() {
+      btn.querySelector('.c-tw__val').textContent = hidden.value || '時刻';
+      btn.classList.toggle('is-empty', !hidden.value);
+    }
+    function place() {
+      var r = btn.getBoundingClientRect();
+      var h = 300;   // パネルのおおよその高さ
+      var top = (r.bottom + h + 8 > window.innerHeight && r.top - h - 8 > 0) ? (r.top - h - 8) : (r.bottom + 8);
+      pop.style.top = Math.max(8, top) + 'px';
+      pop.style.left = Math.min(Math.max(8, r.left), window.innerWidth - 236) + 'px';
+    }
+    function open(o) {
+      if (o && openPop && openPop !== pop) openPop.classList.remove('is-open');
+      pop.classList.toggle('is-open', o);
+      btn.classList.toggle('is-open', o);
+      openPop = o ? pop : null;
+      if (o) place();
+    }
+
+    btn.addEventListener('click', function (e) { e.stopPropagation(); open(!pop.classList.contains('is-open')); });
+    pop.addEventListener('click', function (e) { e.stopPropagation(); });
+    pop.querySelector('.c-tw__clear').addEventListener('click', function () { hidden.value = ''; paint(); open(false); });
+    pop.querySelector('.c-tw__ok').addEventListener('click', function () { commit(); open(false); });
+    document.addEventListener('click', function () { open(false); });
+    window.addEventListener('resize', function () { if (openPop === pop) place(); });
+    document.addEventListener('scroll', function () { if (openPop === pop) place(); }, true);
+
+    paint();
+
+    return {
+      // 保存されている値（HH:MM または空）を反映する
+      set: function (v) {
+        hidden.value = v || '';
+        if (v) {
+          var hs = hours(), ms = minutes();
+          colH.index = Math.max(0, hs.indexOf(v.slice(0, 2)));
+          var mv = Number(v.slice(3)), found = 0;
+          for (var i = 0; i < ms.length; i++) if (Number(ms[i]) <= mv) found = i;
+          colM.index = found;
+        } else {
+          colH.index = 9; colM.index = 0;
+        }
+        paint();
+      }
+    };
+  }
+
+  window.airlogTime = {
+    start: makePicker('twStart', 'startTime'),
+    end:   makePicker('twEnd', 'endTime')
+  };
+})();
+</script>
 </body>
 </html>
