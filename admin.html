@@ -548,7 +548,7 @@
       <div class="c-form-group">
         <label class="c-label"><span>公開期間</span></label>
         <div class="c-date-group">
-          <input type="date" id="startDate" class="c-input"><span>〜</span><input type="date" id="endDate" class="c-input">
+          <input type="datetime-local" id="startDate" class="c-input"><span>〜</span><input type="datetime-local" id="endDate" class="c-input">
         </div>
       </div>
       
@@ -933,12 +933,25 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 公開期間の状態。開始日が空なら「すぐ公開」、終了日が空なら「終了しない」
+  // 公開日・終了日を日時として読む。
+  // 時刻が入っていない古いデータは、開始＝その日の0時、終了＝その日の23:59:59として扱う
+  // datetime-local の入力欄に入れられる形（YYYY-MM-DDTHH:MM）に整える
+  function toInputValue(v) {
+    if (!v) return '';
+    return String(v).indexOf('T') !== -1 ? String(v).slice(0, 16) : (v + 'T00:00');
+  }
+  function parseWhen(v, isEnd) {
+    if (!v) return null;
+    const hasTime = String(v).indexOf('T') !== -1;
+    const d = new Date(hasTime ? v : (v + (isEnd ? 'T23:59:59' : 'T00:00:00')));
+    return isNaN(d) ? null : d;
+  }
   function periodState(post) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const s = post.startDate ? new Date(post.startDate + 'T00:00:00') : null;
-    const e = post.endDate   ? new Date(post.endDate   + 'T00:00:00') : null;
-    if (s && !isNaN(s) && today < s) return 'before';
-    if (e && !isNaN(e) && today > e) return 'after';
+    const now = new Date();
+    const s = parseWhen(post.startDate, false);
+    const e = parseWhen(post.endDate, true);
+    if (s && now < s) return 'before';
+    if (e && now > e) return 'after';
     return 'now';
   }
 
@@ -950,8 +963,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return post.status === 'public' || post.status === '公開' || post.status === undefined;
   }
   function shortJpDate(str) {
-    const d = new Date(str + 'T00:00:00');
-    return isNaN(d) ? str : ((d.getMonth() + 1) + '/' + d.getDate());
+    const d = parseWhen(str, false);
+    if (!d) return str;
+    const p = (n) => ('0' + n).slice(-2);
+    const base = (d.getMonth() + 1) + '/' + d.getDate();
+    return String(str).indexOf('T') !== -1 ? (base + ' ' + p(d.getHours()) + ':' + p(d.getMinutes())) : base;
   }
   function esc(v) {
     return String(v == null ? '' : v)
@@ -1104,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cls = st === 'before' ? 'c-sheet__badge--soon'
                   : st === 'after'  ? 'c-sheet__badge--ended'
                   : 'c-sheet__badge--live';
-        tdDate.innerHTML = '<span class="c-sheet__badge ' + cls + '">' + d.slice(5).replace('-', '/') + '</span>'
+        tdDate.innerHTML = '<span class="c-sheet__badge ' + cls + '">' + shortJpDate(d) + '</span>'
           + '<span class="c-sheet__state">' + (st === 'before' ? '公開前' : st === 'after' ? '掲載終了' : '公開中') + '</span>';
       } else {
         tdDate.innerHTML = isLive(p)
@@ -1399,8 +1415,8 @@ document.addEventListener('DOMContentLoaded', () => {
     existingKeyword = post.keyword || '';
     existingCover = post.coverImage || '';
     coverRemoved = false;
-    inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = post.startDate || '';
-    inputs.endDate.value = post.endDate || ''; 
+    inputs.tags.value = (post.tags || []).join(', '); inputs.startDate.value = toInputValue(post.startDate);
+    inputs.endDate.value = toInputValue(post.endDate); 
     inputs.toc.value = post.toc || '';
     inputs.content.value = post.content || '';
     imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;

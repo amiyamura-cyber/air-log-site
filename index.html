@@ -363,12 +363,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   let globalPosts = [];
 
   // 公開期間の判定。開始日が空なら「すぐ公開」、終了日が空なら「終了しない」。終了日は当日まで表示する
+  // 公開日・終了日を日時として読む。
+  // 時刻が入っていない古いデータは、開始＝その日の0時、終了＝その日の23:59:59として扱う
+  function parseWhen(v, isEnd) {
+    if (!v) return null;
+    const hasTime = String(v).indexOf('T') !== -1;
+    const d = new Date(hasTime ? v : (v + (isEnd ? 'T23:59:59' : 'T00:00:00')));
+    return isNaN(d) ? null : d;
+  }
   function periodState(post) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const s = post.startDate ? new Date(post.startDate + 'T00:00:00') : null;
-    const e = post.endDate   ? new Date(post.endDate   + 'T00:00:00') : null;
-    if (s && !isNaN(s) && today < s) return 'before';
-    if (e && !isNaN(e) && today > e) return 'after';
+    const now = new Date();
+    const s = parseWhen(post.startDate, false);
+    const e = parseWhen(post.endDate, true);
+    if (s && now < s) return 'before';
+    if (e && now > e) return 'after';
     return 'now';
   }
   function isPublishedNow(post) { return periodState(post) === 'now'; }
@@ -379,10 +387,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // ・公開日が未来ならまだ出さない
   // ・公開日が入っていなければ、ステータスに従う
   function startReached(post) {
-    if (!post.startDate) return false;
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const s = new Date(post.startDate + 'T00:00:00');
-    return !isNaN(s) && today >= s;
+    const s = parseWhen(post.startDate, false);
+    return !!s && new Date() >= s;
   }
   function isVisible(post) {
     if (periodState(post) === 'after') return false;
@@ -390,9 +396,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     return post.status === 'public' || post.status === '公開' || post.status === undefined;
   }
   function formatJpDate(str) {
-    const d = new Date(str + 'T00:00:00');
-    if (isNaN(d)) return str;
-    return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    const d = parseWhen(str, false);
+    if (!d) return str;
+    const base = d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日';
+    if (String(str).indexOf('T') === -1) return base;
+    const p = (n) => ('0' + n).slice(-2);
+    return base + ' ' + p(d.getHours()) + '時' + p(d.getMinutes()) + '分';
   }
   try {
       const snapshot = await db.collection('posts').get();
