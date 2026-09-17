@@ -1935,6 +1935,7 @@ function showPromptFallback(text, why, copied) {
   const dlg = document.getElementById('promptFallback');
   const ta = document.getElementById('pfbText');
   if (!dlg || !ta) { showToast('コピーに失敗しました'); return; }
+  bindPromptFallback();
   ta.value = text;
   document.getElementById('pfbTitle').textContent = copied
     ? 'Geminiのタブを開けませんでした'
@@ -1949,9 +1950,11 @@ function showPromptFallback(text, why, copied) {
   }
 }
 
-(function () {
+// この枠のHTMLはこのスクリプトより後ろにあるので、読み込み後に割り当てる
+function bindPromptFallback() {
   const dlg = document.getElementById('promptFallback');
-  if (!dlg) return;
+  if (!dlg || dlg.dataset.bound) return;
+  dlg.dataset.bound = '1';
   const close = () => dlg.classList.remove('is-open');
   document.getElementById('pfbClose').addEventListener('click', close);
   document.getElementById('pfbOpen').addEventListener('click', () => { window.open(getGeminiUrl(), '_blank'); });
@@ -1964,7 +1967,9 @@ function showPromptFallback(text, why, copied) {
   });
   dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dlg.classList.contains('is-open')) close(); });
-})();
+}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindPromptFallback);
+else bindPromptFallback();
 
 async function generateAndOpen() {
   await runCopyAndOpen(buildPrompt());
