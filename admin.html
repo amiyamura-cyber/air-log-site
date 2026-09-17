@@ -450,6 +450,21 @@
   }
   .c-tw__ok:hover { background: #1557b0; }
   /* ▲ ここまで ▲ */
+
+  /* ▼ コピーできなかったときの逃げ道 ▼ */
+  #promptFallback { z-index: 1400; }
+  #promptFallback .c-modal__inner { max-width: 720px; padding: 26px; }
+  .c-pfb__title { font-size: 1.15rem; font-weight: bold; color: #c62828; margin-bottom: 10px; }
+  .c-pfb__lead { font-size: 0.88rem; color: #555; line-height: 1.8; margin: 0 0 14px; }
+  .c-pfb__text {
+    width: 100%; height: 300px; padding: 14px; border: 1px solid #ddd; border-radius: 6px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.8rem; line-height: 1.7;
+    resize: vertical; background: #fafafa; color: #333;
+  }
+  .c-pfb__why { font-size: 0.74rem; color: #999; margin: 8px 0 16px; line-height: 1.7; }
+  .c-pfb__btns { display: flex; gap: 10px; flex-wrap: wrap; }
+  .c-pfb__btns .c-btn { margin-top: 0; width: auto; padding: 12px 22px; }
+  /* ▲ ここまで ▲ */
 </style>
 </head>
 <body>
@@ -1872,39 +1887,84 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+// コピーを2通り試す。両方だめなら理由を持ち帰る（パソコンごとに事情が違うため）
 async function copyText(text) {
+  let why = '';
   try {
     await navigator.clipboard.writeText(text);
-    return true;
+    return { ok: true };
   } catch (e) {
-    try {
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      const ok = document.execCommand('copy');
-      document.body.removeChild(ta);
-      return ok;
-    } catch (err) {
-      return false;
-    }
+    why = (e && e.name ? e.name : '不明') + (e && e.message ? '：' + e.message : '');
   }
+  try {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    const ok = document.execCommand('copy');
+    document.body.removeChild(ta);
+    if (ok) return { ok: true };
+    why = why || '書き込みが拒否されました';
+  } catch (err) {
+    why = why || (err && err.name ? err.name : '不明');
+  }
+  return { ok: false, why: why };
 }
 
 async function runCopyAndOpen(text) {
-  const copied = await copyText(text);
-  if (copied) {
+  const r = await copyText(text);
+  if (r.ok) {
     showToast('指示書をコピーしました！Geminiを開きます…');
-  } else {
-    showToast('コピーに失敗しました。手動で貼り付けてください');
+    setTimeout(() => {
+      const w = window.open(getGeminiUrl(), '_blank');
+      // 別タブが開けなかった場合（ポップアップの制限）も分かるようにする
+      if (!w) showPromptFallback(text, 'コピーはできましたが、Geminiのタブを開けませんでした。ブラウザがポップアップを止めています。', true);
+    }, 400);
+    return;
   }
-  setTimeout(() => {
-    window.open(getGeminiUrl(), '_blank');
-  }, 400);
+  // コピーできなかったときは、中身をそのまま画面に出す
+  showPromptFallback(text, r.why, false);
 }
+
+// 指示書をそのまま画面に出して、手でコピーできるようにする
+function showPromptFallback(text, why, copied) {
+  const dlg = document.getElementById('promptFallback');
+  const ta = document.getElementById('pfbText');
+  if (!dlg || !ta) { showToast('コピーに失敗しました'); return; }
+  ta.value = text;
+  document.getElementById('pfbTitle').textContent = copied
+    ? 'Geminiのタブを開けませんでした'
+    : '指示書をコピーできませんでした';
+  document.getElementById('pfbLead').textContent = copied
+    ? 'コピーは終わっています。下の「Geminiを開く」を押すか、ご自身でGeminiを開いて貼り付けてください。'
+    : 'このパソコンではブラウザがコピーを許可していないようです。下の枠の中身を選んで、手でコピーしてください（全部選ばれた状態になっています）。';
+  document.getElementById('pfbWhy').textContent = why ? ('理由：' + why) : '';
+  dlg.classList.add('is-open');
+  if (!copied) {
+    setTimeout(() => { ta.focus(); ta.select(); }, 60);
+  }
+}
+
+(function () {
+  const dlg = document.getElementById('promptFallback');
+  if (!dlg) return;
+  const close = () => dlg.classList.remove('is-open');
+  document.getElementById('pfbClose').addEventListener('click', close);
+  document.getElementById('pfbOpen').addEventListener('click', () => { window.open(getGeminiUrl(), '_blank'); });
+  document.getElementById('pfbRetry').addEventListener('click', async () => {
+    const ta = document.getElementById('pfbText');
+    ta.focus(); ta.select();
+    const r = await copyText(ta.value);
+    if (r.ok) { showToast('コピーできました！'); close(); }
+    else { document.getElementById('pfbWhy').textContent = '理由：' + r.why + '（枠の中を選んで手でコピーしてください）'; }
+  });
+  dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dlg.classList.contains('is-open')) close(); });
+})();
 
 async function generateAndOpen() {
   await runCopyAndOpen(buildPrompt());
@@ -2496,5 +2556,21 @@ async function generateAndOpenFromToc() {
   };
 })();
 </script>
+
+<!-- ▼ コピーできなかったときの逃げ道 ▼ -->
+<div class="c-modal" id="promptFallback">
+  <div class="c-modal__inner">
+    <div class="c-pfb__title" id="pfbTitle">指示書をコピーできませんでした</div>
+    <p class="c-pfb__lead" id="pfbLead">このパソコンではブラウザがコピーを許可していないようです。下の枠の中身を選んで、手でコピーしてください（全部選ばれた状態になっています）。</p>
+    <textarea id="pfbText" class="c-pfb__text" readonly></textarea>
+    <p class="c-pfb__why" id="pfbWhy"></p>
+    <div class="c-pfb__btns">
+      <button type="button" class="c-btn c-btn--primary" id="pfbRetry">もう一度コピーを試す</button>
+      <button type="button" class="c-btn c-btn--secondary" id="pfbOpen">Geminiを開く</button>
+      <button type="button" class="c-btn c-btn--secondary" id="pfbClose">閉じる</button>
+    </div>
+  </div>
+</div>
+<!-- ▲ ここまで ▲ -->
 </body>
 </html>
