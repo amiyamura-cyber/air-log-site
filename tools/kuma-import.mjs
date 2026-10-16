@@ -122,6 +122,20 @@ async function rewrite(html, dir) {
   return html;
 }
 
+// CTA バナー（クマオカマツコの「お問い合わせはこちら」画像）は載せない。
+// 画面には出ない印（HTMLコメント）にして、元のリンク先と画像名を残す（2026-10-16 宮村さん指示）
+//   例：<!-- kuma-cta kind="download" from="/download.html" img="CTA_くまこ.jpg" -->
+//   （href= と書くとリンクの書き換えに巻き込まれるので from= にする）
+function ctaToMarker(html) {
+  const marker = (href, src) => {
+    const img = decodeURIComponent(src.split('/').pop());
+    return `<!-- kuma-cta kind="${href ? linkKind(href) : 'none'}" from="${href}" img="${img}" -->`;
+  };
+  html = html.replace(/(?:<br \/>\s*)?<a href="([^"]*)"[^>]*>\s*<img[^>]*src="([^"]*CTA_[^"]*)"[^>]*>\s*<\/a>/g, (_, href, src) => marker(href, src));
+  html = html.replace(/(?:<br \/>\s*)?<img[^>]*src="([^"]*CTA_[^"]*)"[^>]*>/g, (_, src) => marker('', src));
+  return html;
+}
+
 function text(s) {
   return s.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;/g, "'").trim();
 }
@@ -139,15 +153,16 @@ async function convert(u) {
   const tags = [...tagBlock.matchAll(/<a [^>]*>([^<]+)<\/a>/g)].map(m => text(m[1]));
   const coverSrc = (html.match(/<figure class="cover">\s*<img src="([^"]+)"/) || [])[1];
 
-  const detail = (html.match(/<div id="articledetail">([\s\S]*)<!-- parts end -->/) || [])[1];
-  if (!detail) throw new Error('本文（articledetail）が見つからない');
+  const rawDetail = (html.match(/<div id="articledetail">([\s\S]*)<!-- parts end -->/) || [])[1];
+  if (!rawDetail) throw new Error('本文（articledetail）が見つからない');
+  const detail = ctaToMarker(rawDetail);
   const blocks = (detail + '<!-- parts end -->').split(/(?=<!-- parts start -->)/).map(b => b.trim()).filter(b => b.startsWith('<!-- parts start -->'));
   const tocBlocks = blocks.filter(b => b.includes('p-media-parts__toc'));
   const bodyBlocks = blocks.filter(b => !b.includes('p-media-parts__toc'));
 
-  // 目次の部品に付いている CTA 画像は、本文の先頭側（目次の直後の位置）へ移す
+  // 目次の部品に付いている CTA の印は、本文の先頭側（目次の直後の位置）へ移す
   let toc = tocBlocks.join('\n');
-  const ctaInToc = toc.match(/<br \/>\s*<a href="[^"]*"><img[^>]*CTA_[^>]*><\/a>/g) || [];
+  const ctaInToc = toc.match(/<!-- kuma-cta [^>]*-->/g) || [];
   for (const c of ctaInToc) toc = toc.replace(c, '');
   const tocIdx = blocks.indexOf(tocBlocks[0]);
   const before = blocks.slice(0, tocIdx).filter(b => !b.includes('p-media-parts__toc'));
