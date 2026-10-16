@@ -9,6 +9,11 @@
 <!-- ★ ファビコン（タブのアイコン）の設定 ★ -->
 <link rel="icon" href="hikakusaito.png">
 
+<!-- ロゴの字体（エアログの4文字だけ読み込む） -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap&text=%E3%82%A8%E3%82%A2%E3%83%AD%E3%82%B0">
+
 <style>
 /* ===== RESET & BASE ===== */
 html {
@@ -27,14 +32,17 @@ ul,ol{list-style:none}
 .l-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,rgba(248,187,208,0),#f06292 25%,#d81b60 50%,#f06292 75%,rgba(248,187,208,0));pointer-events:none}
 .l-header__inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
 
-.l-header__logo{
-  font-family: 'Hiragino Mincho ProN', 'ヒラギノ明朝 ProN W6', 'HiraMinProN-W6', 'Yu Mincho', 'Noto Serif JP', serif;
-  font-size:1.8rem;
-  font-weight:600;
-  color:#d81b60;
-  letter-spacing:-1px;
+/* ロゴ：上に添え書き、ピンクの極太字に白いすき間と水色のずれ影 */
+.l-header__logo{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.l-header__logo small{font-size:.66rem;font-weight:700;color:#333;letter-spacing:.12em;margin:0 0 4px 2px}
+.l-header__logo b{
+  font-family:'Dela Gothic One','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;
+  font-weight:400;
+  font-size:2.05rem;
+  color:#ff4f9a;
+  letter-spacing:.06em;
+  text-shadow:2px 2px 0 #fff,3px 3px 0 #fff,4px 4px 0 #8fdcf5,5px 5px 0 #8fdcf5;
 }
-.l-header__logo span{color:#333}
 
 .l-header__nav{display:flex;gap:32px}
 .l-header__nav a{font-size:.95rem;font-weight:600;color:#333}
@@ -234,7 +242,7 @@ ul,ol{list-style:none}
 <!-- ===== HEADER ===== -->
 <header class="l-header">
   <div class="l-header__inner">
-    <a href="index.html" class="l-header__logo">エア<span>ログ</span></a>
+    <a href="index.html" class="l-header__logo"><small>採用・集客を支援するメディア</small><b>エアログ</b></a>
     <nav class="l-header__nav" id="globalNav">
       <a href="index.html#sec-new">新着記事</a>
       <a href="index.html#sec-recruit">採用支援</a>
