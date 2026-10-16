@@ -164,20 +164,13 @@ async function convert(u) {
     if (!text(content)) throw new Error('本文が空');
     return makeDoc(u, cat, { title, pub, tags, toc: '', content, coverImage: coverSrc ? await localImage(coverSrc, dir) : '' });
   }
-  const blocks = (detail + '<!-- parts end -->').split(/(?=<!-- parts start -->)/).map(b => b.trim()).filter(b => b.startsWith('<!-- parts start -->'));
-  const tocBlocks = blocks.filter(b => b.includes('p-media-parts__toc'));
-  const bodyBlocks = blocks.filter(b => !b.includes('p-media-parts__toc'));
-
-  // 目次の部品に付いている CTA の印は、本文の先頭側（目次の直後の位置）へ移す
-  let toc = tocBlocks.join('\n');
-  const ctaInToc = toc.match(/<!-- kuma-cta [^>]*-->/g) || [];
-  for (const c of ctaInToc) toc = toc.replace(c, '');
-  const tocIdx = blocks.indexOf(tocBlocks[0]);
-  const before = blocks.slice(0, tocIdx).filter(b => !b.includes('p-media-parts__toc'));
-  const after = blocks.slice(tocIdx + 1);
-  let content = tocBlocks.length
-    ? [...before, ...(ctaInToc.length ? [`<!-- parts start -->\n${ctaInToc.join('\n')}\n<!-- parts end -->`] : []), ...after.filter(b => !b.includes('p-media-parts__toc'))].join('\n')
-    : bodyBlocks.join('\n');
+  // 目次の部品だけを抜き取って「目次」に入れ、それ以外は部品の外の文章も含めて全部「本文」に残す。
+  // 目次の部品の中にあった CTA の印は、目次があった位置にそのまま置く
+  const tocRe = /<!-- parts start -->(?:(?!<!-- parts end -->)[\s\S])*?p-media-parts__toc[\s\S]*?<!-- parts end -->/g;
+  const tocBlocks = detail.match(tocRe) || [];
+  const markersOf = b => (b.match(/<!-- kuma-cta [\s\S]*?-->/g) || []);
+  let toc = tocBlocks.map(b => markersOf(b).reduce((s, m) => s.replace(m, ''), b)).join('\n');
+  let content = detail.replace(tocRe, b => markersOf(b).join('\n')).trim();
 
   toc = await rewrite(toc, dir);
   content = await rewrite(content, dir);
