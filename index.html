@@ -348,8 +348,8 @@ ul,ol{list-style:none}
 <button class="page-top" id="pageTop">&#8593;</button>
 
 <script>
-// 記事は Firebase ではなく、自動処理（tools/build-static.mjs）が書き出したファイルから読む。
-// 見に来た人が Firebase を読まないので、Firebase の無料枠（転送量・読み込み回数）を使わない。
+// 記事は、自動処理（tools/build-static.mjs）が書き出したファイルから読む。
+// Firebase には「ファイルを作ったあとに変わった記事」と「記事の数」だけを聞くので、無料枠をほとんど使わない。
 //   data/index.json        … 公開の記事の目録（一覧用。本文なし）
 //   data/posts/<id>.json   … 記事1本ずつ（目次・本文あり）
 
@@ -407,6 +407,69 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch(e) {
       console.error(e);
   }
+
+  // ファイルを作ったあとに管理画面で変わった記事だけを Firebase に聞いて、最新に差し替える。
+  // 変わった記事が無ければ、Firebase の読み込みは「変わった記事」と「記事の数」の2回ぶん（各1件扱い）だけ。
+  // Firebase につながらないときは、ファイルの中身だけで表示する。
+  const freshPosts = {};   // id → Firebase から取った最新の記事（目次・本文あり）
+  await (async function applyFreshChanges() {
+    const FS = 'https://firestore.googleapis.com/v1/projects/air-log-db/databases/(default)/documents';
+    const plain = v => {
+      if (!v) return undefined;
+      if ('stringValue' in v) return v.stringValue;
+      if ('integerValue' in v) return Number(v.integerValue);
+      if ('booleanValue' in v) return v.booleanValue;
+      if ('arrayValue' in v) return (v.arrayValue.values || []).map(plain);
+      return undefined;
+    };
+    const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => { if (!r.ok) throw new Error('Firebase: HTTP ' + r.status); return r.json(); });
+    try {
+      const ver = await (await fetch('data/version.json', { cache: 'no-cache' })).json();
+      if (!ver.since || !ver.ids) return;
+      const timeout = new Promise((_, ng) => setTimeout(() => ng(new Error('Firebase が3秒で応答しなかった')), 3000));
+      const [changed, counted] = await Promise.race([Promise.all([
+        // 一覧に使う項目だけを聞く（本文・目次は、その記事のページを開いたときに1本ぶんだけ取る）
+        post(FS + ':runQuery', { structuredQuery: {
+          select: { fields: ['title', 'genre', 'displayDate', 'date', 'coverPositionX', 'coverPositionY', 'status', 'startDate', 'endDate'].map(f => ({ fieldPath: f })) },
+          from: [{ collectionId: 'posts' }], where: { fieldFilter: { field: { fieldPath: 'updatedAt' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: ver.since } } } } }),
+        post(FS + ':runAggregationQuery', { structuredAggregationQuery: { structuredQuery: { from: [{ collectionId: 'posts' }] }, aggregations: [{ alias: 'n', count: {} }] } }),
+      ]), timeout]);
+
+      const known = new Set(ver.ids);
+      const needCover = [];   // ファイルに表紙が無い記事（新しく足された記事など）
+      for (const row of changed) {
+        if (!row.document) continue;
+        const p = Object.fromEntries(Object.entries(row.document.fields || {}).map(([k, v]) => [k, plain(v)]));
+        p.id = row.document.name.split('/').pop();
+        known.add(p.id);
+        const old = globalPosts.find(x => x.id === p.id);
+        globalPosts = globalPosts.filter(x => x.id !== p.id);
+        if (isPublicStatus(p)) {
+          // 表紙は重いので、ファイルにある画像をそのまま使う。無いときだけ、その記事の表紙を取る
+          if (old && old.coverImage) p.coverImage = old.coverImage; else needCover.push(p);
+          globalPosts.push(p); freshPosts[p.id] = p;
+        }
+      }
+      if (needCover.length) {
+        const got = await post(FS + ':batchGet', { documents: needCover.map(p => 'projects/air-log-db/databases/(default)/documents/posts/' + p.id), mask: { fieldPaths: ['coverImage'] } });
+        for (const g of got) {
+          if (!g.found) continue;
+          const p = needCover.find(x => g.found.name.endsWith('/' + x.id));
+          if (p) p.coverImage = plain(g.found.fields?.coverImage);
+        }
+      }
+
+      // 記事の数が合わない＝ファイルを作ったあとに削除された記事がある。id の一覧を取り直して外す
+      const total = Number(counted[0]?.result?.aggregateFields?.n?.integerValue);
+      if (Number.isFinite(total) && total < known.size) {
+        const rows = await post(FS + ':runQuery', { structuredQuery: { from: [{ collectionId: 'posts' }], select: { fields: [{ fieldPath: '__name__' }] } } });
+        const alive = new Set(rows.filter(r => r.document).map(r => r.document.name.split('/').pop()));
+        globalPosts = globalPosts.filter(x => alive.has(x.id));
+      }
+    } catch (e) {
+      console.warn('最新の変更を取れなかったので、ファイルの中身だけで表示します', e);
+    }
+  })();
 
   function getGenreClass(genre) {
     if (genre === 'お役立ち資料') return 'document';
@@ -572,7 +635,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const notFound = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>';
     // 目録に無い記事（非公開など）は開けない。目次・本文は記事ファイルから読む
     let post = globalPosts.find(p => p.id === id);
-    if (post) {
+    if (post && freshPosts[id]) {
+      // ファイルを作ったあとに変わった記事は、Firebase から最新の1本を取る（目次・本文あり）
+      try {
+        const res = await fetch('https://firestore.googleapis.com/v1/projects/air-log-db/databases/(default)/documents/posts/' + encodeURIComponent(id));
+        const doc = res.ok ? await res.json() : null;
+        const val = v => v && ('stringValue' in v ? v.stringValue : undefined);
+        post = doc ? Object.fromEntries(Object.entries(doc.fields || {}).map(([k, v]) => [k, val(v)])) : null;
+        if (post) post.id = id;
+      } catch (e) { console.error(e); post = null; }
+    } else if (post) {
       try {
         const res = await fetch('data/posts/' + encodeURIComponent(id) + '.json', { cache: 'no-cache' });
         post = res.ok ? await res.json() : null;

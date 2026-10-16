@@ -88,7 +88,16 @@ function writeCover(p) {
   return `media/covers/${name}`;
 }
 
+// 管理画面の updatedAt と同じ形（日本時間の "YYYY/MM/DD HH:MM"）
+function jstStamp(d) {
+  const j = new Date(d.getTime() + 9 * 3600 * 1000);
+  const p = n => String(n).padStart(2, '0');
+  return `${j.getUTCFullYear()}/${p(j.getUTCMonth() + 1)}/${p(j.getUTCDate())} ${p(j.getUTCHours())}:${p(j.getUTCMinutes())}`;
+}
+
 async function main() {
+  // 読み始める1分前を「ここから後に更新された記事は本番のページがFirebaseに聞く」の境目にする
+  const since = jstStamp(new Date(Date.now() - 60 * 1000));
   const all = await readPosts();
   if (!all.length) throw new Error('Firestore から記事が1本も読めなかったので止めました（空のサイトは出さない）');
 
@@ -115,7 +124,8 @@ async function main() {
   });
   walk(OUT);
   const hash = h.digest('hex');
-  fs.writeFileSync(path.join(OUT, 'data/version.json'), JSON.stringify({ hash, builtAt: new Date().toISOString(), posts: pub.length }));
+  // since と ids は本番のページが使う（since より後に更新された記事と、削除された記事を Firebase に聞く）
+  fs.writeFileSync(path.join(OUT, 'data/version.json'), JSON.stringify({ hash, builtAt: new Date().toISOString(), since, posts: pub.length, ids: all.map(p => p.id) }));
 
   console.log(`記事 ${all.length} 本を読み、公開 ${pub.length} 本を書き出しました（非公開 ${all.length - pub.length} 本は出していません）`);
   console.log(`目録 ${Math.round(indexJson.length / 1024)}KB ／ ハッシュ ${hash.slice(0, 12)}`);
