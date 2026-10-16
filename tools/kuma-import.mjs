@@ -153,9 +153,17 @@ async function convert(u) {
   const tags = [...tagBlock.matchAll(/<a [^>]*>([^<]+)<\/a>/g)].map(m => text(m[1]));
   const coverSrc = (html.match(/<figure class="cover">\s*<img src="([^"]+)"/) || [])[1];
 
-  const rawDetail = (html.match(/<div id="articledetail">([\s\S]*)<!-- parts end -->/) || [])[1];
-  if (!rawDetail) throw new Error('本文（articledetail）が見つからない');
+  // 本文は articledetail の始まりから「キュレーション時 リンク」の目印まで（どの記事にも1つある）
+  const rawDetail = (html.match(/<div id="articledetail">([\s\S]*?)<!--キュレーション時 リンク-->/) || [])[1];
+  if (!rawDetail) throw new Error('本文（articledetail〜キュレーションの目印）が見つからない');
   const detail = ctaToMarker(rawDetail);
+
+  // 部品（parts）を使わない記事（「あるある」系など）：本文をそのまま入れる。元の記事にも目次は無い
+  if (!detail.includes('<!-- parts start -->')) {
+    const content = await rewrite(detail.trim(), dir);
+    if (!text(content)) throw new Error('本文が空');
+    return makeDoc(u, cat, { title, pub, tags, toc: '', content, coverImage: coverSrc ? await localImage(coverSrc, dir) : '' });
+  }
   const blocks = (detail + '<!-- parts end -->').split(/(?=<!-- parts start -->)/).map(b => b.trim()).filter(b => b.startsWith('<!-- parts start -->'));
   const tocBlocks = blocks.filter(b => b.includes('p-media-parts__toc'));
   const bodyBlocks = blocks.filter(b => !b.includes('p-media-parts__toc'));
@@ -174,7 +182,10 @@ async function convert(u) {
   toc = await rewrite(toc, dir);
   content = await rewrite(content, dir);
   const coverImage = coverSrc ? await localImage(coverSrc, dir) : '';
+  return makeDoc(u, cat, { title, pub, tags, toc, content, coverImage });
+}
 
+function makeDoc(u, cat, { title, pub, tags, toc, content, coverImage }) {
   const now = new Date();
   const p2 = n => String(n).padStart(2, '0');
   return {
