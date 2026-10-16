@@ -238,10 +238,13 @@ async function main() {
         const docPath = `/projects/${PROJECT}/databases/(default)/documents/posts/${doc.id}`;
         const existing = await client.request({ method: 'GET', path: docPath, resolveOnHTTPError: true });
         const by = existing.status === 200 ? existing.body?.fields?.updatedBy?.stringValue : null;
-        if (existing.status === 200 && by !== 'kuma-import') {
+        if (existing.status === 200 && by !== 'kuma-import' && by !== 'kuma-publish') {
           problems.push(`上書きしなかった（管理画面で ${by || '誰か'} が更新済み）: ${doc.id}`);
           continue;
         }
+        // すでにある記事は、公開／非公開の状態をそのまま保つ（入れ直しで公開済みの記事を非公開に戻さない）
+        const keptStatus = existing.status === 200 ? existing.body?.fields?.status?.stringValue : null;
+        if (keptStatus) doc.status = keptStatus;
         const fields = Object.fromEntries(Object.entries(doc).map(([k, v]) => [k, fsValue(v)]));
         await client.request({ method: 'PATCH', path: `/projects/${PROJECT}/databases/(default)/documents/posts/${doc.id}`, body: { fields } });
       }
