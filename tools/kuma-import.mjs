@@ -229,6 +229,15 @@ async function main() {
       if (!doc.id.startsWith('kuma-')) throw new Error('kuma- 以外の id には書かない');
       fs.writeFileSync(path.join(CACHE, doc.id + '.json'), JSON.stringify(doc, null, 2));
       if (!DRY) {
+        // LONG-RUN-OK：ページと画像は tools/.kuma-cache/ に保存して使い回し、結果は last-run.json に残す
+        // 管理画面で人が直した記事（最後の更新者が kuma-import ではない）は上書きしない
+        const docPath = `/projects/${PROJECT}/databases/(default)/documents/posts/${doc.id}`;
+        const existing = await client.request({ method: 'GET', path: docPath, resolveOnHTTPError: true });
+        const by = existing.status === 200 ? existing.body?.fields?.updatedBy?.stringValue : null;
+        if (existing.status === 200 && by !== 'kuma-import') {
+          problems.push(`上書きしなかった（管理画面で ${by || '誰か'} が更新済み）: ${doc.id}`);
+          continue;
+        }
         const fields = Object.fromEntries(Object.entries(doc).map(([k, v]) => [k, fsValue(v)]));
         await client.request({ method: 'PATCH', path: `/projects/${PROJECT}/databases/(default)/documents/posts/${doc.id}`, body: { fields } });
       }
@@ -239,6 +248,7 @@ async function main() {
     }
   }
   console.log(`\n${ok} / ${targets.length} 本 ${DRY ? '変換' : '書き込み'}しました`);
+  fs.writeFileSync(path.join(CACHE, 'last-run.json'), JSON.stringify({ at: new Date().toISOString(), dry: DRY, targets: targets.length, ok, problems }, null, 2));
   if (problems.length) {
     console.log(`問題 ${problems.length} 件:`);
     problems.forEach(p => console.log(' ・' + p));

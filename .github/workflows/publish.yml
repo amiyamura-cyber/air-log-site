@@ -1,0 +1,62 @@
+# 本番サイトの公開
+# ・main に push したとき：組み立てて公開する
+# ・10分おき：管理画面で更新された記事を取り込む。中身が前回と同じなら公開し直さない
+# ・手動（Actions 画面の Run workflow）：いつでも組み立てて公開する
+# 記事は Firestore から tools/build-static.mjs が読み、ファイルにして配る（見に来た人は Firebase を読まない）
+name: 公開
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.compare.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - id: pages
+        uses: actions/configure-pages@v5
+      - id: build
+        run: node tools/build-static.mjs --out _site
+      - id: compare
+        name: 前回の公開と比べる
+        run: |
+          live=$(curl -fsS "${{ steps.pages.outputs.base_url }}/data/version.json?t=$(date +%s)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{console.log(JSON.parse(s).hash)}catch{console.log("")}})' || true)
+          echo "公開中: ${live:-なし} ／ 今回: ${{ steps.build.outputs.hash }}"
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$live" = "${{ steps.build.outputs.hash }}" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"; echo "変更なし。公開し直しません"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.compare.outputs.changed == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -348,25 +348,11 @@ ul,ol{list-style:none}
 <!-- ===== PAGE TOP ===== -->
 <button class="page-top" id="pageTop">&#8593;</button>
 
-<!-- Firebase SDKの読み込み -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script>
-// 本物の鍵を設定済みです
-const firebaseConfig = {
-  apiKey: "AIzaSyCeDI2X2uPG_h-pKw-zd5k2skd2wPK8xVQ",
-  authDomain: "air-log-db.firebaseapp.com",
-  projectId: "air-log-db",
-  storageBucket: "air-log-db.firebasestorage.app",
-  messagingSenderId: "196476464726",
-  appId: "1:196476464726:web:92db3cd1177640a81695f7",
-  measurementId: "G-95HWRE3LSK"
-};
-
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
-const db = firebase.firestore();
+// 記事は Firebase ではなく、自動処理（tools/build-static.mjs）が書き出したファイルから読む。
+// 見に来た人が Firebase を読まないので、Firebase の無料枠（転送量・読み込み回数）を使わない。
+//   data/index.json        … 公開の記事の目録（一覧用。本文なし）
+//   data/posts/<id>.json   … 記事1本ずつ（目次・本文あり）
 
 document.addEventListener('DOMContentLoaded', async () => {
   let globalPosts = [];
@@ -416,12 +402,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     return base + ' ' + p(d.getHours()) + '時' + p(d.getMinutes()) + '分';
   }
   try {
-      const snapshot = await db.collection('posts').get();
-      globalPosts = snapshot.docs.map(doc => {
-          let data = doc.data();
-          data.id = doc.id; 
-          return data;
-      });
+      const res = await fetch('data/index.json', { cache: 'no-cache' });
+      if (!res.ok) throw new Error('記事の目録を読めませんでした: HTTP ' + res.status);
+      globalPosts = await res.json();
   } catch(e) {
       console.error(e);
   }
@@ -585,13 +568,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     if(grids.contact) { grids.contact.innerHTML = ''; publicPosts.filter(p => p.genre === 'お問い合わせ').slice(0, 6).forEach(p => grids.contact.innerHTML += createCard(p)); }
   }
 
-  function renderArticle(id) {
-    const post = globalPosts.find(p => p.id === id);
+  async function renderArticle(id) {
     const container = document.getElementById('articleContainer');
-    
+    const notFound = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>';
+    // 目録に無い記事（非公開など）は開けない。目次・本文は記事ファイルから読む
+    let post = globalPosts.find(p => p.id === id);
+    if (post) {
+      try {
+        const res = await fetch('data/posts/' + encodeURIComponent(id) + '.json', { cache: 'no-cache' });
+        post = res.ok ? await res.json() : null;
+      } catch (e) { console.error(e); post = null; }
+    }
+
     // 非公開の記事は、公開日が来ていてもURLから開けない
     if (!post || !isPublicStatus(post)) {
-      container.innerHTML = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>'; return;
+      container.innerHTML = notFound; return;
     }
     // 公開期間の外でもURLを知っていれば読めるが、状態が分かるようお知らせを出す
     const state = periodState(post);
