@@ -158,7 +158,8 @@ ul,ol{list-style:none}
 .p-article__toc a { color: #1a73e8; text-decoration: none; transition: opacity 0.2s; }
 .p-article__toc a:hover { text-decoration: underline; opacity: 0.8; }
 
-.p-article__content{line-height:1.9;font-size:1.05rem;color:#333;overflow-wrap:anywhere;}/* 長いURLなど改行できない文字列も折り返し、スマホで横にはみ出さない */
+.p-article__content{line-height:1.9;font-size:1.05rem;color:#333;overflow-wrap:anywhere;}
+.p-article__content iframe{max-width:100%;height:auto;aspect-ratio:16/9;}/* 埋め込み動画もスマホの幅に収める（比率は保つ） *//* 長いURLなど改行できない文字列も折り返し、スマホで横にはみ出さない */
 .p-article__content p{margin-bottom:24px;}
 .p-article__content a{color:#1a73e8;text-decoration:underline;text-underline-offset:2px;}
 .p-article__content a:hover{color:#0b4fa8;}
