@@ -12,6 +12,7 @@
 // 元の記事は tools/.kuma-cache/pages/ の保存分を読む（元サイトは叩かない）
 import fs from 'fs';
 import path from 'path';
+import { execFileSync } from 'child_process';
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const CACHE = path.join(ROOT, 'tools/.kuma-cache');
@@ -27,6 +28,8 @@ do {
 } while (token);
 
 const kuma = posts.filter(p => p.id.startsWith('kuma-'));
+// 手元にあるだけでは本番に出ない。GitHub に上がっている（git が追っている）画像だけを「ある」とみなす
+const tracked = new Set(execFileSync('git', ['-c', 'core.quotepath=false', 'ls-files', 'media'], { cwd: ROOT }).toString().split('\n'));
 const pages = fs.readdirSync(path.join(CACHE, 'pages')).filter(f => f.startsWith('blog_'));
 const issues = [];
 const count = { status: {}, cta: [0, 0], img: [0, 0], missingFile: 0, kumaLeft: 0 };
@@ -52,6 +55,7 @@ for (const p of kuma) {
   if (imgSrc !== imgs.length) issues.push(`本文画像の数が違う: ${p.id} 元${imgSrc} → ${imgs.length}`);
   for (const i of [...imgs, s('coverImage')].filter(Boolean)) {
     if (!fs.existsSync(path.join(ROOT, i))) { count.missingFile++; issues.push(`画像ファイルが無い: ${p.id} ${i}`); }
+    else if (!tracked.has(i)) { count.missingFile++; issues.push(`画像がGitHubに上がっていない: ${p.id} ${i}`); }
   }
 
   const left = (mine.match(/(src|href)="(https?:\/\/(www\.)?kumaoka-matsuko\.com|\/dcms_media|\/(contact|download|blog)[^"]*)"/g) || []);
