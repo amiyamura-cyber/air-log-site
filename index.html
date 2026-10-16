@@ -383,18 +383,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   function isPublishedNow(post) { return periodState(post) === 'now'; }
 
   // サイトに出すかどうかの判定。
+  // ・ステータスが非公開なら、公開日が来ていても出さない（ステータスを優先）
   // ・掲載終了日を過ぎていたら出さない
-  // ・公開日が来ていれば、ステータスが非公開でも公開する（公開日を優先）
   // ・公開日が未来ならまだ出さない
-  // ・公開日が入っていなければ、ステータスに従う
   function startReached(post) {
     const s = parseWhen(post.startDate, false);
     return !!s && new Date() >= s;
   }
+  function isPublicStatus(post) {
+    return post.status === 'public' || post.status === '公開' || post.status === undefined;
+  }
   function isVisible(post) {
+    if (!isPublicStatus(post)) return false;
     if (periodState(post) === 'after') return false;
     if (post.startDate) return startReached(post);
-    return post.status === 'public' || post.status === '公開' || post.status === undefined;
+    return true;
   }
   function formatJpDate(str) {
     const d = parseWhen(str, false);
@@ -578,8 +581,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const post = globalPosts.find(p => p.id === id);
     const container = document.getElementById('articleContainer');
     
-    const isDraft = (post && post.status !== 'public' && post.status !== '公開' && post.status !== undefined);
-    if (!post || (isDraft && !startReached(post))) {
+    // 非公開の記事は、公開日が来ていてもURLから開けない
+    if (!post || !isPublicStatus(post)) {
       container.innerHTML = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>'; return;
     }
     // 公開期間の外でもURLを知っていれば読めるが、状態が分かるようお知らせを出す
