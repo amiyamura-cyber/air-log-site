@@ -1,3 +1,4 @@
 .vercel
 .env*
 .firebase/
+tools/.kuma-cache/
