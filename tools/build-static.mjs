@@ -112,6 +112,29 @@ async function main() {
     if (after === before) throw new Error('--allow-index：index.html に noindex の行が見つからない');
     fs.writeFileSync(f, after);
   }
+  // --redirect-to <URL>：旧アドレス（github.io）向け。各ページを「新しいアドレスの同じページへ移る」だけのページにする。
+  // ?id=… や #… は引き継ぐ。存在しないページ（404.html）はトップへ。GitHub Pages は 301 を出せないので、ブラウザ側で移す
+  const ri = process.argv.indexOf('--redirect-to');
+  if (ri >= 0) {
+    const base = process.argv[ri + 1].replace(/\/?$/, '/');
+    const page = file => {
+      const target = base + (file === 'index.html' || file === '404.html' ? '' : file);
+      return `<!DOCTYPE html>
+<html lang="ja"><head><meta charset="UTF-8">
+<meta name="robots" content="noindex">
+<link rel="canonical" href="${target}">
+<meta http-equiv="refresh" content="0; url=${target}">
+<title>エアログは移転しました</title>
+<script>location.replace(${JSON.stringify(target)} + ${file === '404.html' ? "''" : 'location.search + location.hash'});</script>
+</head><body style="font-family:sans-serif;padding:40px;text-align:center">
+<p>エアログは <a href="${target}">${base}</a> に移転しました。自動で移動しない場合はリンクを押してください。</p>
+</body></html>
+`;
+    };
+    const htmls = fs.readdirSync(OUT).filter(n => n.endsWith('.html'));
+    for (const n of [...new Set([...htmls, '404.html'])]) fs.writeFileSync(path.join(OUT, n), page(n));
+    console.log(`旧アドレス向け：${htmls.length + 1} ページを ${base} への転送にしました`);
+  }
   fs.mkdirSync(path.join(OUT, 'data/posts'), { recursive: true });
 
   const pub = all.filter(isPublicStatus);

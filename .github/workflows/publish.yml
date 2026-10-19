@@ -36,7 +36,8 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
       - id: build
-        run: node tools/build-static.mjs --out _site
+        # 旧アドレス（github.io）は 2026-10-19 から rc-group.co.jp/airlog/ への転送だけを出す
+        run: node tools/build-static.mjs --out _site --redirect-to https://rc-group.co.jp/airlog/
       - id: compare
         name: 前回の公開と比べる
         run: |
