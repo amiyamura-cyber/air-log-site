@@ -95,14 +95,43 @@ function jstStamp(d) {
   return `${j.getUTCFullYear()}/${p(j.getUTCMonth() + 1)}/${p(j.getUTCDate())} ${p(j.getUTCHours())}:${p(j.getUTCMinutes())}`;
 }
 
+// --posts-from <dir>：Firestore を読めないとき（無料枠切れなど）用。前に作った data/（index.json・version.json・posts/）から組み立てる。
+// 記事ファイルは公開の記事だけ・表紙は media/covers/ の画像を指しているので、その画像は今の本番から取り込む（上げ直しで消さない）。
+// id の一覧は前の version.json を引き継ぐ（本番のページが「削除された記事」を判定するのに使う）
+const fromArg = process.argv.indexOf('--posts-from');
+const FROM = fromArg >= 0 ? path.resolve(process.argv[fromArg + 1]) : null;
+const LIVE = 'https://rc-group.co.jp/airlog/';
+let fromIds = null;
+async function readPostsFrom(dir) {
+  const files = fs.readdirSync(path.join(dir, 'posts')).filter(f => f.endsWith('.json'));
+  const posts = files.map(f => JSON.parse(fs.readFileSync(path.join(dir, 'posts', f), 'utf8')));
+  const index = JSON.parse(fs.readFileSync(path.join(dir, 'index.json'), 'utf8'));
+  if (posts.length !== index.length) throw new Error(`--posts-from：記事ファイル ${posts.length} 本と目録 ${index.length} 本が合わない`);
+  fromIds = JSON.parse(fs.readFileSync(path.join(dir, 'version.json'), 'utf8')).ids;
+  return posts;
+}
+async function fetchCovers(posts) {
+  let n = 0;
+  for (const p of posts) {
+    if (typeof p.coverImage !== 'string' || !p.coverImage.startsWith('media/covers/')) continue;
+    const r = await fetch(LIVE + p.coverImage);
+    if (!r.ok) throw new Error(`表紙を本番から取れなかった: HTTP ${r.status} ${p.coverImage}`);
+    fs.mkdirSync(path.join(OUT, 'media/covers'), { recursive: true });
+    fs.writeFileSync(path.join(OUT, p.coverImage), Buffer.from(await r.arrayBuffer()));
+    n++;
+  }
+  console.log(`表紙 ${n} 枚を本番から取り込みました`);
+}
+
 async function main() {
   // 読み始める1分前を「ここから後に更新された記事は本番のページがFirebaseに聞く」の境目にする
   const since = jstStamp(new Date(Date.now() - 60 * 1000));
-  const all = await readPosts();
+  const all = FROM ? await readPostsFrom(FROM) : await readPosts();
   if (!all.length) throw new Error('Firestore から記事が1本も読めなかったので止めました（空のサイトは出さない）');
 
   fs.rmSync(OUT, { recursive: true, force: true });
   copyRepo(ROOT, OUT);
+  if (FROM) await fetchCovers(all);
   // --allow-index：会社のドメイン（rc-group.co.jp/airlog/）向け。トップページだけ検索よけ（noindex）を外す。
   // 管理画面・サンクスページは検索に出さないまま。github.io 向けは付けたまま
   if (process.argv.includes('--allow-index')) {
@@ -157,7 +186,7 @@ async function main() {
   walk(OUT);
   const hash = h.digest('hex');
   // since と ids は本番のページが使う（since より後に更新された記事と、削除された記事を Firebase に聞く）
-  fs.writeFileSync(path.join(OUT, 'data/version.json'), JSON.stringify({ hash, builtAt: new Date().toISOString(), since, posts: pub.length, ids: all.map(p => p.id) }));
+  fs.writeFileSync(path.join(OUT, 'data/version.json'), JSON.stringify({ hash, builtAt: new Date().toISOString(), since, posts: pub.length, ids: fromIds || all.map(p => p.id) }));
 
   console.log(`記事 ${all.length} 本を読み、公開 ${pub.length} 本を書き出しました（非公開 ${all.length - pub.length} 本は出していません）`);
   console.log(`目録 ${Math.round(indexJson.length / 1024)}KB ／ ハッシュ ${hash.slice(0, 12)}`);
