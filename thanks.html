@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow"><!-- 送信完了ページは検索に出さない -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>お問い合わせありがとうございました｜エアログ</title>
+<link rel="icon" href="hikakusaito.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&display=swap&text=%E3%82%A8%E3%82%A2%E3%83%AD%E3%82%B0">
+<style>
+/* BowNow のお問い合わせフォームを送信したあとに表示するページ。見た目は index.html のヘッダー・フッターにそろえる */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;color:#333;line-height:1.7;background:#FEF7FA;min-height:100vh;display:flex;flex-direction:column}
+a{text-decoration:none;color:inherit;transition:opacity .2s}
+a:hover{opacity:.7}
+.l-header{background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.05);position:relative}
+.l-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,rgba(248,187,208,0),#f06292 25%,#d81b60 50%,#f06292 75%,rgba(248,187,208,0));pointer-events:none}
+.l-header__inner{max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;align-items:center}
+.l-header__logo{display:flex;flex-direction:column;align-items:flex-start;line-height:1}
+.l-header__logo small{font-size:.66rem;font-weight:700;color:#333;letter-spacing:.12em;margin:0 0 4px 2px}
+.l-header__logo b{font-family:'Dela Gothic One','Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;font-weight:400;font-size:2.05rem;color:#ff4f9a;letter-spacing:.06em;text-shadow:2px 2px 0 #fff,3px 3px 0 #fff,4px 4px 0 #8fdcf5,5px 5px 0 #8fdcf5}
+.p-thanks{flex:1;display:flex;align-items:center;justify-content:center;padding:56px 16px}
+.p-thanks__box{background:#fff;border:1px solid #eee;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.04);max-width:640px;width:100%;padding:48px 32px;text-align:center}
+.p-thanks__mark{width:64px;height:64px;margin:0 auto 20px;border-radius:50%;background:linear-gradient(135deg,#f06292,#d81b60);color:#fff;font-size:2rem;line-height:64px;font-weight:bold}
+.p-thanks__title{font-size:1.5rem;color:#222;margin-bottom:16px;text-wrap:balance}
+.p-thanks__text{font-size:.98rem;color:#555;margin-bottom:32px}
+.p-thanks__btn{display:inline-block;background:linear-gradient(135deg,#f06292,#d81b60);color:#fff;font-weight:bold;padding:14px 40px;border-radius:30px;box-shadow:0 4px 12px rgba(216,27,96,.25)}
+.l-footer{background:#263238;color:#cfd8dc;padding:32px 24px;text-align:center;font-size:.8rem}
+@media(max-width:480px){.p-thanks__box{padding:36px 20px}.p-thanks__title{font-size:1.25rem}}
+</style>
+</head>
+<body>
+<header class="l-header">
+  <div class="l-header__inner">
+    <a href="index.html" class="l-header__logo"><small>採用・集客を支援するメディア</small><b>エアログ</b></a>
+  </div>
+</header>
+
+<main class="p-thanks">
+  <div class="p-thanks__box">
+    <div class="p-thanks__mark" aria-hidden="true">✓</div>
+    <h1 class="p-thanks__title">お問い合わせありがとうございました</h1>
+    <p class="p-thanks__text">内容を確認のうえ、担当者よりご連絡いたします。<br>今しばらくお待ちください。</p>
+    <a href="index.html" class="p-thanks__btn">エアログのトップへ戻る</a>
+  </div>
+</main>
+
+<footer class="l-footer">&copy; 2026 Resource Creation Co.,Ltd.</footer>
+</body>
+</html>
