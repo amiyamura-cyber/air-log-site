@@ -325,6 +325,72 @@ a.c-pill:hover{background:#fff;color:var(--pink)}
 .c-contact-modal__close:hover,.c-contact-modal__close:focus-visible{background:#f5f5f5;outline:none}
 .c-contact-modal__form iframe{width:100%;border:0;display:block}
 
+/* ===== パンくず（HOME ＞ いまのページ） ===== */
+.p-breadcrumb__inner{display:flex;align-items:center;max-width:1284px;margin:20px auto 0;padding:0 16px 15px;overflow-x:auto;white-space:nowrap;list-style:none}
+@media(min-width:640px){.p-breadcrumb__inner{padding:0 32px 15px}}
+.p-breadcrumb__item{line-height:1;position:relative;padding-right:26px;font-size:.75rem;font-weight:600}
+.p-breadcrumb__item:not(:last-child)::after{content:"";position:absolute;top:calc(50% - 3px);right:9px;width:6px;height:6px;border-top:1px solid var(--ink);border-right:1px solid var(--ink);transform:rotate(45deg)}
+.p-breadcrumb__item:first-child a{display:block;width:14px;height:14px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 7.5 8 2.5l6 5M3.8 6.3V13.5h8.4V6.3' fill='none' stroke='%233e3a39' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E") center/contain no-repeat}
+.p-breadcrumb__item:first-child a:hover{opacity:.6}
+.l-wrapper.is-sub{margin-top:0}
+/* 資料ページはサイドを出さず全幅 */
+.l-wrapper.is-wide .l-sidebar{display:none}
+.l-wrapper.is-wide .l-main{width:100%}
+
+/* ===== 一覧ページ ===== */
+.p-list__title{padding:0 0 10px 45px;border-bottom:2px solid var(--ink);margin-bottom:24px;font-size:clamp(1.375rem,1.318rem + .24vw,1.5rem);font-weight:700;line-height:1.65;position:relative}
+.p-list__title::before{content:"";position:absolute;left:0;top:8px;width:32px;height:28px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 28'%3E%3Ccircle cx='13' cy='15' r='11' fill='%23fff' stroke='%233e3a39' stroke-width='1.6'/%3E%3Ccircle cx='13' cy='15' r='6' fill='%23f4b4d0'/%3E%3Ccircle cx='13' cy='15' r='2' fill='%2300a5e3'/%3E%3Cpath d='M14 14 28 3M23 3h5v5' fill='none' stroke='%233e3a39' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat}
+@media(max-width:767.8px){.p-list__title{padding-left:35px}.p-list__title::before{width:28px}}
+.p-list__desc{margin-bottom:30px}
+@media(max-width:639.8px){.p-list__desc{margin-bottom:20px}}
+.p-list__sort{text-align:right;margin-bottom:15px}
+.p-list__sort a{text-decoration:underline}
+.p-list__sort a:hover{text-decoration:none}
+.p-list__empty{padding:40px 0;text-align:center;color:#666}
+.p-list__pager{margin-top:20px;display:flex;justify-content:flex-end;flex-wrap:wrap}
+@media(max-width:639.8px){.p-list__pager{justify-content:center}}
+.p-list__pager a,.p-list__pager strong{padding:10px 13px;display:block;line-height:1;font-weight:700;margin:5px 0}
+.p-list__pager a{background:#fff}
+.p-list__pager a:hover{background:var(--line);color:#fff}
+.p-list__pager strong{background:var(--line);color:#fff}
+
+/* 横長のカード（一覧・トップのお役立ち資料） */
+.p-ycard{display:flex;gap:24px;padding:24px;border:1px solid var(--ink);border-radius:10px;background:#fff;cursor:pointer}
+.p-ycard + .p-ycard{margin-top:16px}
+@media(min-width:768px){.p-ycard + .p-ycard{margin-top:24px}}
+@media(max-width:767.8px){.p-ycard{flex-direction:column;padding:16px;gap:16px}}
+.p-ycard__thumb{width:220px;flex:none}
+@media(max-width:767.8px){.p-ycard__thumb{width:100%}}
+.p-ycard__thumb img{border-radius:10px;width:100%;aspect-ratio:287/144;object-fit:cover;background:#f5f5f5}
+.p-ycard__info{flex:1;min-width:0;display:flex;flex-direction:column}
+.p-ycard:hover .p-card__title{color:var(--blue)}
+.p-yoko + .c-btn{margin-top:24px}
+@media(min-width:768px){.p-yoko + .c-btn{margin-top:48px}}
+
+/* ===== お役立ち資料ダウンロード ===== */
+.p-dl + .p-dl{margin-top:40px}
+@media(min-width:640px){.p-dl + .p-dl{margin-top:60px}}
+@media(min-width:1024px){.p-dl + .p-dl{margin-top:80px}}
+.p-dl__anchors{display:grid;grid-template-columns:1fr;gap:16px;list-style:none}
+@media(min-width:640px){.p-dl__anchors{grid-template-columns:repeat(2,1fr);gap:24px 48px}}
+@media(min-width:1024px){.p-dl__anchors{grid-template-columns:repeat(3,1fr)}}
+.p-dl__anchors + .c-btn{margin-top:24px}
+.p-dl__grid{display:grid;grid-template-columns:1fr;gap:48px}
+@media(min-width:640px){.p-dl__grid{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:1024px){.p-dl__grid{grid-template-columns:repeat(3,1fr)}}
+.p-dl__item{display:flex;flex-direction:column}
+.p-dl__body{flex-grow:1}
+.p-dl__body figure{border-radius:10px;overflow:hidden}
+.p-dl__body figure img{width:100%}
+.p-dl__body h3{margin-top:16px;font-size:clamp(1.25rem,1.193rem + .24vw,1.375rem);font-weight:700;line-height:1.65}
+.p-dl__body p{margin-top:16px}
+.p-dl__item .c-btn{margin-top:24px}
+.c-btn.__wide a,.c-btn.__wide button{max-width:100%}
+/* ボタンの右の丸：ページ内へ（下向き矢印）・資料（ダウンロード） */
+.c-btn.__anchor a::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2.5 7 8 12.5 13.5 7M8 12.5V2' fill='none' stroke='%2300a5e3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.c-btn.__dl a::after,.c-btn.__dl button::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 6.5 8 10.5l4-4M8 10.5V1.5M2 11v3h12v-3' fill='none' stroke='%2300a5e3' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")}
+.c-btn.__anchor a:hover::after,.c-btn.__dl a:hover::after,.c-btn.__dl button:hover::after{right:15px}
+
 /* ===== RESPONSIVE（1024px未満はサイドを下へ） ===== */
 @media(max-width:1023.8px){
   .l-wrapper{flex-direction:column}
@@ -341,12 +407,10 @@ a.c-pill:hover{background:#fff;color:var(--pink)}
     <a href="index.html" class="l-header__logo"><small>採用・集客を支援するメディア</small><b>エアログ</b></a>
     <button type="button" class="l-header__contact" data-open-contact><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.5 7 8.5 6.5L20.5 7"/></svg>お問い合わせ</button>
     <nav class="l-header__nav" id="globalNav">
-      <a href="index.html#sec-new">新着記事</a>
-      <a href="index.html#sec-recruit">採用支援</a>
-      <a href="index.html#sec-customer">集客支援</a>
-      <a href="index.html#sec-document">お役立ち資料</a>
-      <a href="index.html#sec-seminar">セミナー情報</a>
-      <a href="index.html#sec-contact">お問い合わせ</a>
+      <a href="?cat=sns" data-cat="sns">SNS採用</a>
+      <a href="?cat=news" data-cat="news">人材ニュース</a>
+      <a href="?cat=hrd" data-cat="hrd">採用の極意</a>
+      <a href="?page=download" data-cat="download">お役立ち資料</a>
     </nav>
   </div>
 </header>
@@ -365,18 +429,96 @@ a.c-pill:hover{background:#fff;color:var(--pink)}
   </section>
 </div>
 
+<!-- パンくず（一覧・資料ページだけ） -->
+<nav class="p-breadcrumb" id="breadcrumb" aria-label="パンくずリスト" style="display: none;"></nav>
+
 <!-- ===== 2-COLUMN LAYOUT ===== -->
 <div class="l-wrapper">
 
   <main class="l-main">
     <!-- ★ トップページ用コンテンツ（一覧など） ★ -->
     <div id="topPageContent" style="display: none;">
-      <section class="l-section" id="sec-new"><h2 class="c-title">新着記事 / <span class="__en">NEW</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="#">新着記事一覧を見る</a></div></section>
-      <section class="l-section" id="sec-document"><h2 class="c-title">お役立ち資料 / <span class="__en">DOCUMENT</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="#">お役立ち資料一覧を見る</a></div></section>
-      <section class="l-section" id="sec-recruit"><h2 class="c-title">採用支援 / <span class="__en">RECRUIT</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="#">採用支援一覧を見る</a></div></section>
-      <section class="l-section" id="sec-customer"><h2 class="c-title">集客支援 / <span class="__en">MARKETING</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="#">集客支援一覧を見る</a></div></section>
-      <section class="l-section" id="sec-seminar"><h2 class="c-title">セミナー情報 / <span class="__en">SEMINAR</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="#">セミナー情報一覧を見る</a></div></section>
-      <section class="l-section" id="sec-contact"><h2 class="c-title">お問い合わせ / <span class="__en">CONTACT</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="#">お問い合わせ一覧を見る</a></div></section>
+      <section class="l-section" id="sec-new"><h2 class="c-title">最新記事 / <span class="__en">NEW</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="?cat=new">最新記事一覧を見る</a></div></section>
+      <section class="l-section" id="sec-sns"><h2 class="c-title">SNS採用 / <span class="__en">SNS</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="?cat=sns">SNS採用一覧を見る</a></div></section>
+      <section class="l-section" id="sec-news"><h2 class="c-title">人材ニュース / <span class="__en">NEWS</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="?cat=news">人材ニュース一覧を見る</a></div></section>
+      <section class="l-section" id="sec-hrd"><h2 class="c-title">採用の極意 / <span class="__en">HRD</span></h2><div class="p-card-grid"></div><div class="c-btn"><a href="?cat=hrd">採用の極意一覧を見る</a></div></section>
+      <section class="l-section" id="sec-download"><h2 class="c-title">お役立ち資料 / <span class="__en">DOCUMENT</span></h2><div class="p-yoko"></div><div class="c-btn"><a href="?page=download">お役立ち資料一覧を見る</a></div></section>
+    </div>
+
+    <!-- ★ お役立ち資料ダウンロード（クマオカマツコの download.html と同じ中身・2026-10-19） ★ -->
+    <div id="downloadPageContent" style="display: none;">
+      <section class="p-dl">
+        <h2 class="c-title">完全無料でお役立ち資料をダウンロードいただけます！</h2>
+        <ul class="p-dl__anchors">
+          <li class="c-btn __white __anchor __wide"><a href="#link01">テンプレート集</a></li>
+          <li class="c-btn __white __anchor __wide"><a href="#link02">採用課題</a></li>
+          <li class="c-btn __white __anchor __wide"><a href="#link03">採用トレンド</a></li>
+          <li class="c-btn __white __anchor __wide"><a href="#link04">採用戦略</a></li>
+          <li class="c-btn __white __anchor __wide"><a href="#link05">SNS代行サービス</a></li>
+          <li class="c-btn __white __anchor __wide"><a href="#link06">etc.</a></li>
+        </ul>
+        <div class="c-btn __dl __wide"><button type="button" data-open-contact>お問い合わせ</button></div>
+      </section>
+
+      <section class="p-dl" id="link01">
+        <h2 class="c-title">すぐ使えるテンプレート集</h2>
+        <div class="p-dl__grid">
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a248.jpg" alt="" loading="lazy"></figure><h3>面接質問集50</h3><p>本資料では、新卒・中途それぞれの採用シーンで活用できる面接質問を50問厳選して収録。志多角的に候補者を見極めるための質問をまとめています。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a248">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a249.jpg" alt="" loading="lazy"></figure><h3>スカウトテンプレート</h3><p>本資料では、未経験人材に響くスカウトテンプレートを厳選してご紹介。効率よく、かつ成果につながるスカウト運用を実現したい方は、ぜひご活用ください。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a249">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a250.jpg" alt="" loading="lazy"></figure><h3>採用振り返りシート</h3><p>本資料では、新卒・中途・アルバイトそれぞれの採用に対応した振り返りシートをご用意。採用の再現性を高めたい方はぜひご活用ください。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a250">詳細はこちら</a></div></div>
+        </div>
+      </section>
+
+      <section class="p-dl" id="link02">
+        <h2 class="c-title">すぐ見つかる自社の採用課題</h2>
+        <div class="p-dl__grid">
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a100.jpg" alt="" loading="lazy"></figure><h3>SNS活用のリアル</h3><p>この資料では、SNSの基本から運用のコツ、調査データまでを分かりやすく解説。<br>初めてでも安心して導入できるよう、実例とノウハウをぎゅっと詰め込みました。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a100">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a101.jpg" alt="" loading="lazy"></figure><h3>SNS採用の新常識</h3><p>採用SNS、なんとなく運用していませんか？<br>この資料では、SNSの基本から実践ノウハウ、最新の調査結果まで、明日から使える内容を詰め込みました。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a101">詳細はこちら</a></div></div>
+        </div>
+      </section>
+
+      <section class="p-dl" id="link03">
+        <h2 class="c-title">すぐわかる採用トレンド</h2>
+        <div class="p-dl__grid">
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a335.jpg" alt="" loading="lazy"></figure><h3>全国求人メディア 訪問数ランキング</h3><p>各種求人メディアについて、カテゴリー・訪問数・平均滞在時間などを独自調査しまとめました。<br>【随時更新／2026年5月版配信中】</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a335">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a129.jpg" alt="" loading="lazy"></figure><h3>26卒SNS就活実態調査</h3><p>この資料では、就活生の本音と他社の動向、成果につながるSNS活用法を徹底解説！アカウント運用に悩むご担当者様必見の内容です。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a129">詳細はこちら</a></div></div>
+        </div>
+      </section>
+
+      <section class="p-dl" id="link04">
+        <h2 class="c-title">すぐ真似できる採用戦略</h2>
+        <div class="p-dl__grid">
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a155.jpg" alt="" loading="lazy"></figure><h3>フォロワー数＆再生回数版</h3><p>SNS運用を通じて“会社の雰囲気”や“働く人のリアル”を発信し、フォロワーや視聴者との接点を増やすことで応募につなげた成功事例をご紹介</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a155">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a152.jpg" alt="" loading="lazy"></figure><h3>物流・運送業界版</h3><p>求人媒体では出会えなかった層へリーチし、応募数・採用数の改善に直結した具体的な取り組みをデータと共にご紹介。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a152">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a154.jpg" alt="" loading="lazy"></figure><h3>サービス業界版</h3><p>従来の求人媒体では届けられなかった若年層や未経験層にアプローチし、応募数の大幅増加や採用成功につながった具体的な成果をまとめています。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a154">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a153.jpg" alt="" loading="lazy"></figure><h3>建設・不動産業界版</h3><p>会社の雰囲気や魅力を動画や広告でダイレクトに伝え、若手層や未経験層から応募が集まった具体的な成果をご紹介しています。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a153">詳細はこちら</a></div></div>
+        </div>
+      </section>
+
+      <section class="p-dl" id="link05">
+        <h2 class="c-title">すぐ導入できるSNS代行サービス</h2>
+        <div class="p-dl__grid">
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a102.jpg" alt="" loading="lazy"></figure><h3>SNS運用代行</h3><p>＼自社SNSフォロワー150万人超・総再生回数10億回突破の実績も／<br>SNSで新卒エントリー数8倍・中途48倍以上に成長した企業の“本気のSNS採用”まとめました。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a102">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a103.jpg" alt="" loading="lazy"></figure><h3>企業のSNS運用代行 実態調査</h3><p>この資料では、実際の調査結果をもとに、雰囲気重視時代の採用戦略を読み解きます。<br>他社はどう動いてる？自社はどう見られている？採用広報のヒントが詰まった資料です。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a103">詳細はこちら</a></div></div>
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/a135.jpg" alt="" loading="lazy"></figure><h3>新サービス「人材育成プラン」</h3><p>SNS運用、代行だけで満足していませんか？<br>この資料でご紹介するのは、投稿代行だけで終わらない、「自社でバズらせる力を身につける」ためのSNSサービスです。</p></div><div class="c-btn __dl __wide"><a href="?id=kuma-download-a135">詳細はこちら</a></div></div>
+        </div>
+      </section>
+
+      <section class="p-dl" id="link06">
+        <h2 class="c-title">etc.</h2>
+        <div class="p-dl__grid">
+          <div class="p-dl__item"><div class="p-dl__body"><figure><img src="media/download/coming-soon.jpg" alt="Coming Soon" loading="lazy"></figure></div></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ★ カテゴリの一覧ページ（?cat=…） ★ -->
+    <div id="listPageContent" style="display: none;">
+      <h1 class="p-list__title" id="listTitle"></h1>
+      <p class="p-list__desc" id="listDesc"></p>
+      <div class="p-list__sort" id="listSort"></div>
+      <div class="p-yoko" id="listItems"></div>
+      <div class="p-list__pager" id="listPager"></div>
     </div>
 
     <!-- ★ 記事詳細ページ用コンテンツ（最初は非表示） ★ -->
@@ -415,38 +557,37 @@ a.c-pill:hover{background:#fff;color:var(--pink)}
     <div class="p-side-category">
       <h2 class="p-side-title __category">カテゴリ</h2>
       <ul>
-        <li><a class="c-pill" href="index.html#sec-recruit">採用支援</a></li>
-        <li><a class="c-pill" href="index.html#sec-customer">集客支援</a></li>
-        <li><a class="c-pill" href="index.html#sec-document">お役立ち資料</a></li>
-        <li><a class="c-pill" href="index.html#sec-seminar">セミナー情報</a></li>
-        <li><a class="c-pill" href="index.html#sec-contact">お問い合わせ</a></li>
+        <li><a class="c-pill" href="?cat=sns">SNS採用ノウハウ</a></li>
+        <li><a class="c-pill" href="?cat=news">人材ニュース</a></li>
+        <li><a class="c-pill" href="?cat=hrd">採用トピックス</a></li>
+        <li><a class="c-pill" href="?cat=download">お役立ち資料</a></li>
       </ul>
     </div>
   </aside>
 </div>
 
 <!-- ===== こんな記事を書いています（トップだけ） ===== -->
-<section class="l-intro" id="introArea" style="display: none;">
+<section class="l-intro" id="introArea">
   <div class="l-intro__inner">
     <h2 class="l-intro__title"><span>こんな記事を書いています</span></h2>
     <div class="l-intro__items">
-      <div class="l-intro__item" data-genre="採用支援">
+      <div class="l-intro__item" data-cat="sns">
         <figure><img alt=""></figure>
-        <h3>採用支援</h3>
-        <p>求人広告やSNS採用、面接のコツなど、採用活動を成功させるためのノウハウを発信します。</p>
-        <p class="c-link"><a href="index.html#sec-recruit">記事一覧を見る</a></p>
+        <h3>SNS採用のノウハウ</h3>
+        <p>20代の85％が企業のSNSを検索！Z世代の採用には欠かせない、SNSの活用方法などについて発信します。</p>
+        <p class="c-link"><a href="?cat=sns">記事一覧を見る</a></p>
       </div>
-      <div class="l-intro__item" data-genre="集客支援">
+      <div class="l-intro__item" data-cat="news">
         <figure><img alt=""></figure>
-        <h3>集客支援</h3>
-        <p>SNS運用やWeb集客など、お客様に選ばれるための情報を発信します。</p>
-        <p class="c-link"><a href="index.html#sec-customer">記事一覧を見る</a></p>
+        <h3>人材採用のノウハウ</h3>
+        <p>求人広告やダイレクトリクルーティング etc. 採用手法が多様化している現在において、採用成功に必要なノウハウを発信します。</p>
+        <p class="c-link"><a href="?cat=news">記事一覧を見る</a></p>
       </div>
-      <div class="l-intro__item" data-genre="お役立ち資料">
+      <div class="l-intro__item" data-cat="download">
         <figure><img alt=""></figure>
         <h3>お役立ち資料</h3>
-        <p>採用・集客に活かせる資料やデータをまとめています。お役立てください。</p>
-        <p class="c-link"><a href="index.html#sec-document">記事一覧を見る</a></p>
+        <p>採用活動に活かせる資料やデータをダウンロードできます。無料でダウンロードできますので、お役立てください！</p>
+        <p class="c-link"><a href="?page=download">記事一覧を見る</a></p>
       </div>
     </div>
   </div>
@@ -650,73 +791,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   })();
 
-  document.getElementById('searchInput').addEventListener('input', function(e) {
-    const query = e.target.value.toLowerCase();
-    const cards = document.querySelectorAll('.p-card');
-    cards.forEach(card => {
-      const title = card.querySelector('.p-card__title').textContent.toLowerCase();
-      card.style.display = title.includes(query) ? 'flex' : 'none';
-    });
-  });
-
-  function applyCategoryFilter() {
-    const hash = window.location.hash;
-    const sections = ['sec-new', 'sec-recruit', 'sec-customer', 'sec-document', 'sec-seminar', 'sec-contact'];
-
-    if (document.getElementById('articlePageContent').style.display === 'block') return;
-
-    let isFiltered = false;
-    if (hash && sections.includes(hash.replace('#', ''))) {
-      isFiltered = true;
-    }
-
-    sections.forEach(secId => {
-      const el = document.getElementById(secId);
-      if (!el) return;
-
-      if (isFiltered) {
-        el.style.display = (hash === '#' + secId) ? 'block' : 'none';
-      } else {
-        el.style.display = 'block';
-      }
-    });
-    window.scrollTo(0, 0);
+  // ===== カテゴリ（メニューはクマオカマツコと同じ4つ） =====
+  // 記事のカテゴリ（genre）は管理画面の3つのまま。人材ニュースと採用の極意は、どちらも「採用支援」なので
+  // クマオカマツコの人材ニュースから移した記事（id が kuma-news-）だけを人材ニュースにし、残りの採用支援は採用の極意にする（2026-10-19 宮村さん決定）
+  const CATS = {
+    sns:      { nav: 'SNS採用',     title: 'SNS採用ノウハウ', en: 'SNS',      desc: '20代の85％が企業のSNSを検索！Z世代の採用には欠かせない、SNSの活用方法などについて発信します。' },
+    news:     { nav: '人材ニュース', title: '人材ニュース',    en: 'NEWS',     desc: '人材業界を取り巻く環境が大きく変化している今、市場では何が起きているか？トレンドやニュースを発信します。' },
+    hrd:      { nav: '採用の極意',   title: '採用トピックス',  en: 'HRD',      desc: '売り手市場の今、より良い人材を獲得するためには何をすれば良いか？企業の採用活動において役立つ情報を発信します。' },
+    download: { nav: 'お役立ち資料', title: 'お役立ち資料',    en: 'DOCUMENT', desc: '採用活動に活かせる資料やデータをダウンロードできます。無料でダウンロードできますので、お役立てください！' },
+    new:      { nav: '最新記事',     title: '最新記事一覧',    en: 'NEW',      desc: '' },
+  };
+  function catOf(post) {
+    if (post.genre === '集客支援') return 'sns';
+    if (post.genre === 'お役立ち資料') return 'download';
+    if (post.genre === '採用支援') return String(post.id || '').startsWith('kuma-news-') ? 'news' : 'hrd';
+    return null;   // 上の3つ以外のカテゴリ（今は0本）は、最新記事にだけ出る
+  }
+  function pillHtml(post) {
+    const c = catOf(post);
+    return c ? `<a class="c-pill" href="?cat=${c}" onclick="event.stopPropagation()">${CATS[c].title}</a>` : `<span class="c-pill">${post.genre || 'その他'}</span>`;
   }
 
-  document.querySelectorAll('a[href^="index.html#"], a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function(e) {
-      if (document.getElementById('articlePageContent').style.display === 'block') return;
-      e.preventDefault(); 
-      const targetHref = this.getAttribute('href');
-      const targetHash = targetHref.includes('#') ? targetHref.substring(targetHref.indexOf('#')) : '';
-      history.pushState(null, null, targetHash || window.location.pathname);
-      applyCategoryFilter();
+  document.getElementById('searchInput').addEventListener('input', function(e) {
+    const query = e.target.value.toLowerCase();
+    document.querySelectorAll('.p-card, .p-ycard').forEach(card => {
+      const title = card.querySelector('.p-card__title').textContent.toLowerCase();
+      card.style.display = title.includes(query) ? '' : 'none';
     });
   });
-
-  window.addEventListener('popstate', applyCategoryFilter);
 
   const params = new URLSearchParams(window.location.search);
   const articleId = params.get('id');
+  const listCat = CATS[params.get('cat')] ? params.get('cat') : null;
+  const isDownload = params.get('page') === 'download';
 
+  // 前の作りの「#sec-…」のURLで来た人は、同じ中身の新しいURLへ移す
+  const OLD_HASH = { '#sec-new': '?cat=new', '#sec-recruit': '?cat=hrd', '#sec-customer': '?cat=sns', '#sec-document': '?page=download' };
+  if (!articleId && !listCat && !isDownload && OLD_HASH[location.hash]) { location.replace(OLD_HASH[location.hash]); return; }
+
+  // メニューの今いる場所に下線
+  const here = isDownload ? 'download' : listCat;
+  document.querySelectorAll('#globalNav a').forEach(a => a.classList.toggle('is-current', !!here && a.dataset.cat === here));
+
+  const show = id => { document.getElementById(id).style.display = 'block'; };
   if (articleId) {
-    document.getElementById('topPageSliderWrapper').style.display = 'none';
-    document.getElementById('topPageContent').style.display = 'none';
-    document.getElementById('articlePageContent').style.display = 'block';
+    show('articlePageContent');
     renderArticle(articleId);
+  } else if (isDownload) {
+    document.querySelector('.l-wrapper').classList.add('is-wide', 'is-sub');
+    show('downloadPageContent');
+    renderBreadcrumb('お役立ち資料ダウンロード');
+    document.title = 'お役立ち資料ダウンロード｜エアログ';
+  } else if (listCat) {
+    document.querySelector('.l-wrapper').classList.add('is-sub');
+    show('listPageContent');
+    renderList(listCat);
   } else {
-    document.getElementById('topPageSliderWrapper').style.display = 'block';
-    document.getElementById('topPageContent').style.display = 'block';
-    document.getElementById('articlePageContent').style.display = 'none';
-    document.getElementById('introArea').style.display = 'block';
+    show('topPageSliderWrapper');
+    show('topPageContent');
     renderHeroSlider();
     renderGridList();
-    renderIntro();
-    applyCategoryFilter();
   }
+  renderIntro();
   renderSideLatest();
 
-  // 公開中の記事を新しい順に（カード・サイドの最新記事・関連記事で共通）
+  // 公開中の記事を新しい順に（カード・サイドの最新記事・関連記事・一覧で共通）
   function latestVisible() {
     return globalPosts.filter(isVisible).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
   }
@@ -727,6 +866,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const x = post.coverPositionX !== undefined ? post.coverPositionX : 50;
     const y = post.coverPositionY !== undefined ? post.coverPositionY : 50;
     return `object-position: ${x}% ${y}%;`;
+  }
+  function postsOf(c) {
+    return c === 'new' ? latestVisible() : latestVisible().filter(p => catOf(p) === c);
+  }
+
+  // パンくず（HOME ＞ いまのページ）
+  function renderBreadcrumb(name) {
+    const el = document.getElementById('breadcrumb');
+    el.innerHTML = `<ol class="p-breadcrumb__inner"><li class="p-breadcrumb__item"><a href="index.html" aria-label="HOME"></a></li><li class="p-breadcrumb__item"><span>${name}</span></li></ol>`;
+    el.style.display = 'block';
   }
 
   // サイドの「最新記事」：新しい順に3本
@@ -741,11 +890,75 @@ document.addEventListener('DOMContentLoaded', async () => {
   // 「こんな記事を書いています」の絵は、そのカテゴリのいちばん新しい記事の表紙を使う
   function renderIntro() {
     document.querySelectorAll('.l-intro__item').forEach(item => {
-      const p = latestVisible().find(x => x.genre === item.dataset.genre);
+      const p = postsOf(item.dataset.cat)[0];
       const img = item.querySelector('img');
       if (p) { img.src = coverOf(p); img.setAttribute('style', posOf(p)); }
       else item.querySelector('figure').remove();
     });
+  }
+
+  // 横長のカード（一覧ページ・トップのお役立ち資料）
+  function yokoCard(post) {
+    return `
+      <article class="p-ycard" onclick="window.location.href='?id=${post.id}'">
+        <figure class="p-ycard__thumb"><img src="${coverOf(post)}" alt="" loading="lazy" style="${posOf(post)}"></figure>
+        <div class="p-ycard__info">
+          <h3 class="p-card__title">${post.title || '無題'}</h3>
+          <div class="p-card__cats">${pillHtml(post)}</div>
+          <p class="p-card__date"><span>更新日</span>${post.displayDate || ''}</p>
+        </div>
+      </article>`;
+  }
+
+  // カテゴリの一覧ページ：10本ずつ・新しい順／古い順・ページ番号
+  function renderList(c) {
+    const info = CATS[c];
+    const sort = params.get('sort') === 'asc' ? 'asc' : 'desc';
+    let list = postsOf(c);
+    if (sort === 'asc') list = list.slice().reverse();
+    const per = 10, pages = Math.max(1, Math.ceil(list.length / per));
+    const page = Math.min(pages, Math.max(1, parseInt(params.get('p'), 10) || 1));
+    const url = (p, s) => `?cat=${c}${(s || sort) === 'asc' ? '&sort=asc' : ''}${p > 1 ? '&p=' + p : ''}`;
+
+    renderBreadcrumb(info.title);
+    document.title = info.title + 'の記事一覧｜エアログ';
+    document.getElementById('listTitle').textContent = info.title;
+    const desc = document.getElementById('listDesc');
+    desc.textContent = info.desc; desc.style.display = info.desc ? '' : 'none';
+    document.getElementById('listSort').innerHTML = sort === 'desc'
+      ? `新しい順&emsp;|&emsp;<a href="${url(1, 'asc')}">古い順</a>`
+      : `<a href="${url(1, 'desc')}">新しい順</a>&emsp;|&emsp;古い順`;
+    document.getElementById('listItems').innerHTML = list.slice((page - 1) * per, page * per).map(yokoCard).join('')
+      || '<p class="p-list__empty">まだ記事がありません。</p>';
+
+    // ページ番号：今のページを中心に最大7つ。前へ・次へ
+    let html = '';
+    if (pages > 1) {
+      const from = Math.max(1, Math.min(page - 3, pages - 6)), to = Math.min(pages, from + 6);
+      if (page > 1) html += `<a href="${url(page - 1)}">&lt;&lt; 前へ</a>`;
+      for (let i = from; i <= to; i++) html += i === page ? `<strong>${i}</strong>` : `<a href="${url(i)}">${i}</a>`;
+      if (page < pages) html += `<a href="${url(page + 1)}">次へ &gt;&gt;</a>`;
+    }
+    document.getElementById('listPager').innerHTML = html;
+  }
+
+  function renderGridList(){
+    function createCard(post){
+      return `
+      <article class="p-card" onclick="window.location.href='?id=${post.id}'">
+        <img class="p-card__thumb" src="${coverOf(post)}" alt="" loading="lazy" style="${posOf(post)}">
+        <div class="p-card__body">
+          <h3 class="p-card__title">${post.title || '無題'}</h3>
+          <div class="p-card__cats">${pillHtml(post)}</div>
+          <p class="p-card__date"><span>更新日</span>${post.displayDate || ''}</p>
+        </div>
+      </article>`;
+    }
+    ['new', 'sns', 'news', 'hrd'].forEach(c => {
+      document.querySelector(`#sec-${c} .p-card-grid`).innerHTML = postsOf(c).slice(0, 6).map(createCard).join('');
+    });
+    // お役立ち資料は横長のカードで1本（クマオカマツコと同じ）
+    document.querySelector('#sec-download .p-yoko').innerHTML = postsOf('download').slice(0, 1).map(yokoCard).join('');
   }
 
   function renderHeroSlider() {
@@ -829,41 +1042,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => goTo(n), 50);
   }
 
-  function renderGridList(){
-    const publicPosts = globalPosts.filter(isVisible).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
-    
-    function createCard(post){
-      const imgSrc = post.coverImage || `https://via.placeholder.com/600x400/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
-      const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
-      const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
-      return `
-      <article class="p-card" onclick="window.location.href='?id=${post.id}'">
-        <img class="p-card__thumb" src="${imgSrc}" alt="" loading="lazy" style="object-position: ${posX}% ${posY}%;">
-        <div class="p-card__body">
-          <h3 class="p-card__title">${post.title || '無題'}</h3>
-          <div class="p-card__cats"><span class="c-pill">${post.genre || 'その他'}</span></div>
-          <p class="p-card__date"><span>更新日</span>${post.displayDate || ''}</p>
-        </div>
-      </article>`;
-    }
-
-    const grids = { 
-        new: document.querySelector('#sec-new .p-card-grid'), 
-        recruit: document.querySelector('#sec-recruit .p-card-grid'), 
-        document: document.querySelector('#sec-document .p-card-grid'),
-        customer: document.querySelector('#sec-customer .p-card-grid'),
-        seminar: document.querySelector('#sec-seminar .p-card-grid'),
-        contact: document.querySelector('#sec-contact .p-card-grid')
-    };
-
-    if(grids.new) { grids.new.innerHTML = ''; publicPosts.slice(0, 6).forEach(p => grids.new.innerHTML += createCard(p)); }
-    if(grids.recruit) { grids.recruit.innerHTML = ''; publicPosts.filter(p => p.genre === '採用支援').slice(0, 6).forEach(p => grids.recruit.innerHTML += createCard(p)); }
-    if(grids.document) { grids.document.innerHTML = ''; publicPosts.filter(p => p.genre === 'お役立ち資料').slice(0, 6).forEach(p => grids.document.innerHTML += createCard(p)); }
-    if(grids.customer) { grids.customer.innerHTML = ''; publicPosts.filter(p => p.genre === '集客支援').slice(0, 6).forEach(p => grids.customer.innerHTML += createCard(p)); }
-    if(grids.seminar) { grids.seminar.innerHTML = ''; publicPosts.filter(p => p.genre === 'セミナー情報').slice(0, 6).forEach(p => grids.seminar.innerHTML += createCard(p)); }
-    if(grids.contact) { grids.contact.innerHTML = ''; publicPosts.filter(p => p.genre === 'お問い合わせ').slice(0, 6).forEach(p => grids.contact.innerHTML += createCard(p)); }
-  }
-
   async function renderArticle(id) {
     const container = document.getElementById('articleContainer');
     const notFound = '<div style="padding:80px;text-align:center;">記事が存在しません。<br><a href="?">トップに戻る</a></div>';
@@ -913,8 +1091,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       tocHtml = `<div class="p-article__toc"><div class="p-article__toc-title">目次</div>${post.toc}</div>`;
     }
 
-    // 関連記事：同じカテゴリの公開中の記事を新しい順に3本（この記事は除く）
-    const related = latestVisible().filter(p => p.genre === post.genre && p.id !== (post.id || id)).slice(0, 3);
+    // 関連記事：同じカテゴリ（メニューの4つ）の公開中の記事を新しい順に3本（この記事は除く）
+    const related = latestVisible().filter(p => catOf(p) === catOf({ ...post, id: post.id || id }) && p.id !== (post.id || id)).slice(0, 3);
     const relatedHtml = related.length ? `
         <h2 class="p-relation__title">関連記事</h2>
         <div class="p-relation">${related.map(p => `
@@ -929,7 +1107,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div class="p-article__time">更新日&nbsp;:&nbsp;${post.displayDate || ''}</div>
         ${noticeHtml}
         <h1 class="p-article__title">${post.title}</h1>
-        <div class="p-article__cats"><a class="c-pill" href="index.html#sec-${{ '採用支援': 'recruit', '集客支援': 'customer', 'お役立ち資料': 'document', 'セミナー情報': 'seminar', 'お問い合わせ': 'contact' }[post.genre] || 'new'}">${post.genre || 'その他'}</a></div>
+        <div class="p-article__cats">${pillHtml(post)}</div>
         <figure class="p-article__coverwrap"><img class="p-article__cover${String(post.id || id).startsWith('kuma-') ? ' p-article__cover--whole' : ''}" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;"></figure>
         ${tocHtml}
         <div class="p-article__content">${post.content || '<p>本文がありません。</p>'}</div>
