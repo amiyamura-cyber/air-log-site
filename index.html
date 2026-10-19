@@ -1096,13 +1096,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (post.toc) {
       tocHtml = `<div class="p-article__toc"><div class="p-article__toc-title">目次</div>${post.toc}</div>`;
     }
-    // クマオカマツコから移した記事は、本文の <!-- kuma-toc --> の位置（元サイトで目次があった位置）に目次を出す。
-    // 印が無い記事（手書きの記事など）は今までどおり本文の上に出す
     const content = post.content || '<p>本文がありません。</p>';
-    const tocAt = content.indexOf('<!-- kuma-toc -->');
-    const bodyHtml = tocAt >= 0
-      ? `<div class="p-article__content">${content.slice(0, tocAt)}</div>${tocHtml}<div class="p-article__content">${content.slice(tocAt)}</div>`
-      : `${tocHtml}<div class="p-article__content">${content}</div>`;
+    const bodyHtml = `${tocHtml}<div class="p-article__content">${content}</div>`;
 
     // 関連記事：同じカテゴリ（メニューの4つ）の公開中の記事を新しい順に3本（この記事は除く）
     const related = latestVisible().filter(p => catOf(p) === catOf({ ...post, id: post.id || id }) && p.id !== (post.id || id)).slice(0, 3);
@@ -1140,6 +1135,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const tocBox = container.querySelector('.p-article__toc');
     const isKuma = String(post.id || id).startsWith('kuma-');
+    // クマオカマツコから移した記事は、本文の <!-- kuma-toc --> の位置（元サイトで目次があった位置）に目次を出す。
+    // 印を含む部品の手前で本文を2つに分け、その間に目次を置く。印が無い記事（手書きの記事など）は今までどおり本文の上
+    const bodyEl = container.querySelector('.p-article__content');
+    if (tocBox && bodyEl) {
+      const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_COMMENT);
+      let mark = null;
+      while (walker.nextNode()) { if (walker.currentNode.nodeValue.trim() === 'kuma-toc') { mark = walker.currentNode; break; } }
+      if (mark) {
+        let top = mark;
+        while (top.parentNode !== bodyEl) top = top.parentNode;
+        const after = document.createElement('div');
+        after.className = 'p-article__content';
+        while (top.nextSibling) after.appendChild(top.nextSibling);
+        after.insertBefore(top, after.firstChild);
+        bodyEl.after(tocBox);
+        tocBox.after(after);
+      }
+    }
     if (tocBox && isKuma) {
       // クマオカマツコから移した記事は、目次を元サイトと同じ形で出す（番号・「・1-1.」はCSSとデータのまま）
       tocBox.classList.add('is-kuma');
