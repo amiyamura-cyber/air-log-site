@@ -194,6 +194,12 @@ a.c-pill:hover{background:#fff;color:var(--pink)}
 .p-article__toc li ul,.p-article__toc li ol{list-style:none;padding-left:0;margin:4px 0 0 2.66em}
 .p-article__toc li li{position:relative;padding-left:1.15em}
 .p-article__toc li li::before{content:"\2022";position:absolute;left:0;color:var(--blue)}
+/* クマオカマツコから移した記事の目次は元サイトと同じ形：大見出しに 1. 2. …、小見出しは字下げ・点なしで「・1-1.」をそのまま */
+.p-article__toc.is-kuma ol.p-media-parts__toc-list{list-style:none;padding-left:25px}
+.p-article__toc.is-kuma ol.p-media-parts__toc-list > li{list-style:decimal}
+.p-article__toc.is-kuma li ul,.p-article__toc.is-kuma li ol{margin:0}
+.p-article__toc.is-kuma li li{padding-left:0}
+.p-article__toc.is-kuma li li::before{content:none}
 .p-article__toc a{color:inherit}
 .p-article__toc a:hover{text-decoration:underline}
 
@@ -1126,8 +1132,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (el.textContent.trim() === '目次' && !el.closest('.p-article__toc-title')) el.remove();
       });
 
-    // 目次の小見出しに付いている先頭の中黒（・）を消す。点はCSSで表示しているため二重になる
-    container.querySelectorAll('.p-article__toc a').forEach(function (a) {
+    const tocBox = container.querySelector('.p-article__toc');
+    const isKuma = String(post.id || id).startsWith('kuma-');
+    if (tocBox && isKuma) {
+      // クマオカマツコから移した記事は、目次を元サイトと同じ形で出す（番号・「・1-1.」はCSSとデータのまま）
+      tocBox.classList.add('is-kuma');
+      // 取り込みで目次の箱に入ってしまった導入文を、箱のすぐ下（本文の先頭）へ出す。元サイトでも目次の後ろにある
+      const stray = Array.from(tocBox.querySelectorAll('p')).filter(function (p) {
+        return !p.closest('.p-article__toc-title') && !p.closest('li') && p.textContent.trim();
+      });
+      if (stray.length) {
+        const body = container.querySelector('.p-article__content');
+        const frag = document.createDocumentFragment();
+        stray.forEach(function (p) { frag.appendChild(p); });
+        body.insertBefore(frag, body.firstChild);
+      }
+    }
+
+    // 目次の小見出しに付いている先頭の中黒（・）を消す。点はCSSで表示しているため二重になる（移した記事は元サイトどおり残す）
+    if (!isKuma) container.querySelectorAll('.p-article__toc a').forEach(function (a) {
       const t = a.textContent.replace(/^\s*[・･·]\s*/, '');
       if (t !== a.textContent) a.textContent = t;
     });
