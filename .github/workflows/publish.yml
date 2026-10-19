@@ -1,4 +1,6 @@
-# 本番サイトの公開（GitHub Pages と、会社のサーバー rc-group.co.jp/airlog/ の2か所）
+# 本番サイトの公開（GitHub Pages）
+# 会社のサーバー（rc-group.co.jp/airlog/）へは、このMacから tools/deploy-rc.sh で上げる。
+# さくらは国外IPからのFTPを拒否するので、海外で動く GitHub Actions からは上げられない（2026-10-19 確認）
 # ・main に push したとき：組み立てて公開する
 # ・10分おき：管理画面で更新された記事を取り込む。中身が前回と同じなら公開し直さない
 # ・手動（Actions 画面の Run workflow）：いつでも組み立てて公開する
@@ -49,25 +51,6 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-
-  # 会社のサーバー（rc-group.co.jp/airlog/）へ上げる。中身が変わったファイルだけ上げる（tools/deploy-ftp.py）
-  # こちらは検索に出す（--allow-index でトップページの noindex を外す）
-  deploy-rc:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-rc
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - run: node tools/build-static.mjs --out _site_rc --allow-index
-      - run: python3 tools/deploy-ftp.py _site_rc
-        env:
-          FTP_HOST: ${{ secrets.AIRLOG_FTP_HOST }}
-          FTP_USER: ${{ secrets.AIRLOG_FTP_USER }}
-          FTP_PASS: ${{ secrets.AIRLOG_FTP_PASS }}
 
   deploy:
     needs: build
