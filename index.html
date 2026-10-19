@@ -219,6 +219,14 @@ ul,ol{list-style:none}
 /* ===== PAGE TOP ===== */
 .page-top{position:fixed;bottom:32px;right:32px;width:56px;height:56px;border-radius:50%;background:#d81b60;color:#fff;border:none;font-size:1.5rem;cursor:pointer;opacity:0;visibility:hidden;transition:all .3s;box-shadow:0 4px 16px rgba(216,27,96,.3);z-index:900}
 .page-top.visible{opacity:1;visibility:visible}
+/* お問い合わせフォームの窓 */
+.c-contact-modal{position:fixed;inset:0;z-index:2000;background:rgba(38,50,56,.55);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:max(24px,env(safe-area-inset-top,0px)) 16px 24px}
+.c-contact-modal.is-closed{visibility:hidden;pointer-events:none}/* 閉じていても大きさは持たせる（BowNow が高さを測れるように） */
+.c-contact-modal__panel{position:relative;background:#fff;border-radius:12px;width:100%;max-width:720px;padding:32px 24px 24px;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.c-contact-modal__title{font-size:1.3rem;margin-bottom:16px;padding-left:12px;border-left:5px solid #d81b60;color:#222}
+.c-contact-modal__close{position:absolute;top:10px;right:12px;width:40px;height:40px;border:none;background:transparent;font-size:1.8rem;line-height:1;color:#555;cursor:pointer;border-radius:50%}
+.c-contact-modal__close:hover,.c-contact-modal__close:focus-visible{background:#f5f5f5;outline:none}
+.c-contact-modal__form iframe{width:100%;border:0;display:block}
 .page-top:hover{transform:translateY(-4px)}
 
 /* ===== RESPONSIVE ===== */
@@ -297,7 +305,7 @@ ul,ol{list-style:none}
     <section class="p-cta-banner">
       <h2>採用のお悩み、まるっと解決！</h2>
       <p>求人広告のプロが最適なプランをご提案します。まずはお気軽にご相談ください。</p>
-      <a href="#" class="p-cta-banner__btn">無料相談はこちら</a>
+      <a href="#" class="p-cta-banner__btn" data-open-contact>無料相談はこちら</a>
     </section>
   </main>
 
@@ -319,7 +327,7 @@ ul,ol{list-style:none}
       <div class="c-line-banner">
         <h3 class="c-line-banner__title">お問い合わせ<br>受付中！</h3>
         <p class="c-line-banner__desc">求人掲載・採用のご相談は<br>こちらからお気軽にどうぞ</p>
-        <a href="#" class="c-line-banner__btn">お問い合わせはこちら</a>
+        <a href="#" class="c-line-banner__btn" data-open-contact>お問い合わせはこちら</a>
       </div>
     </div>
 
@@ -350,6 +358,41 @@ ul,ol{list-style:none}
 
 <!-- ===== PAGE TOP ===== -->
 <button class="page-top" id="pageTop">&#8593;</button>
+
+<!-- ===== お問い合わせフォーム（BowNow）=====
+     「無料相談はこちら」「お問い合わせはこちら」（data-open-contact）で開く。
+     BowNow のコードは1ページに1回しか差し込めないので、フォームはここ1か所に置き、2つのボタンから同じ窓を開く。
+     コードはページを開いた時点で読み込む（BowNow の訪問の記録を取るため） -->
+<div class="c-contact-modal is-closed" id="contactModal" aria-hidden="true">
+  <div class="c-contact-modal__panel" role="dialog" aria-modal="true" aria-labelledby="contactModalTitle">
+    <button type="button" class="c-contact-modal__close" id="contactModalClose" aria-label="閉じる">×</button>
+    <h2 class="c-contact-modal__title" id="contactModalTitle">お問い合わせ</h2>
+    <div class="c-contact-modal__form">
+<script id="_bownow_cs_sid_3097bf001a8f7f2e5cee">
+var _bownow_cs_sid_3097bf001a8f7f2e5cee = document.createElement('script');
+_bownow_cs_sid_3097bf001a8f7f2e5cee.charset = 'utf-8';
+_bownow_cs_sid_3097bf001a8f7f2e5cee.src = 'https://contents.bownow.jp/forms/sid_3097bf001a8f7f2e5cee/trace.js';
+document.getElementsByTagName('head')[0].appendChild(_bownow_cs_sid_3097bf001a8f7f2e5cee);
+</script>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var modal = document.getElementById('contactModal');
+  function open() { modal.classList.remove('is-closed'); modal.setAttribute('aria-hidden', 'false'); document.body.style.overflow = 'hidden'; document.getElementById('contactModalClose').focus(); }
+  function close() { modal.classList.add('is-closed'); modal.setAttribute('aria-hidden', 'true'); document.body.style.overflow = ''; }
+  // 「#」のリンクはページ内の他の処理（先頭へ戻る）も拾うので、先に受け取って止める
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('[data-open-contact]');
+    if (!a) return;
+    e.preventDefault(); e.stopPropagation(); open();
+  }, true);
+  document.getElementById('contactModalClose').addEventListener('click', close);
+  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !modal.classList.contains('is-closed')) close(); });
+})();
+</script>
 
 <script>
 // 記事は、自動処理（tools/build-static.mjs）が書き出したファイルから読む。

@@ -103,6 +103,15 @@ async function main() {
 
   fs.rmSync(OUT, { recursive: true, force: true });
   copyRepo(ROOT, OUT);
+  // --allow-index：会社のドメイン（rc-group.co.jp/airlog/）向け。トップページだけ検索よけ（noindex）を外す。
+  // 管理画面・サンクスページは検索に出さないまま。github.io 向けは付けたまま
+  if (process.argv.includes('--allow-index')) {
+    const f = path.join(OUT, 'index.html');
+    const before = fs.readFileSync(f, 'utf8');
+    const after = before.replace(/<meta name="robots"[^>]*>(<!--[^>]*-->)?\n?/, '');
+    if (after === before) throw new Error('--allow-index：index.html に noindex の行が見つからない');
+    fs.writeFileSync(f, after);
+  }
   fs.mkdirSync(path.join(OUT, 'data/posts'), { recursive: true });
 
   const pub = all.filter(isPublicStatus);
