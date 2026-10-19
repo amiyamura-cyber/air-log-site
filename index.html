@@ -55,6 +55,8 @@ ul,ol{list-style:none}
 .p-hero__track { display: flex; align-items: center; transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
 .p-hero__slide { flex: 0 0 420px; padding: 0 12px; box-sizing: border-box; transition: all 0.5s ease; opacity: 0.4; transform: scale(0.85); cursor: pointer; }
 .p-hero__slide.is-center { opacity: 1; transform: scale(1.05); z-index: 2; }
+/* 端の写しから本物へ戻すときは動きを止めて一瞬で入れ替える（見た目は変わらない） */
+.p-hero__track.is-jumping, .p-hero__track.is-jumping .p-hero__slide { transition: none; }
 .p-hero__slide img { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 1px solid #eaeaea; background: #fff; }
 .p-hero__btn { position: absolute; top: calc(50% - 14px); transform: translateY(-50%); background: rgba(50,50,50,0.8); color: #fff; border: none; width: 44px; height: 44px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; z-index: 10; transition: background 0.2s; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 .p-hero__btn:hover { background: #111; }
@@ -596,17 +598,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     track.innerHTML = '';
     let sliderPosts = [...publicPosts.sort(() => 0.5 - Math.random()).slice(0, 6)];
     while (sliderPosts.length < 6) { sliderPosts.push({ isDummy: true }); }
+    let setHtml = '';
     sliderPosts.forEach(post => {
       if(post.isDummy) {
-        track.innerHTML += `<div class="p-hero__slide"><img src="https://via.placeholder.com/800x450/eeeeee/bbbbbb?text=No+Article" alt=""></div>`;
+        setHtml += `<div class="p-hero__slide"><img src="https://via.placeholder.com/800x450/eeeeee/bbbbbb?text=No+Article" alt=""></div>`;
       } else {
         const defaultImg = `https://via.placeholder.com/800x450/e3f2fd/1a73e8?text=${encodeURIComponent(post.genre || 'No Image')}`;
         const imgSrc = post.coverImage || defaultImg;
         const posX = post.coverPositionX !== undefined ? post.coverPositionX : 50;
         const posY = post.coverPositionY !== undefined ? post.coverPositionY : 50;
-        track.innerHTML += `<div class="p-hero__slide" data-id="${post.id}"><img src="${imgSrc}" style="object-position: ${posX}% ${posY}%;"></div>`;
+        setHtml += `<div class="p-hero__slide" data-id="${post.id}"><img src="${imgSrc}" style="object-position: ${posX}% ${posY}%;"></div>`;
       }
     });
+    // 最初の1枚の左・最後の1枚の右が空かないよう、同じ並びを前後にも置いて輪にする（真ん中の組が本物）
+    track.innerHTML = setHtml + setHtml + setHtml;
     initHeroSlider();
   }
 
@@ -614,20 +619,38 @@ document.addEventListener('DOMContentLoaded', async () => {
     const track = document.getElementById('heroTrack');
     const slides = track.querySelectorAll('.p-hero__slide');
     if(slides.length === 0) return;
-    let current = 0;
+    const n = slides.length / 3; // 1組の枚数（前の写し・本物・後ろの写し）
+    let current = n;
     let autoPlayId;
 
-    function goTo(idx) {
-      if(idx < 0) idx = slides.length - 1;
-      if(idx >= slides.length) idx = 0;
-      current = idx;
+    function place() {
       const offset = -(current * slides[0].offsetWidth) + (document.getElementById('heroArea').offsetWidth / 2) - (slides[0].offsetWidth / 2);
       track.style.transform = `translateX(${offset}px)`;
       slides.forEach((slide, i) => { slide.classList.toggle('is-center', i === current); });
-      
+    }
+
+    // 写しの上に来ていたら、同じ絵の本物の位置へ動きなしで移す
+    function backToReal() {
+      if(current >= n && current < 2 * n) return;
+      current = ((current % n) + n) % n + n;
+      track.classList.add('is-jumping');
+      place();
+      void track.offsetWidth;
+      track.classList.remove('is-jumping');
+    }
+
+    function goTo(idx) {
+      // idx は戻す前の位置から数えているので、本物へ戻した分だけ同じだけずらす
+      const before = current;
+      backToReal();
+      current = idx + (current - before);
+      place();
+
       clearInterval(autoPlayId);
       autoPlayId = setInterval(() => goTo(current + 1), 4000);
     }
+
+    track.addEventListener('transitionend', e => { if(e.target === track) backToReal(); });
 
     slides.forEach((slide, idx) => {
       slide.onclick = () => {
@@ -639,7 +662,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('heroPrev').onclick = () => goTo(current - 1);
     document.getElementById('heroNext').onclick = () => goTo(current + 1);
 
-    setTimeout(() => goTo(0), 50);
+    setTimeout(() => goTo(n), 50);
   }
 
   function renderGridList(){
