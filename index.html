@@ -1096,6 +1096,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (post.toc) {
       tocHtml = `<div class="p-article__toc"><div class="p-article__toc-title">目次</div>${post.toc}</div>`;
     }
+    // クマオカマツコから移した記事は、本文の <!-- kuma-toc --> の位置（元サイトで目次があった位置）に目次を出す。
+    // 印が無い記事（手書きの記事など）は今までどおり本文の上に出す
+    const content = post.content || '<p>本文がありません。</p>';
+    const tocAt = content.indexOf('<!-- kuma-toc -->');
+    const bodyHtml = tocAt >= 0
+      ? `<div class="p-article__content">${content.slice(0, tocAt)}</div>${tocHtml}<div class="p-article__content">${content.slice(tocAt)}</div>`
+      : `${tocHtml}<div class="p-article__content">${content}</div>`;
 
     // 関連記事：同じカテゴリ（メニューの4つ）の公開中の記事を新しい順に3本（この記事は除く）
     const related = latestVisible().filter(p => catOf(p) === catOf({ ...post, id: post.id || id }) && p.id !== (post.id || id)).slice(0, 3);
@@ -1115,8 +1122,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <h1 class="p-article__title">${post.title}</h1>
         <div class="p-article__cats">${pillHtml(post)}</div>
         <figure class="p-article__coverwrap"><img class="p-article__cover${String(post.id || id).startsWith('kuma-') ? ' p-article__cover--whole' : ''}" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;"></figure>
-        ${tocHtml}
-        <div class="p-article__content">${post.content || '<p>本文がありません。</p>'}</div>
+        ${bodyHtml}
         ${relatedHtml}
     `;
 
@@ -1137,16 +1143,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (tocBox && isKuma) {
       // クマオカマツコから移した記事は、目次を元サイトと同じ形で出す（番号・「・1-1.」はCSSとデータのまま）
       tocBox.classList.add('is-kuma');
-      // 取り込みで目次の箱に入ってしまった導入文を、箱のすぐ下（本文の先頭）へ出す。元サイトでも目次の後ろにある
-      const stray = Array.from(tocBox.querySelectorAll('p')).filter(function (p) {
-        return !p.closest('.p-article__toc-title') && !p.closest('li') && p.textContent.trim();
-      });
-      if (stray.length) {
-        const body = container.querySelector('.p-article__content');
-        const frag = document.createDocumentFragment();
-        stray.forEach(function (p) { frag.appendChild(p); });
-        body.insertBefore(frag, body.firstChild);
-      }
+      // 囲みの見出しは元サイトのもの（「目次」以外に「調査結果サマリー」などがある）
+      const head = tocBox.querySelector('.p-media-parts__toc p.h2');
+      if (head) { tocBox.querySelector('.p-article__toc-title').textContent = head.textContent.trim(); head.remove(); }
     }
 
     // 目次の小見出しに付いている先頭の中黒（・）を消す。点はCSSで表示しているため二重になる（移した記事は元サイトどおり残す）

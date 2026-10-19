@@ -164,13 +164,28 @@ async function convert(u) {
     if (!text(content)) throw new Error('本文が空');
     return makeDoc(u, cat, { title, pub, tags, toc: '', content, coverImage: coverSrc ? await localImage(coverSrc, dir) : '' });
   }
-  // 目次の部品だけを抜き取って「目次」に入れ、それ以外は部品の外の文章も含めて全部「本文」に残す。
-  // 目次の部品の中にあった CTA の印は、目次があった位置にそのまま置く
-  const tocRe = /<!-- parts start -->(?:(?!<!-- parts end -->)[\s\S])*?p-media-parts__toc[\s\S]*?<!-- parts end -->/g;
-  const tocBlocks = detail.match(tocRe) || [];
+  // 目次は「目次の要素（<div class="p-media-parts__toc">）」だけを抜き取る。部品（parts）の区切りで探すと、
+  // 区切りの無い記事で次の章まで持ってきたり、本文の箇条書き（p-media-parts__toc-list）を目次と取り違えたりする（2026-10-19）。
+  // 本文には目次があった位置に <!-- kuma-toc --> を残し、サイトはそこに目次を出す。目次の中にあった CTA の印もその位置に置く
   const markersOf = b => (b.match(/<!-- kuma-cta [\s\S]*?-->/g) || []);
-  let toc = tocBlocks.map(b => markersOf(b).reduce((s, m) => s.replace(m, ''), b)).join('\n');
-  let content = detail.replace(tocRe, b => markersOf(b).join('\n')).trim();
+  let toc = '';
+  let content = detail;
+  const start = detail.indexOf('<div class="p-media-parts__toc">');
+  if (start >= 0) {
+    const tagRe = /<\/?div\b[^>]*>/g;
+    tagRe.lastIndex = start;
+    let depth = 0, end = -1, m;
+    while ((m = tagRe.exec(detail))) {
+      depth += m[0][1] === '/' ? -1 : 1;
+      if (depth === 0) { end = m.index + m[0].length; break; }
+    }
+    if (end < 0) throw new Error('目次の要素の終わりが見つからない');
+    const block = detail.slice(start, end);
+    toc = markersOf(block).reduce((s, mk) => s.replace(mk, ''), block);
+    content = detail.slice(0, start) + ['<!-- kuma-toc -->', ...markersOf(block)].join('\n') + detail.slice(end);
+    if (content.includes('<div class="p-media-parts__toc">')) throw new Error('目次の要素が2つある');
+  }
+  content = content.trim();
 
   toc = await rewrite(toc, dir);
   content = await rewrite(content, dir);
