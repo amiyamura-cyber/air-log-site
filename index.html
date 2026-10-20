@@ -1195,6 +1195,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       s.id = v;
       s.text = 'var ' + v + " = document.createElement('script');\n" + v + ".charset = 'utf-8';\n" + v + ".src = 'https://contents.bownow.jp/forms/" + sid + "/trace.js';\ndocument.getElementsByTagName('head')[0].appendChild(" + v + ');';
       old.replaceWith(s);
+      // BowNow のフォームは読み込み完了時に自分の高さを知らせるが、0 を知らせて見えないままになることがある（2026-10-20 a100 で確認）。
+      // 高さが 0 のままなら、BowNow の「測り直し」の合図（'focus'）を送る
+      [800, 2000, 4000, 8000].forEach(function (ms) {
+        setTimeout(function () {
+          const f = document.getElementById('_bownow_iframe_' + sid);
+          if (f && f.contentWindow && !(parseFloat(f.getAttribute('height')) > 0)) f.contentWindow.postMessage('focus', '*');
+        }, ms);
+      });
     });
   }
 });
