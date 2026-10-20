@@ -1182,8 +1182,44 @@ document.addEventListener('DOMContentLoaded', async () => {
       t.parentNode.insertBefore(w, t);
       w.appendChild(t);
     });
+
+    // 本文に入っている BowNow の資料ダウンロードフォームを出す。innerHTML で入れた <script> は動かないので、同じ場所に作り直す。
+    // クマオカマツコから移した記事のフォームは、エアログ用に複製したフォーム（送信後に airlog/thanks へ飛ぶ・2026-10-20）に差し替える
+    container.querySelectorAll('.p-article__content script[id^="_bownow_cs_sid_"]').forEach(function (old) {
+      const from = old.id.replace('_bownow_cs_', '');
+      const sid = AIRLOG_BOWNOW_FORMS[from] || from;
+      const v = '_bownow_cs_' + sid;
+      const same = document.getElementById(v);
+      if (!/^sid_[0-9a-f]{20}$/.test(sid) || (same && same !== old)) return;   // 同じフォームがすでにページにあれば二重に出さない
+      const s = document.createElement('script');
+      s.id = v;
+      s.text = 'var ' + v + " = document.createElement('script');\n" + v + ".charset = 'utf-8';\n" + v + ".src = 'https://contents.bownow.jp/forms/" + sid + "/trace.js';\ndocument.getElementsByTagName('head')[0].appendChild(" + v + ');';
+      old.replaceWith(s);
+    });
   }
 });
+
+// クマオカマツコの資料フォーム → エアログ用に複製したフォーム（BowNow「エアログ／資料ダウンロードフォーム《…》」36個）
+const AIRLOG_BOWNOW_FORMS = {
+  sid_97b742c087130ab866aa: 'sid_0f9415b60f1a3a9f5390', sid_b943ca5a4239478f6194: 'sid_0fa4244918258f0e0309',
+  sid_8165335b7a2f8dc10230: 'sid_6907149c7e054122f5a6', sid_f37943930368c014c372: 'sid_59b60666f626436ac20e',
+  sid_5e3db842369627b003ef: 'sid_b78ce97f45f844946d80', sid_8838750aeaa5031e4687: 'sid_d7232a4bb76b3f8253cd',
+  sid_3bbdd38624caf2e8cf1e: 'sid_191bfa4f2aa5fea67feb', sid_35f1f14d8d332af8142a: 'sid_e854022db64ed07f8fd3',
+  sid_5f35ef17d9e222847b52: 'sid_fe64d94387b5e99f2fc8', sid_ed0fa742b8f3dbf5f5eb: 'sid_d6ef889cea2b4d82efa5',
+  sid_d587e30850411aaf33ae: 'sid_867345fadc5ce0ebd88a', sid_a594feb929a713a4b1d5: 'sid_ac046e35357b85768785',
+  sid_57adef27e8babac52b68: 'sid_c4895421e95cb3f0f129', sid_07ce7d03a2ce97d981c2: 'sid_d561073023c636bdd555',
+  sid_dd38d6f1e263f5501205: 'sid_e7a3dd3970ca9bd224dd', sid_722483b421a08e54664a: 'sid_a5c0e5003a6523b5b8ae',
+  sid_982a97518272b27f2f9b: 'sid_eba6851f555af28a5f98', sid_ff91591abd11ab944f2e: 'sid_bc92069f09b34cb2311a',
+  sid_7f0a6f9ecfcc6abb0b10: 'sid_611fe5713747951a6c56', sid_d6bc947efbd75e27a627: 'sid_43be130ac0df9fe41555',
+  sid_3f6456707930cbb04014: 'sid_53956373b454bb046c19', sid_2d050936f757dc37aed9: 'sid_9502b61a4e1809e23bd9',
+  sid_d63dc697aba84e602f06: 'sid_7bd71e5a873809c0271d', sid_96b0be8795522b9a05f5: 'sid_589f688d16026a461d39',
+  sid_01fb58ae002f04ac1720: 'sid_b3394a0eaaa5c953d285', sid_516cd2c9f2e883521786: 'sid_426d987eb3bb250117bb',
+  sid_bb3c73a6187d4233b2dd: 'sid_69c3fab5b9ce2a5d0e9e', sid_083c73821b1c4dbac54b: 'sid_69bce26c43cb3bee26d9',
+  sid_8d9cc04ceae6e6772247: 'sid_014475e678cf98cebc45', sid_1cce262f7e30856eafe2: 'sid_c7390e080366257a0da5',
+  sid_e12067a651bde1d5abf3: 'sid_5f60a6ea6087f9b6d9ca', sid_31f118dca15fa32118b2: 'sid_206109e713046645dde8',
+  sid_e5d1599b8271db3fce69: 'sid_49f0c9da3f1145fc5074', sid_5d13de068da436664d58: 'sid_cd1473b5221295fd99a4',
+  sid_092ecb4c8d8bd1298aef: 'sid_26429b42b498e98a763e', sid_7e9aa69dc2e21daed699: 'sid_2182d30bae6b634c42db'
+};
 </script>
 </body>
 </html>
