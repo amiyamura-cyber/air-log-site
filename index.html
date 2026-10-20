@@ -211,7 +211,7 @@ a.c-pill:hover{background:#fff;color:var(--pink)}
 .p-article__toc a:hover{text-decoration:underline}
 
 .p-article__content{line-height:1.9;overflow-wrap:anywhere}/* 長いURLなど改行できない文字列も折り返し、スマホで横にはみ出さない */
-.p-article__content iframe{max-width:100%;height:auto;aspect-ratio:16/9}/* 埋め込み動画もスマホの幅に収める（比率は保つ） */
+.p-article__content iframe:not([id^="_bownow_iframe_"]){max-width:100%;height:auto;aspect-ratio:16/9}/* 埋め込み動画もスマホの幅に収める（比率は保つ）。BowNow のフォームは高さを BowNow が決めるので外す */
 .p-article__content p{margin-bottom:24px}
 .p-article__content a{color:var(--blue);text-decoration:underline;text-underline-offset:2px}
 .p-article__content a:hover{opacity:.7}
