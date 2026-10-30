@@ -26,7 +26,7 @@ if (outArg < 0) throw new Error('--out <出力先> を指定してください')
 const OUT = path.resolve(process.argv[outArg + 1]);
 
 // 写さないもの（サイトに要らない・公開しない）
-const SKIP = new Set(['.git', '.github', 'tools', 'node_modules', '_site', '.firebase', '.vercel', '.claude', '.gitignore', 'firebase.json', 'firestore.rules']);
+const SKIP = new Set(['.git', '.github', 'tools', 'node_modules', '_site', '.firebase', '.vercel', '.claude', '.gitignore', 'firebase.json', 'firestore.rules', 'firestore.indexes.json']);
 
 function copyRepo(src, dst) {
   fs.mkdirSync(dst, { recursive: true });
@@ -52,21 +52,21 @@ function plain(v) {
   return undefined;
 }
 
+// 公開（status == 'public'）の記事だけを聞く。Firestore のルールが非公開の記事を読ませないため（2026-10-30）
 async function readPosts() {
+  const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents:runQuery`;
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ structuredQuery: {
+    from: [{ collectionId: 'posts' }], where: { fieldFilter: { field: { fieldPath: 'status' }, op: 'EQUAL', value: { stringValue: 'public' } } },
+  } }) });
+  if (!r.ok) throw new Error(`Firestore を読めなかった: HTTP ${r.status} ${await r.text()}`);
   const posts = [];
-  let token = '';
-  do {
-    const url = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents/posts?pageSize=300${token ? '&pageToken=' + encodeURIComponent(token) : ''}`;
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`Firestore を読めなかった: HTTP ${r.status} ${await r.text()}`);
-    const j = await r.json();
-    for (const d of j.documents || []) {
-      const p = Object.fromEntries(Object.entries(d.fields || {}).map(([k, v]) => [k, plain(v)]));
-      p.id = d.name.split('/').pop();
-      posts.push(p);
-    }
-    token = j.nextPageToken || '';
-  } while (token);
+  for (const row of await r.json()) {
+    const d = row.document;
+    if (!d) continue;
+    const p = Object.fromEntries(Object.entries(d.fields || {}).map(([k, v]) => [k, plain(v)]));
+    p.id = d.name.split('/').pop();
+    posts.push(p);
+  }
   return posts;
 }
 

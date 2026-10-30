@@ -1,7 +1,9 @@
 rules_version = '2';
 
 // エアログ（air-log-db）のアクセスルール
-// 閲覧：誰でも可（公開サイトが記事を表示するため）
+// 閲覧：公開（status が public）の記事だけ誰でも可（公開サイトが記事を表示するため）。非公開の記事・設定はログインした社員だけ
+//   2026-10-30：前は posts も settings も誰でも読め、非公開の記事も API から読めた（宮村さん「作りの欠陥じゃない？直して」）
+//   公開サイトの問い合わせは必ず status == 'public' を条件に付ける（付けないと全体が拒否される）
 // 書き込み：rc-group.co.jp のGoogleアカウントでログインした人のみ
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -13,13 +15,13 @@ service cloud.firestore {
     }
 
     match /posts/{postId} {
-      allow read: if true;
+      allow read: if resource.data.status == 'public' || isStaff();
       allow create, update, delete: if isStaff();
     }
 
     // 作成者の一覧など、管理画面で使う設定
     match /settings/{docId} {
-      allow read: if true;
+      allow read: if isStaff();
       allow create, update, delete: if isStaff();
     }
 

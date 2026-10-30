@@ -756,6 +756,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       if ('arrayValue' in v) return (v.arrayValue.values || []).map(plain);
       return undefined;
     };
+    // 🔴 Firestore のルールは公開（status == 'public'）の記事しか読ませない（2026-10-30）。問い合わせには必ずこの条件を付ける。
+    //    非公開に戻した記事は返ってこなくなるので、下の「公開記事の数」が減ったことで見分けて一覧から外す
+    const PUBLIC_ONLY = { fieldFilter: { field: { fieldPath: 'status' }, op: 'EQUAL', value: { stringValue: 'public' } } };
     const post = (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => { if (!r.ok) throw new Error('Firebase: HTTP ' + r.status); return r.json(); });
     try {
       const ver = await (await fetch('data/version.json', { cache: 'no-cache' })).json();
@@ -765,8 +768,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 一覧に使う項目だけを聞く（本文・目次は、その記事のページを開いたときに1本ぶんだけ取る）
         post(FS + ':runQuery', { structuredQuery: {
           select: { fields: ['title', 'genre', 'displayDate', 'date', 'coverPositionX', 'coverPositionY', 'status', 'startDate', 'endDate'].map(f => ({ fieldPath: f })) },
-          from: [{ collectionId: 'posts' }], where: { fieldFilter: { field: { fieldPath: 'updatedAt' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: ver.since } } } } }),
-        post(FS + ':runAggregationQuery', { structuredAggregationQuery: { structuredQuery: { from: [{ collectionId: 'posts' }] }, aggregations: [{ alias: 'n', count: {} }] } }),
+          from: [{ collectionId: 'posts' }], where: { compositeFilter: { op: 'AND', filters: [PUBLIC_ONLY, { fieldFilter: { field: { fieldPath: 'updatedAt' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: ver.since } } }] } } } }),
+        post(FS + ':runAggregationQuery', { structuredAggregationQuery: { structuredQuery: { from: [{ collectionId: 'posts' }], where: PUBLIC_ONLY }, aggregations: [{ alias: 'n', count: {} }] } }),
       ]), timeout]);
 
       const known = new Set(ver.ids);
@@ -793,10 +796,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
 
-      // 記事の数が合わない＝ファイルを作ったあとに削除された記事がある。id の一覧を取り直して外す
+      // 公開記事の数が合わない＝ファイルを作ったあとに削除・非公開にされた記事がある。公開記事の id の一覧を取り直して外す
       const total = Number(counted[0]?.result?.aggregateFields?.n?.integerValue);
       if (Number.isFinite(total) && total < known.size) {
-        const rows = await post(FS + ':runQuery', { structuredQuery: { from: [{ collectionId: 'posts' }], select: { fields: [{ fieldPath: '__name__' }] } } });
+        const rows = await post(FS + ':runQuery', { structuredQuery: { from: [{ collectionId: 'posts' }], where: PUBLIC_ONLY, select: { fields: [{ fieldPath: '__name__' }] } } });
         const alive = new Set(rows.filter(r => r.document).map(r => r.document.name.split('/').pop()));
         globalPosts = globalPosts.filter(x => alive.has(x.id));
       }
