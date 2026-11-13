@@ -1136,9 +1136,13 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const d = await db.collection('settings').doc('authors').get();
       authors = (d.exists && d.data().list) ? d.data().list : [];
-    } catch (e) { authors = []; }
+      authorsLoadError = null;
+    } catch (e) { console.error(e); authors = []; authorsLoadError = e; }
   }
+  // 読めていない一覧（空）を保存すると、登録済みの作成者を全部消してしまうので止める
+  let authorsLoadError = new Error('作成者の一覧をまだ読んでいません');
   async function saveAuthors() {
+    if (authorsLoadError) throw new Error('作成者の一覧を読み込めていないので保存しません。ページを再読み込みしてからやり直してください。');
     await db.collection('settings').doc('authors').set({ list: authors });
   }
 
@@ -1146,9 +1150,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const name = (prompt('登録する作成者の名前を入力してください。') || '').trim();
     if (!name) return;
     if (authors.indexOf(name) !== -1) { alert('すでに登録されています。'); return; }
+    if (authorsLoadError) { alert('【エラー】作成者の一覧を読み込めていないので登録できません。ページを再読み込みしてからやり直してください。'); return; }
     authors.push(name);
     try { await saveAuthors(); renderSheet(); }
-    catch (e) { alert('【エラー】保存に失敗しました：' + e.message); }
+    catch (e) { authors.pop(); alert('【エラー】保存に失敗しました：' + e.message); }
   });
 
   // 1件だけ更新する（表の中で直接書き換えるため）
@@ -1425,6 +1430,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let originalDate = now.toISOString();
     if(isEdit) {
         const currentData = await loadData();
+        if (loadDataError) { alert('【エラー】記事を読み込めなかったので保存を止めました（元の日付が書き換わるのを防ぐため）。ページを再読み込みしてからやり直してください。'); return; }
         const existing = currentData.find(p => p.id === inputs.id.value);
         if(existing) originalDate = existing.date;
     }
@@ -1521,6 +1527,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function editPost(id) {
     const posts = await loadData();
+    if (loadDataError) { alert('【エラー】記事を読み込めませんでした。ページを再読み込みしてからやり直してください。'); return; }
     const post = posts.find(p => p.id === id); if (!post) return;
     inputs.id.value = post.id; inputs.title.value = post.title; inputs.genre.value = post.genre;
     existingAuthor = post.author || '';
@@ -1548,6 +1555,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function deletePost(id) {
     const posts = await loadData();
+    if (loadDataError) { alert('【エラー】記事を読み込めませんでした。ページを再読み込みしてからやり直してください。'); return; }
     const post = posts.find(p => p.id === id);
     if (!post) return;
 

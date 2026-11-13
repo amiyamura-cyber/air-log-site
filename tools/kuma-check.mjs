@@ -22,6 +22,8 @@ const posts = [];
 let token = '';
 do {
   const r = await fetch(`https://firestore.googleapis.com/v1/projects/air-log-db/databases/(default)/documents/posts?pageSize=300${token ? '&pageToken=' + encodeURIComponent(token) : ''}`);
+  // 読めなかったのに「0本」で先へ進むと、食い違い0と出てしまうので止める（2026-10-30 からログインなしでは全件を読めない）
+  if (!r.ok) throw new Error(`Firestore を読めなかったので止めました: HTTP ${r.status}（ログインなしでは全件を読めません）`);
   const j = await r.json();
   for (const d of j.documents || []) posts.push({ id: d.name.split('/').pop(), f: d.fields });
   token = j.nextPageToken || '';

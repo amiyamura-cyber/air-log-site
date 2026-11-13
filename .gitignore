@@ -4,3 +4,4 @@
 tools/.kuma-cache/
 _site/
 .claude/
+tools/.check-live.json

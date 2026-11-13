@@ -6,6 +6,7 @@
 # ・さくらは国外IPからのFTPを拒否するので、GitHub Actions ではなくこのMac（国内）から上げる
 # ・FTPのパスワードは macOS のキーチェーン（サービス名 airlog-ftp・アカウント rc-group）から読む。ファイルには書かない
 # ・main と GitHub が一致していないときは止める（上げた版と GitHub の版がずれないように）
+# ・上げる前に手元を、上げたあとに本番を tools/check-live.mjs で点検する（NG なら失敗で終わる）
 # ・組み立ては一時フォルダで行い、上げるのは airlog フォルダの中の変わったファイルだけ（tools/deploy-ftp.py）
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -16,6 +17,9 @@ if [ -n "$(git status --porcelain)" ] || [ "$(git rev-parse HEAD)" != "$(git rev
   exit 1
 fi
 
+# 上げる前に手元の版を点検する（NG なら上げない）
+node tools/check-live.mjs --local
+
 PASS="$(security find-generic-password -s airlog-ftp -a rc-group -w)"
 OUT="$(mktemp -d "${TMPDIR:-/tmp}/airlog-rc.XXXXXX")"
 trap 'rm -rf "$OUT"' EXIT
@@ -23,3 +27,5 @@ trap 'rm -rf "$OUT"' EXIT
 node tools/build-static.mjs --out "$OUT" --allow-index
 FTP_HOST=rc-group.sakura.ne.jp FTP_USER=rc-group FTP_PASS="$PASS" python3 tools/deploy-ftp.py "$OUT"
 echo "上げた版: $(git rev-parse --short HEAD) → https://rc-group.co.jp/airlog/"
+# 上げたあとに本番を点検する（APIキーの許可サイト・Firestore のルール・管理画面の作り・サイトマップ）。NG ならここで失敗で終わる
+node tools/check-live.mjs
