@@ -11,6 +11,7 @@
 //      に書き出す。非公開の記事はどちらにも入れない
 //   3. 記事のデータに埋め込まれた表紙画像（data:image/...）は media/covers/ に画像ファイルとして書き出す
 //   4. リポジトリのファイル（index.html・admin.html・media など）を一緒に --out へ写す
+//   5. --allow-index のときは sitemap.xml（トップ・一覧・今出ている記事のアドレス）を書く
 //
 // 決まり：
 //   ・Firestore から1本も読めなかったら失敗で止める（空のサイトを出して記事を全部消さない）
@@ -123,6 +124,38 @@ async function fetchCovers(posts) {
   console.log(`表紙 ${n} 枚を本番から取り込みました`);
 }
 
+// sitemap.xml：トップ・一覧ページ・今サイトに出ている記事のアドレスを書く。
+// 載せる記事は index.html の isVisible と同じ判定（公開日がまだ来ていない記事・掲載終了日を過ぎた記事は載せない）。
+// 日付は index.html と同じ読み方で、時刻が無ければ開始＝0時・終了＝23:59:59。時差が書かれていなければ日本時間として読む
+// 一覧ページは index.html のメニューにあるもの（?cat=sns|news|hrd|new と ?page=download）
+const SITEMAP_LISTS = ['?cat=new', '?cat=sns', '?cat=news', '?cat=hrd', '?page=download'];
+function parseWhenJst(v, isEnd) {
+  if (!v) return null;
+  let s = String(v);
+  if (!s.includes('T')) s += isEnd ? 'T23:59:59' : 'T00:00:00';
+  if (!/(Z|[+-]\d\d:?\d\d)$/.test(s)) s += '+09:00';
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+function writeSitemap(pub) {
+  const now = new Date();
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const before = [], after = [], shown = [];
+  for (const p of pub) {
+    const s = parseWhenJst(p.startDate, false), e = parseWhenJst(p.endDate, true);
+    if (e && now > e) after.push(p.id);
+    else if (p.startDate && !(s && now >= s)) before.push(p.id);
+    else shown.push(p);
+  }
+  const urls = [LIVE, ...SITEMAP_LISTS.map(q => LIVE + q), ...shown.map(p => LIVE + '?id=' + encodeURIComponent(p.id))];
+  if (new Set(urls).size !== urls.length) throw new Error('sitemap.xml：同じアドレスが2回入っている');
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    + urls.map(u => `<url><loc>${esc(u)}</loc></url>\n`).join('') + '</urlset>\n';
+  fs.writeFileSync(path.join(OUT, 'sitemap.xml'), xml);
+  console.log(`sitemap.xml：${urls.length} 件（トップ1・一覧${SITEMAP_LISTS.length}・記事${shown.length}）`
+    + `／載せていない記事：公開日がまだ ${before.length} 本${before.length ? '（' + before.join(', ') + '）' : ''}・掲載終了 ${after.length} 本${after.length ? '（' + after.join(', ') + '）' : ''}`);
+}
+
 async function main() {
   // 読み始める1分前を「ここから後に更新された記事は本番のページがFirebaseに聞く」の境目にする
   const since = jstStamp(new Date(Date.now() - 60 * 1000));
@@ -176,6 +209,9 @@ async function main() {
   }
   const indexJson = JSON.stringify(index);
   fs.writeFileSync(path.join(OUT, 'data/index.json'), indexJson);
+
+  // --allow-index のときだけ sitemap.xml（Google に渡すページの一覧）を書く。旧アドレス向け（--redirect-to）には書かない
+  if (process.argv.includes('--allow-index') && ri < 0) writeSitemap(pub);
 
   // 中身のハッシュ（記事と、写したファイル全部）
   const h = crypto.createHash('sha256');
