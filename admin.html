@@ -921,12 +921,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentEditingField = null;
 
   // Firebaseからデータを取得する関数
+  // 読めなかったときは loadDataError に理由を残す（一覧が「記事がありません」と嘘を出さないため）
+  let loadDataError = null;
   async function loadData() {
     try {
       const snapshot = await db.collection('posts').get();
+      loadDataError = null;
       return snapshot.docs.map(doc => doc.data());
     } catch(e) {
       console.error(e);
+      loadDataError = e;
       return [];
     }
   }
@@ -1125,7 +1129,9 @@ document.addEventListener('DOMContentLoaded', () => {
   tabCards.addEventListener('click', function () { switchView(false); });
   tabSheet.addEventListener('click', function () { switchView(true); });
 
-  window.airlogLoadAuthors = async function () { await loadAuthors(); renderSheet(); };
+  // ログインできたときに呼ばれる。記事の一覧もここで読み直す
+  // （ページを開いた時点ではログイン前で、Firestore のルールが記事を読ませないため。2026-11-13 ログイン直後に一覧が空になった）
+  window.airlogLoadAuthors = async function () { await loadAuthors(); await renderGrid(); renderSheet(); };
   async function loadAuthors() {
     try {
       const d = await db.collection('settings').doc('authors').get();
@@ -1345,6 +1351,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (viewSheet.style.display !== 'none') renderSheet();
     posts.sort((a, b) => new Date(b.date) - new Date(a.date));
     articleGrid.innerHTML = ''; articleCount.textContent = `全 ${posts.length} 件`;
+    if (loadDataError) {
+      // 読めなかっただけで、記事が無いわけではない（ログイン前は Firestore のルールで読めない）
+      articleCount.textContent = '読み込めませんでした';
+      articleGrid.innerHTML = '<div class="c-empty-message">記事を読み込めませんでした。<br>ログイン後も出ないときは、ページを再読み込みしてください。</div>';
+      return;
+    }
     if (posts.length === 0) {
       articleGrid.innerHTML = '<div class="c-empty-message">記事がありません。<br>左のフォームから新規作成してください。</div>';
       return;
