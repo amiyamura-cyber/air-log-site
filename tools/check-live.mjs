@@ -72,6 +72,7 @@ ok('管理画面：記事を読む場所は全部「読めなかった」を見�
 if (!LOCAL) {
   const top = await text(LIVE);
   ok('本番：トップが開く', top.status === 200, `HTTP ${top.status}`);
+  ok('公開ページ：目録を読めなかったら「記事が無いサイト」に見せない', /indexLoadError = e;/.test(top.body) && /if \(indexLoadError && [\s\S]{0,400}LOAD_FAILED_HTML/.test(top.body), '読めなかったのに No Article・空の一覧が出る');
   ok('本番：トップに検索よけ（noindex）が無い', !/<meta name="robots"/i.test(top.body), 'noindex が入っていると検索に出ない');
   const idx = await text(LIVE + 'data/index.json?check=' + Date.now());
   const index = idx.status === 200 ? JSON.parse(idx.body) : [];

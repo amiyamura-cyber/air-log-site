@@ -734,12 +734,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const p = (n) => ('0' + n).slice(-2);
     return base + ' ' + p(d.getHours()) + '時' + p(d.getMinutes()) + '分';
   }
+  // 記事の目録を読めなかったときの印。読めなかったのに「記事が無いサイト」に見せないため（2026-11-13）
+  let indexLoadError = null;
+  const LOAD_FAILED_HTML = '<div class="p-loadfail" style="padding:60px 20px;text-align:center;line-height:2;">記事を読み込めませんでした。<br>時間をおいて、ページを開き直してください。</div>';
   try {
       const res = await fetch('data/index.json', { cache: 'no-cache' });
       if (!res.ok) throw new Error('記事の目録を読めませんでした: HTTP ' + res.status);
       globalPosts = await res.json();
   } catch(e) {
       console.error(e);
+      indexLoadError = e;
   }
 
   // ファイルを作ったあとに管理画面で変わった記事だけを Firebase に聞いて、最新に差し替える。
@@ -851,7 +855,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('#globalNav a').forEach(a => a.classList.toggle('is-current', !!here && a.dataset.cat === here));
 
   const show = id => { document.getElementById(id).style.display = 'block'; };
-  if (articleId) {
+  if (indexLoadError && (articleId || !isDownload)) {
+    // 目録を読めなかった：空の一覧・「No Article」・「記事が存在しません」を出さず、読めなかったと知らせる
+    // （資料ダウンロードの一覧は目録を使わないので、そのまま出す）
+    document.querySelector('.l-main').insertAdjacentHTML('afterbegin', LOAD_FAILED_HTML);
+  } else if (articleId) {
     show('articlePageContent');
     renderArticle(articleId);
   } else if (isDownload) {
