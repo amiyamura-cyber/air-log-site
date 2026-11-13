@@ -1,0 +1,8 @@
+# エアログ：ページ本体（html）は、ブラウザが控えを使う前に毎回サーバーへ「新しくなっていないか」を聞く。
+# これが無いと、上げ直しても Cmd+Shift+R を押すまで古い管理画面・古いトップが出る（2026-11-13）。
+# 画像などはこれまでどおり控えを使う。効いているかは tools/check-live.mjs が上げるたびに確かめる
+<IfModule mod_headers.c>
+  <FilesMatch "\.html$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>

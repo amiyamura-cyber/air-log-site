@@ -85,6 +85,11 @@ if (!LOCAL) {
   const missing = index.filter(p => !smIds.has(p.id) && !p.startDate && !p.endDate).map(p => p.id);
   ok('本番：サイトマップが読める', sm.status === 200 && locs.length > 0, `HTTP ${sm.status}・${locs.length} 件`);
   ok('本番：サイトマップと目録が食い違わない', extra.length === 0 && missing.length === 0, `目録に無いのに載っている ${extra.length}・期間の指定が無いのに載っていない ${missing.length}`);
+  // html を上げ直したらすぐ新しい版が出ること（.htaccess の Cache-Control: no-cache。無いと古い版が控えから出続ける）
+  for (const f of ['', 'admin.html', 'thanks.html']) {
+    const cc = (await fetch(LIVE + f, { method: 'HEAD' })).headers.get('cache-control') || '';
+    ok(`本番：${f || 'トップ'} は控えを使う前にサーバーへ聞く`, /no-cache/.test(cc), `Cache-Control: ${cc || '（無し）'}。上げ直しても古い版が出続ける`);
+  }
   const thanks = await text(LIVE + 'thanks.html');
   ok('本番：管理画面・サンクスページは検索よけのまま', /<meta name="robots"[^>]*noindex/i.test(admin) && /<meta name="robots"[^>]*noindex/i.test(thanks.body), 'noindex が外れている');
 }
