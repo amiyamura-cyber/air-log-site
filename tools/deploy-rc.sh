@@ -9,6 +9,7 @@
 # ・FTPのパスワードは macOS のキーチェーン（サービス名 airlog-ftp・アカウント rc-group）から読む。ファイルには書かない
 # ・main と GitHub が一致していないときは止める（上げた版と GitHub の版がずれないように）
 # ・上げる前に手元を、上げたあとに本番を tools/check-live.mjs で点検する（NG なら失敗で終わる）
+# ・組み立てたあと・上げる前に tools/guard-shrink.mjs が公開の本数を本番と比べる（大きく減っていたら止める）
 # ・組み立ては一時フォルダで行い、上げるのは airlog フォルダの中の変わったファイルだけ（tools/deploy-ftp.py）
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -27,6 +28,8 @@ OUT="$(mktemp -d "${TMPDIR:-/tmp}/airlog-rc.XXXXXX")"
 trap 'rm -rf "$OUT"' EXIT
 
 node tools/build-static.mjs --out "$OUT" --allow-index
+# 公開の本数が本番より1割を超えて減っていたら、上げる前に止める（減ったぶんの記事ファイルを本番から消してしまうため）
+node tools/guard-shrink.mjs --new "$OUT/data/version.json"
 FTP_HOST=rc-group.sakura.ne.jp FTP_USER=rc-group FTP_PASS="$PASS" python3 tools/deploy-ftp.py "$OUT"
 echo "上げた版: $(git rev-parse --short HEAD) → https://rc-group.co.jp/airlog/"
 # 上げたあとに本番を点検する（APIキーの許可サイト・Firestore のルール・管理画面の作り・サイトマップ）。NG ならここで失敗で終わる
