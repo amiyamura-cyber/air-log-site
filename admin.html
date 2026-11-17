@@ -1348,6 +1348,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let existingAuthor = '';    // 編集中の記事に既に入っている作成者
   let existingKeyword = '';  // 同じく、既に記録されている対策キーワード
   let existingCover = '';    // 編集中の記事に既に入っているカバー画像
+  let existingCopiedFrom = ''; // 複製した記事の複製元の id（公開ページはこれで見え方を決める。2026-11-17）
   let coverRemoved = false;  // 「画像を削除」を押したかどうか
 
   async function renderGrid() {
@@ -1402,12 +1403,14 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="p-card__footer">
               <span class="p-card__date">更新: ${post.displayDate}</span>${periodBadge(post)}
               <div class="p-card__actions">
+                <button type="button" class="p-card__btn p-card__btn--copy" data-id="${post.id}" title="この記事を写して新しい記事を作る（保存するまで記事は増えません）">複製</button>
                 <button type="button" class="p-card__btn p-card__btn--edit" data-id="${post.id}">編集</button>
                 <button type="button" class="p-card__btn p-card__btn--delete" data-id="${post.id}">削除</button>
               </div>
             </div>
           </div>
         `;
+        card.querySelector('.p-card__btn--copy').addEventListener('click', (e) => { e.stopPropagation(); duplicatePost(post.id); });
         card.querySelector('.p-card__btn--edit').addEventListener('click', (e) => { e.stopPropagation(); editPost(post.id); });
         card.querySelector('.p-card__btn--delete').addEventListener('click', (e) => { e.stopPropagation(); deletePost(post.id); });
         card.addEventListener('click', () => openPreview(post));
@@ -1449,7 +1452,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // 作業表に自動で記録する分
       author: (isEdit && existingAuthor) ? existingAuthor : autoAuthorName(),
       updatedBy: autoAuthorName(),
-      updatedAt: nowStamp()
+      updatedAt: nowStamp(),
+      // 複製した記事だけ、複製元の id を持つ（無い記事には項目を作らない）
+      ...(existingCopiedFrom ? { copiedFrom: existingCopiedFrom } : {})
     };
     
     try {
@@ -1533,6 +1538,7 @@ document.addEventListener('DOMContentLoaded', () => {
     existingAuthor = post.author || '';
     existingKeyword = post.keyword || '';
     existingCover = post.coverImage || '';
+    existingCopiedFrom = post.copiedFrom || '';
     coverRemoved = false;
     inputs.tags.value = (post.tags || []).join(', '); const sw = splitWhen(post.startDate); inputs.startDate.value = sw.date;
     const ew = splitWhen(post.endDate); inputs.endDate.value = ew.date;
@@ -1547,6 +1553,37 @@ document.addEventListener('DOMContentLoaded', () => {
     inputs.coverImageData.value = post.coverImage || '';
     showImagePreview(post.coverImage || ''); window.scrollTo({ top: 0, behavior: 'smooth' });
     setEditing(post);
+  }
+
+  // ▼ 複製：記事の中身を入力欄に写して「新しい記事」として始める（2026-11-17）▼
+  // ・ここでは何も保存しない。「保存する」を押したときに新しい id で1本増える（元の記事は変えない）
+  // ・題の末尾に「（コピー）」、公開設定は非公開（うっかり同じ記事が2本公開されないように）
+  // ・作成者・日付は保存した人・保存した日になる（新規作成と同じ）
+  // ・公開ページは id で見え方を決めているので、複製元の id を copiedFrom に持たせる（複製の複製でも、いちばん元の id）
+  async function duplicatePost(id) {
+    const posts = await loadData();
+    if (loadDataError) { alert('【エラー】記事を読み込めませんでした。ページを再読み込みしてからやり直してください。'); return; }
+    const post = posts.find(p => p.id === id); if (!post) return;
+    if (editingId && !confirm('編集中の記事があります。入力中の内容は消えて、複製した記事に入れ替わります。よろしいですか？')) return;
+    clearForm();
+    inputs.title.value = (post.title || '') + '（コピー）';
+    inputs.genre.value = post.genre;
+    existingKeyword = post.keyword || '';
+    existingCover = post.coverImage || '';
+    existingCopiedFrom = post.copiedFrom || post.id;
+    inputs.tags.value = (post.tags || []).join(', ');
+    const sw = splitWhen(post.startDate); inputs.startDate.value = sw.date;
+    const ew = splitWhen(post.endDate); inputs.endDate.value = ew.date;
+    if (window.airlogTime) { window.airlogTime.start.set(sw.time); window.airlogTime.end.set(ew.time); }
+    else { inputs.startTime.value = sw.time; inputs.endTime.value = ew.time; }
+    inputs.toc.value = post.toc || '';
+    inputs.content.value = post.content || '';
+    imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;
+    imagePositionSliderY.value = post.coverPositionY !== undefined ? post.coverPositionY : 50;
+    inputs.coverImageData.value = post.coverImage || '';
+    showImagePreview(post.coverImage || '');
+    editorHeading.textContent = '複製して新しい記事を作る（「保存する」を押すまで記事は増えません）';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   // ▼ 削除は確認ダイアログを挟む ▼
@@ -1613,6 +1650,7 @@ document.addEventListener('DOMContentLoaded', () => {
     existingAuthor = '';
     existingKeyword = '';
     existingCover = '';
+    existingCopiedFrom = '';
     coverRemoved = false;
     if (window.airlogTime) { window.airlogTime.start.set(''); window.airlogTime.end.set(''); }
     for (const radio of inputs.status) radio.checked = (radio.value === 'private');

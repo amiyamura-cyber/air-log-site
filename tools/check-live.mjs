@@ -62,6 +62,7 @@ ok('Firestore：公開の記事はログインなしで数えられる（公開�
 const has = (name, re, why) => ok(name, re.test(admin), why);
 has('管理画面：ログインできた時点で記事一覧を読み直す', /airlogLoadAuthors\s*=\s*async function\s*\(\)\s*\{[^}]*renderGrid\(\)/, 'ログインの直後に一覧が空になる（ページを開いた時点ではログイン前で読めない）');
 has('管理画面：記事を読めなかったら「記事がありません」と出さない', /if \(loadDataError\) \{[\s\S]{0,300}読み込めませんでした/, '読めなかったのに 0件 と出る');
+has('管理画面：複製ボタンが複製元の id（copiedFrom）を持たせて保存する', /p-card__btn--copy[\s\S]{0,200}duplicatePost/.test(admin) ? /existingCopiedFrom = post\.copiedFrom \|\| post\.id/ : /$^/, '複製した記事が公開ページで元と違う見え方になる（表紙・目次の位置・人材ニュース）');
 has('管理画面：作成者の一覧を読めなかったら保存しない', /if \(authorsLoadError\) throw/, '読めていない空の一覧で上書きして、登録済みの作成者を消す');
 // ばらつき：記事を読む loadData() を呼ぶ場所は、どこも「読めなかった」を見ていること（描く・保存・編集・削除）
 const calls = [...admin.matchAll(/await loadData\(\);([\s\S]{0,260})/g)];
@@ -74,6 +75,7 @@ if (!LOCAL) {
   ok('本番：トップが開く', top.status === 200, `HTTP ${top.status}`);
   ok('公開ページ：目録を読めなかったら「記事が無いサイト」に見せない', /indexLoadError = e;/.test(top.body) && /if \(indexLoadError && [\s\S]{0,400}LOAD_FAILED_HTML/.test(top.body), '読めなかったのに No Article・空の一覧が出る');
   ok('公開ページ：記事・一覧ごとにタブ名と説明文を入れる（検索結果の見出しがサイト名だけにならない）', /setPageMeta\(\(post\.title/.test(top.body) && /setPageMeta\(tabName \+/.test(top.body), '記事ページのタブ名がどれもサイト名のままになる');
+  ok('公開ページ：見え方（表紙・目次・人材ニュース）を複製元の id で決める', (top.body.match(/lookId\(post(, id)?\)\.startsWith\('kuma-/g) || []).length === 3 && !/String\(post\.id \|\| (id|'')\)\.startsWith\('kuma-/.test(top.body) && /'endDate', 'copiedFrom'\]/.test(top.body), '管理画面で複製した記事が、元の記事と違う見え方になる');
   const rc = await text(LIVE + '.firebaserc');
   ok('本番：設定ファイル（.firebaserc）を外に出していない', rc.status === 404 || rc.status === 403, `HTTP ${rc.status}`);
   // カードの題は、どれも記事へのリンクの形（a タグ）になっていること。押すと動く仕掛けだけだと Google が記事を辿れない

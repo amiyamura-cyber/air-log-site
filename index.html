@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const [changed, counted] = await Promise.race([Promise.all([
         // 一覧に使う項目だけを聞く（本文・目次は、その記事のページを開いたときに1本ぶんだけ取る）
         post(FS + ':runQuery', { structuredQuery: {
-          select: { fields: ['title', 'genre', 'displayDate', 'date', 'coverPositionX', 'coverPositionY', 'status', 'startDate', 'endDate'].map(f => ({ fieldPath: f })) },
+          select: { fields: ['title', 'genre', 'displayDate', 'date', 'coverPositionX', 'coverPositionY', 'status', 'startDate', 'endDate', 'copiedFrom'].map(f => ({ fieldPath: f })) },
           from: [{ collectionId: 'posts' }], where: { compositeFilter: { op: 'AND', filters: [PUBLIC_ONLY, { fieldFilter: { field: { fieldPath: 'updatedAt' }, op: 'GREATER_THAN_OR_EQUAL', value: { stringValue: ver.since } } }] } } } }),
         post(FS + ':runAggregationQuery', { structuredAggregationQuery: { structuredQuery: { from: [{ collectionId: 'posts' }], where: PUBLIC_ONLY }, aggregations: [{ alias: 'n', count: {} }] } }),
       ]), timeout]);
@@ -825,10 +825,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     download: { nav: 'お役立ち資料', title: 'お役立ち資料',    en: 'DOCUMENT', desc: '採用活動に活かせる資料やデータをダウンロードできます。無料でダウンロードできますので、お役立てください！' },
     new:      { nav: '最新記事',     title: '最新記事一覧',    en: 'NEW',      desc: '' },
   };
+  // 見え方（表紙を切らない・目次の位置・人材ニュース）は記事の id で決めている。管理画面で複製した記事は id が変わるので、
+  // 複製元の id（copiedFrom）で決める（2026-11-17）
+  function lookId(post, id) { return String(post.copiedFrom || post.id || id || ''); }
   function catOf(post) {
     if (post.genre === '集客支援') return 'sns';
     if (post.genre === 'お役立ち資料') return 'download';
-    if (post.genre === '採用支援') return String(post.id || '').startsWith('kuma-news-') ? 'news' : 'hrd';
+    if (post.genre === '採用支援') return lookId(post).startsWith('kuma-news-') ? 'news' : 'hrd';
     return null;   // 上の3つ以外のカテゴリ（今は0本）は、最新記事にだけ出る
   }
   function pillHtml(post) {
@@ -1157,7 +1160,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         ${noticeHtml}
         <h1 class="p-article__title">${post.title}</h1>
         <div class="p-article__cats">${pillHtml(post)}</div>
-        <figure class="p-article__coverwrap"><img class="p-article__cover${String(post.id || id).startsWith('kuma-') ? ' p-article__cover--whole' : ''}" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;"></figure>
+        <figure class="p-article__coverwrap"><img class="p-article__cover${lookId(post, id).startsWith('kuma-') ? ' p-article__cover--whole' : ''}" src="${imgSrc}" alt="" style="object-position: ${posX}% ${posY}%;"></figure>
         ${bodyHtml}
         ${relatedHtml}
     `;
@@ -1178,7 +1181,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
 
     const tocBox = container.querySelector('.p-article__toc');
-    const isKuma = String(post.id || id).startsWith('kuma-');
+    const isKuma = lookId(post, id).startsWith('kuma-');
     // クマオカマツコから移した記事は、本文の <!-- kuma-toc --> の位置（元サイトで目次があった位置）に目次を出す。
     // 印を含む部品の手前で本文を2つに分け、その間に目次を置く。印が無い記事（手書きの記事など）は今までどおり本文の上
     const bodyEl = container.querySelector('.p-article__content');

@@ -76,7 +76,7 @@ async function readPosts() {
 const isPublicStatus = p => p.status === 'public' || p.status === '公開' || p.status === undefined;
 
 // 一覧に使う項目（index.html の一覧・スライダー・期間判定で使うものだけ）
-const LIST_KEYS = ['id', 'title', 'genre', 'displayDate', 'date', 'coverImage', 'coverPositionX', 'coverPositionY', 'status', 'startDate', 'endDate'];
+const LIST_KEYS = ['id', 'title', 'genre', 'displayDate', 'date', 'coverImage', 'coverPositionX', 'coverPositionY', 'status', 'startDate', 'endDate', 'copiedFrom'];
 const pick = (p, keys) => Object.fromEntries(keys.filter(k => p[k] !== undefined).map(k => [k, p[k]]));
 
 function writeCover(p) {
