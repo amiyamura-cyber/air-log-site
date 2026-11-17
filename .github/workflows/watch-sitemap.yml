@@ -1,0 +1,29 @@
+# 見張り：記事を公開・非公開にしたら、10分以内に本番のサイトマップ（https://rc-group.co.jp/airlog/sitemap.xml）に反映されているか
+# 中身は tools/watch-sitemap.mjs。NG なら失敗で終わり、GitHub から失敗のメールが届く
+# ・30分おきの指定だが、GitHub の定時実行は混んでいると間引かれる（publish.yml の10分おきは実際には数時間おきだった。2026-11-17）
+# ・Firestore は1回の見張りで数えるだけ（読み取り1回＋ sitemap.php の分）。全件は読まない
+# ・手動（Actions 画面の Run workflow）でもいつでも動かせる
+name: サイトマップの見張り
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: watch-sitemap
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: node tools/watch-sitemap.mjs

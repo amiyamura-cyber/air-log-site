@@ -108,6 +108,8 @@ if (!LOCAL) {
   const d1 = diff(sm, fsPosts);
   // cache は最大10分前のもの。その間に足した・消した記事のぶんはずれてよいので、live のときだけ食い違いを NG にする
   ok('本番：サイトマップと Firestore の公開記事が食い違わない', fsPosts.length > 0 && (smSource !== 'live' || (d1.extra.length === 0 && d1.missing.length === 0)), `Firestore 公開 ${fsPosts.length} 本・載っているのに公開に無い ${d1.extra.length}・期間の指定が無いのに載っていない ${d1.missing.length}（${smSource}）`);
+  const smPublic = Number(smRes.headers.get('x-sitemap-public'));
+  ok('本番：サイトマップの印（X-Sitemap-Public）が Firestore の公開の数と合う（見張り tools/watch-sitemap.mjs が頼っている）', fsPosts.length > 0 && (smSource !== 'live' || smPublic === fsPosts.length) && Number.isFinite(smPublic), `X-Sitemap-Public: ${smRes.headers.get('x-sitemap-public') ?? '（無し）'}・Firestore 公開 ${fsPosts.length} 本（${smSource}）`);
   const st = await text(LIVE + 'sitemap.xml?static=1&check=' + Date.now());
   const sms = smIdsOf(st.body);
   const d2 = diff(sms, index);
