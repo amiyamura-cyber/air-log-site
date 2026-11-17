@@ -27,7 +27,7 @@ if (outArg < 0) throw new Error('--out <出力先> を指定してください')
 const OUT = path.resolve(process.argv[outArg + 1]);
 
 // 写さないもの（サイトに要らない・公開しない）
-const SKIP = new Set(['.git', '.github', 'tools', 'node_modules', '_site', '.firebase', '.vercel', '.claude', '.gitignore', 'firebase.json', 'firestore.rules', 'firestore.indexes.json']);
+const SKIP = new Set(['.git', '.github', 'tools', 'node_modules', '_site', '.firebase', '.vercel', '.claude', '.gitignore', '.firebaserc', 'firebase.json', 'firestore.rules', 'firestore.indexes.json']);
 
 function copyRepo(src, dst) {
   fs.mkdirSync(dst, { recursive: true });

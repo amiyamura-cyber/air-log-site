@@ -855,6 +855,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.querySelectorAll('#globalNav a').forEach(a => a.classList.toggle('is-current', !!here && a.dataset.cat === here));
 
   const show = id => { document.getElementById(id).style.display = 'block'; };
+  // ページごとのタブ名・説明文・正式なアドレスを入れる（検索結果の見出しと説明に使われる。2026-11-17）
+  // 入れないと、どの記事も見出しが「エアログ｜採用・集客を支援するメディア」のままになる
+  function setPageMeta(title, description, query) {
+    if (title) document.title = title;
+    const put = (sel, make, attr, val) => {
+      let el = document.head.querySelector(sel);
+      if (!el) { el = make(); document.head.appendChild(el); }
+      el.setAttribute(attr, val);
+    };
+    const text = String(description || '').replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    if (text) put('meta[name="description"]', () => Object.assign(document.createElement('meta'), { name: 'description' }), 'content', text.length > 120 ? text.slice(0, 119) + '…' : text);
+    put('link[rel="canonical"]', () => Object.assign(document.createElement('link'), { rel: 'canonical' }), 'href', location.origin + location.pathname + (query || ''));
+  }
   if (indexLoadError && (articleId || !isDownload)) {
     // 目録を読めなかった：空の一覧・「No Article」・「記事が存在しません」を出さず、読めなかったと知らせる
     // （資料ダウンロードの一覧は目録を使わないので、そのまま出す）
@@ -866,12 +879,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelector('.l-wrapper').classList.add('is-wide', 'is-sub');
     show('downloadPageContent');
     renderBreadcrumb('お役立ち資料ダウンロード');
-    document.title = 'お役立ち資料ダウンロード｜エアログ';
+    setPageMeta('お役立ち資料ダウンロード｜エアログ', CATS.download.desc, '?page=download');
   } else if (listCat) {
     document.querySelector('.l-wrapper').classList.add('is-sub');
     show('listPageContent');
     renderList(listCat);
   } else {
+    setPageMeta('', '', '');
     show('topPageSliderWrapper');
     show('topPageContent');
     renderHeroSlider();
@@ -946,7 +960,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const url = (p, s) => `?cat=${c}${(s || sort) === 'asc' ? '&sort=asc' : ''}${p > 1 ? '&p=' + p : ''}`;
 
     renderBreadcrumb(info.title);
-    document.title = info.title + 'の記事一覧｜エアログ';
+    setPageMeta(info.title + 'の記事一覧｜エアログ', info.desc, '?cat=' + c);
     document.getElementById('listTitle').textContent = info.title;
     const desc = document.getElementById('listDesc');
     desc.textContent = info.desc; desc.style.display = info.desc ? '' : 'none';
@@ -1139,6 +1153,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         ${bodyHtml}
         ${relatedHtml}
     `;
+
+    // タブ名を記事の題に、説明文を本文の出だしに、正式なアドレスをこの記事のものにする
+    setPageMeta((post.title || '無題') + '｜エアログ', post.content, '?id=' + encodeURIComponent(post.id || id));
 
     // 「【」で始まる大見出しに印を付ける（左端を◾️と光学的に揃えるため）
     container.querySelectorAll('.p-article__toc li > a').forEach(function (a) {
