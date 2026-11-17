@@ -1569,10 +1569,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const copyDialog = document.getElementById('copyDialog');
   let pendingCopyPost = null;
 
+  // 複製元はその1本だけ読む（全件読むと数秒待たされ、Firestore の無料枠も約400回減る）
   async function duplicatePost(id) {
-    const posts = await loadData();
-    if (loadDataError) { alert('【エラー】記事を読み込めませんでした。ページを再読み込みしてからやり直してください。'); return; }
-    const post = posts.find(p => p.id === id); if (!post) { alert('【エラー】複製元の記事が見つかりませんでした。ページを再読み込みしてからやり直してください。'); return; }
+    let post = null;
+    try { const snap = await db.collection('posts').doc(id).get(); post = snap.exists ? snap.data() : null; }
+    catch (e) { alert('【エラー】記事を読み込めませんでした。ページを再読み込みしてからやり直してください。'); return; }
+    if (!post) { alert('【エラー】複製元の記事が見つかりませんでした。ページを再読み込みしてからやり直してください。'); return; }
+    if (!post.id) post.id = id;
     pendingCopyPost = post;
     document.getElementById('copyName').textContent = post.title || '（タイトル未入力）';
     document.getElementById('copyNewName').textContent = COPY_MARK + (post.title || '');
