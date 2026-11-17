@@ -88,15 +88,30 @@ if (!LOCAL) {
   const idx = await text(LIVE + 'data/index.json?check=' + Date.now());
   const index = idx.status === 200 ? JSON.parse(idx.body) : [];
   ok('本番：記事の目録が読める', index.length > 0, `HTTP ${idx.status}・${index.length} 本`);
-  const sm = await text(LIVE + 'sitemap.xml?check=' + Date.now());
-  const locs = [...sm.body.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1].replace(/&amp;/g, '&'));
-  const smIds = new Set(locs.filter(l => l.includes('?id=')).map(l => decodeURIComponent(l.split('?id=')[1])));
-  const ids = new Set(index.map(p => p.id));
-  const extra = [...smIds].filter(i => !ids.has(i));
-  // 目録にあってサイトマップに無いのは、公開日がまだ・掲載終了の記事だけのはず
-  const missing = index.filter(p => !smIds.has(p.id) && !p.startDate && !p.endDate).map(p => p.id);
-  ok('本番：サイトマップが読める', sm.status === 200 && locs.length > 0, `HTTP ${sm.status}・${locs.length} 件`);
-  ok('本番：サイトマップと目録が食い違わない', extra.length === 0 && missing.length === 0, `目録に無いのに載っている ${extra.length}・期間の指定が無いのに載っていない ${missing.length}`);
+  // サイトマップ：sitemap.xml は sitemap.php がその場で Firestore から作る（2026-11-17）。予備（deploy-rc.sh が上げたもの）は ?static=1 で見る
+  const smIdsOf = body => {
+    const locs = [...body.matchAll(/<loc>(.*?)<\/loc>/g)].map(m => m[1].replace(/&amp;/g, '&'));
+    return { locs, ids: new Set(locs.filter(l => l.includes('?id=')).map(l => decodeURIComponent(l.split('?id=')[1]))) };
+  };
+  // 期間の指定が無いのにサイトマップに無いもの・相手に無いのにサイトマップにあるものを数える（公開日がまだ・掲載終了の記事は載らなくてよい）
+  const diff = (sm, posts) => {
+    const all = new Set(posts.map(p => p.id));
+    return { extra: [...sm.ids].filter(i => !all.has(i)), missing: posts.filter(p => !sm.ids.has(p.id) && !p.startDate && !p.endDate).map(p => p.id) };
+  };
+  const smRes = await fetch(LIVE + 'sitemap.xml?check=' + Date.now());
+  const smSource = smRes.headers.get('x-sitemap-source') || '';
+  const sm = smIdsOf(await smRes.text());
+  ok('本番：サイトマップが読める', smRes.status === 200 && sm.locs.length > 0, `HTTP ${smRes.status}・${sm.locs.length} 件`);
+  ok('本番：サイトマップを Firestore からその場で作っている（sitemap.php）', /^(live|cache)$/.test(smSource), `X-Sitemap-Source: ${smSource || '（無し）'}。static なら Firestore を読めず予備を返している／無しなら .htaccess の振り分けが効いていない`);
+  const pq = await post(`${FS}:runQuery`, { structuredQuery: { from: [{ collectionId: 'posts' }], where: PUBLIC_ONLY, select: { fields: [{ fieldPath: 'startDate' }, { fieldPath: 'endDate' }] } } });
+  const fsPosts = pq.status === 200 ? JSON.parse(pq.body).filter(r => r.document).map(r => ({ id: r.document.name.split('/').pop(), startDate: r.document.fields?.startDate?.stringValue || r.document.fields?.startDate?.timestampValue, endDate: r.document.fields?.endDate?.stringValue || r.document.fields?.endDate?.timestampValue })) : [];
+  const d1 = diff(sm, fsPosts);
+  // cache は最大10分前のもの。その間に足した・消した記事のぶんはずれてよいので、live のときだけ食い違いを NG にする
+  ok('本番：サイトマップと Firestore の公開記事が食い違わない', fsPosts.length > 0 && (smSource !== 'live' || (d1.extra.length === 0 && d1.missing.length === 0)), `Firestore 公開 ${fsPosts.length} 本・載っているのに公開に無い ${d1.extra.length}・期間の指定が無いのに載っていない ${d1.missing.length}（${smSource}）`);
+  const st = await text(LIVE + 'sitemap.xml?static=1&check=' + Date.now());
+  const sms = smIdsOf(st.body);
+  const d2 = diff(sms, index);
+  ok('本番：予備のサイトマップ（?static=1）が読めて目録と食い違わない', st.status === 200 && sms.locs.length > 0 && d2.extra.length === 0 && d2.missing.length === 0, `HTTP ${st.status}・${sms.locs.length} 件・目録に無いのに載っている ${d2.extra.length}・期間の指定が無いのに載っていない ${d2.missing.length}`);
   // html を上げ直したらすぐ新しい版が出ること（.htaccess の Cache-Control: no-cache。無いと古い版が控えから出続ける）
   for (const f of ['', 'admin.html', 'thanks.html']) {
     const cc = (await fetch(LIVE + f, { method: 'HEAD' })).headers.get('cache-control') || '';

@@ -6,3 +6,11 @@
     Header set Cache-Control "no-cache"
   </FilesMatch>
 </IfModule>
+
+# sitemap.xml は sitemap.php が開かれたときに Firestore から作る（管理画面で足した記事が、上げ直さなくても載る。2026-11-17）。
+# ?static=1 のときは回さず、deploy-rc.sh が上げた予備の sitemap.xml をそのまま返す（点検用。PHP が読めないときの予備もこれ）
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{QUERY_STRING} !(^|&)static=1(&|$)
+  RewriteRule ^sitemap\.xml$ sitemap.php [L]
+</IfModule>

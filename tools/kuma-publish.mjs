@@ -11,7 +11,7 @@
 //   ・管理画面で人が直した記事（最後の更新者が kuma-import / kuma-publish 以外）は触らず、件数を出す
 //   ・変えるのは status と updatedAt / updatedBy だけ（本文などは書き換えない）
 //   ・公開ページへはその場で出る（index.html が、変わった記事を Firestore に聞く）
-//   ・本番の控えのファイル（data/）とサイトマップに入るのは、次に tools/deploy-rc.sh が動いたとき（毎日の定期タスク airlog-daily-deploy）
+//   ・サイトマップにもその場で入る（sitemap.php が Firestore から作る。最大10分は前のものを返す）。本番の控えのファイル（data/）に入るのは、次に tools/deploy-rc.sh を動かしたとき
 //   ・結果は tools/.kuma-cache/publish-last-run.json に残す
 // LONG-RUN-OK：記事の一覧は1回読むだけ。書き込みは対象の本数ぶん
 import fs from 'fs';

@@ -3,8 +3,9 @@
 #
 #   bash tools/deploy-rc.sh
 #
-# ・コードを変えたときは push のあとに手で動かす。それとは別に、毎日の定期タスク airlog-daily-deploy がこれを動かす
-#   （管理画面で足した・直した記事を、本番の控えのファイル data/ とサイトマップに入れるため。2026-11-17）
+# ・コードを変えたときは push のあとに手で動かす（定期的に動かす仕組みは無い）
+# ・サイトマップは sitemap.php が開かれたときに Firestore から作るので、記事を足しただけなら上げ直さなくてよい（2026-11-17）。
+#   ここで上げる sitemap.xml は、sitemap.php が Firestore を読めないときの予備
 # ・さくらは国外IPからのFTPを拒否するので、GitHub Actions ではなくこのMac（国内）から上げる
 # ・FTPのパスワードは macOS のキーチェーン（サービス名 airlog-ftp・アカウント rc-group）から読む。ファイルには書かない
 # ・main と GitHub が一致していないときは止める（上げた版と GitHub の版がずれないように）
