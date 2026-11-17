@@ -266,6 +266,7 @@
   #deleteDialog { z-index: 1100; }
   #deleteDialog .c-modal__inner { max-width: 440px; padding: 26px; }
   .c-deldlg__title { font-size: 1.15rem; font-weight: bold; color: #c62828; margin-bottom: 14px; }
+  .c-deldlg__title--copy { color: #222; }
   .c-deldlg__lead { font-size: 0.88rem; color: #555; line-height: 1.8; margin-bottom: 18px; }
   .c-deldlg__target {
     background: #fafafa; border: 1px solid #e0e0e0; border-left: 4px solid #e53935;
@@ -1403,7 +1404,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="p-card__footer">
               <span class="p-card__date">更新: ${post.displayDate}</span>${periodBadge(post)}
               <div class="p-card__actions">
-                <button type="button" class="p-card__btn p-card__btn--copy" data-id="${post.id}" title="この記事を写して新しい記事を作る（保存するまで記事は増えません）">複製</button>
+                <button type="button" class="p-card__btn p-card__btn--copy" data-id="${post.id}" title="この記事を複製する（確認の窓で「保存する」を押したときだけ記事が増えます）">複製</button>
                 <button type="button" class="p-card__btn p-card__btn--edit" data-id="${post.id}">編集</button>
                 <button type="button" class="p-card__btn p-card__btn--delete" data-id="${post.id}">削除</button>
               </div>
@@ -1555,36 +1556,62 @@ document.addEventListener('DOMContentLoaded', () => {
     setEditing(post);
   }
 
-  // ▼ 複製：記事の中身を入力欄に写して「新しい記事」として始める（2026-11-17）▼
-  // ・ここでは何も保存しない。「保存する」を押したときに新しい id で1本増える（元の記事は変えない）
-  // ・題の末尾に「（コピー）」、公開設定は非公開（うっかり同じ記事が2本公開されないように）
-  // ・作成者・日付は保存した人・保存した日になる（新規作成と同じ）
+  // ▼ 複製：確認の窓で「保存する」か「保存せずに終わる」の2択（2026-11-17 宮村さん「保存押して初めて複製されて、複製されたものにはコピーが先頭につくように」）▼
+  // ・窓を開いただけでは何も増えない。「保存する」を押したときに新しい id で1本増える（元の記事は変えない・入力欄にも触らない）
+  // ・中身は元の記事の項目を全部写す（入力欄に無い項目も落とさない）。変えるのは下の項目だけ
+  //     題の先頭に「【コピー】」／公開設定は非公開（同じ記事が2本公開されないように）／作成者・日付は保存した人・保存した日
   // ・公開ページは id で見え方を決めているので、複製元の id を copiedFrom に持たせる（複製の複製でも、いちばん元の id）
+  const COPY_MARK = '【コピー】';
+  const copyDialog = document.getElementById('copyDialog');
+  let pendingCopyPost = null;
+
   async function duplicatePost(id) {
     const posts = await loadData();
     if (loadDataError) { alert('【エラー】記事を読み込めませんでした。ページを再読み込みしてからやり直してください。'); return; }
-    const post = posts.find(p => p.id === id); if (!post) return;
-    if (editingId && !confirm('編集中の記事があります。入力中の内容は消えて、複製した記事に入れ替わります。よろしいですか？')) return;
-    clearForm();
-    inputs.title.value = (post.title || '') + '（コピー）';
-    inputs.genre.value = post.genre;
-    existingKeyword = post.keyword || '';
-    existingCover = post.coverImage || '';
-    existingCopiedFrom = post.copiedFrom || post.id;
-    inputs.tags.value = (post.tags || []).join(', ');
-    const sw = splitWhen(post.startDate); inputs.startDate.value = sw.date;
-    const ew = splitWhen(post.endDate); inputs.endDate.value = ew.date;
-    if (window.airlogTime) { window.airlogTime.start.set(sw.time); window.airlogTime.end.set(ew.time); }
-    else { inputs.startTime.value = sw.time; inputs.endTime.value = ew.time; }
-    inputs.toc.value = post.toc || '';
-    inputs.content.value = post.content || '';
-    imagePositionSliderX.value = post.coverPositionX !== undefined ? post.coverPositionX : 50;
-    imagePositionSliderY.value = post.coverPositionY !== undefined ? post.coverPositionY : 50;
-    inputs.coverImageData.value = post.coverImage || '';
-    showImagePreview(post.coverImage || '');
-    editorHeading.textContent = '複製して新しい記事を作る（「保存する」を押すまで記事は増えません）';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const post = posts.find(p => p.id === id); if (!post) { alert('【エラー】複製元の記事が見つかりませんでした。ページを再読み込みしてからやり直してください。'); return; }
+    pendingCopyPost = post;
+    document.getElementById('copyName').textContent = post.title || '（タイトル未入力）';
+    document.getElementById('copyNewName').textContent = COPY_MARK + (post.title || '');
+    copyDialog.classList.add('is-open');
+    setTimeout(function () { document.getElementById('btnCopyCancel').focus(); }, 50);
   }
+
+  function closeCopyDialog() {
+    copyDialog.classList.remove('is-open');
+    pendingCopyPost = null;
+  }
+  document.getElementById('btnCopyCancel').addEventListener('click', closeCopyDialog);
+  copyDialog.addEventListener('click', function (ev) { if (ev.target === copyDialog) closeCopyDialog(); });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Escape' && copyDialog.classList.contains('is-open')) closeCopyDialog();
+  });
+
+  document.getElementById('btnCopyConfirm').addEventListener('click', async function () {
+    if (!pendingCopyPost) return;
+    const post = pendingCopyPost;
+    const btn = this;
+    btn.disabled = true; btn.textContent = '保存しています…';
+    const now = new Date();
+    const copy = Object.assign({}, post, {
+      id: generateId(),
+      title: COPY_MARK + (post.title || ''),
+      status: 'private',
+      date: now.toISOString(), displayDate: formatDate(now),
+      author: autoAuthorName(), updatedBy: autoAuthorName(), updatedAt: nowStamp(),
+      copiedFrom: post.copiedFrom || post.id
+    });
+    try {
+      await db.collection('posts').doc(copy.id).set(copy);
+      closeCopyDialog();
+      await renderGrid();
+      alert('複製しました。「' + copy.title + '」が非公開で増えています。直すときは、その記事の「編集」から。');
+    } catch (err) {
+      alert('【エラー】複製の保存に失敗しました（記事は増えていません）: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '保存する';
+    }
+  });
+  // ▲ ここまで ▲
 
   // ▼ 削除は確認ダイアログを挟む ▼
   const deleteDialog = document.getElementById('deleteDialog');
@@ -2398,6 +2425,25 @@ async function generateAndOpenFromToc() {
     <div class="c-deldlg__btns">
       <button type="button" class="c-btn c-btn--secondary" id="btnDeleteCancel">キャンセル</button>
       <button type="button" class="c-btn c-btn--danger" id="btnDeleteConfirm">削除する</button>
+    </div>
+  </div>
+</div>
+<!-- ▲ ここまで ▲ -->
+
+<!-- ▼ 複製の確認（保存する／保存せずに終わるの2択）▼ -->
+<div class="c-modal" id="copyDialog">
+  <div class="c-modal__inner">
+    <div class="c-deldlg__title c-deldlg__title--copy">この記事を複製しますか？</div>
+    <p class="c-deldlg__lead">「保存する」を押すと、同じ中身の記事が非公開で1本増えます。元の記事は変わりません。</p>
+    <div class="c-deldlg__target">
+      <div class="c-deldlg__meta">複製元</div>
+      <div class="c-deldlg__name" id="copyName"></div>
+      <div class="c-deldlg__meta">増える記事</div>
+      <div class="c-deldlg__name" id="copyNewName"></div>
+    </div>
+    <div class="c-deldlg__btns">
+      <button type="button" class="c-btn c-btn--secondary" id="btnCopyCancel">保存せずに終わる</button>
+      <button type="button" class="c-btn c-btn--primary" id="btnCopyConfirm">保存する</button>
     </div>
   </div>
 </div>

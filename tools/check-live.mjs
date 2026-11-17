@@ -62,7 +62,9 @@ ok('Firestore：公開の記事はログインなしで数えられる（公開�
 const has = (name, re, why) => ok(name, re.test(admin), why);
 has('管理画面：ログインできた時点で記事一覧を読み直す', /airlogLoadAuthors\s*=\s*async function\s*\(\)\s*\{[^}]*renderGrid\(\)/, 'ログインの直後に一覧が空になる（ページを開いた時点ではログイン前で読めない）');
 has('管理画面：記事を読めなかったら「記事がありません」と出さない', /if \(loadDataError\) \{[\s\S]{0,300}読み込めませんでした/, '読めなかったのに 0件 と出る');
-has('管理画面：複製ボタンが複製元の id（copiedFrom）を持たせて保存する', /p-card__btn--copy[\s\S]{0,200}duplicatePost/.test(admin) ? /existingCopiedFrom = post\.copiedFrom \|\| post\.id/ : /$^/, '複製した記事が公開ページで元と違う見え方になる（表紙・目次の位置・人材ニュース）');
+has('管理画面：複製ボタンが複製元の id（copiedFrom）を持たせて保存する', /p-card__btn--copy[\s\S]{0,200}duplicatePost/.test(admin) ? /copiedFrom: post\.copiedFrom \|\| post\.id/ : /$^/, '複製した記事が公開ページで元と違う見え方になる（表紙・目次の位置・人材ニュース）');
+// 2026-11-17 宮村さん「保存押して初めて複製されて、複製されたものにはコピーが先頭につくように」：窓は保存する／保存せずに終わるの2択・題の先頭に【コピー】・非公開
+ok('管理画面：複製は窓で「保存する／保存せずに終わる」の2択、保存した記事は題の先頭に【コピー】・非公開', /id="btnCopyCancel">保存せずに終わる</.test(admin) && /id="btnCopyConfirm">保存する</.test(admin) && /title: COPY_MARK \+ \(post\.title/.test(admin) && /const COPY_MARK = '【コピー】'/.test(admin) && /status: 'private',\s*date: now/.test(admin) && !/'（コピー）'/.test(admin), '複製の窓のボタンか、増えた記事の題・公開設定が決めと違う');
 has('管理画面：作成者の一覧を読めなかったら保存しない', /if \(authorsLoadError\) throw/, '読めていない空の一覧で上書きして、登録済みの作成者を消す');
 // ばらつき：記事を読む loadData() を呼ぶ場所は、どこも「読めなかった」を見ていること（描く・保存・編集・削除）
 const calls = [...admin.matchAll(/await loadData\(\);([\s\S]{0,260})/g)];
