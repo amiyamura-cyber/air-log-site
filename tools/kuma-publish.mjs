@@ -80,7 +80,7 @@ async function main() {
       ok++;
     } catch (e) { problems.push(`${d.name.split('/').pop()} … ${e.message}`); }
   }
-  console.log(`${ok} / ${targets.length} 本を${to === 'public' ? '公開' : '非公開'}にしました。本番には10分おきの自動処理で出ます`);
+  console.log(`${ok} / ${targets.length} 本を${to === 'public' ? '公開' : '非公開'}にしました。公開ページにはその場で出ます。サイトマップには10分以内に入ります（sitemap.php）。本番の控えのファイル（data/）に入れるには tools/deploy-rc.sh を動かしてください`);
   problems.forEach(p => console.log(' ・' + p));
   fs.writeFileSync(path.join(CACHE, 'publish-last-run.json'), JSON.stringify({ at: now.toISOString(), to, targets: targets.length, ok, problems }, null, 2));
   if (problems.length) process.exitCode = 1;
