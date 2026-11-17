@@ -13,21 +13,31 @@
 import fs from 'fs';
 import path from 'path';
 import { execFileSync } from 'child_process';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
 
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), '..');
 const CACHE = path.join(ROOT, 'tools/.kuma-cache');
 const strip = s => s.replace(/<!--[\s\S]*?-->/g, '').replace(/<[^>]+>/g, '').replace(/&[a-z#0-9]+;/g, ' ').replace(/\s+/g, '');
 
+// Firestore はログインなしでは全件を読めない（2026-10-30 のルール）。firebase login 済みのアカウントで読む（kuma-publish と同じ読み方）
+const FT = '/opt/homebrew/lib/node_modules/firebase-tools/lib/';
+const { requireAuth } = require(FT + 'requireAuth');
+const { getGlobalDefaultAccount } = require(FT + 'auth');
+const { Client } = require(FT + 'apiv2');
+const account = getGlobalDefaultAccount();
+if (!account) throw new Error('firebase login が必要です');
+await requireAuth({ user: account.user, tokens: account.tokens });
+const client = new Client({ urlPrefix: 'https://firestore.googleapis.com', auth: true, apiVersion: 'v1' });
 const posts = [];
 let token = '';
 do {
-  const r = await fetch(`https://firestore.googleapis.com/v1/projects/air-log-db/databases/(default)/documents/posts?pageSize=300${token ? '&pageToken=' + encodeURIComponent(token) : ''}`);
-  // 読めなかったのに「0本」で先へ進むと、食い違い0と出てしまうので止める（2026-10-30 からログインなしでは全件を読めない）
-  if (!r.ok) throw new Error(`Firestore を読めなかったので止めました: HTTP ${r.status}（ログインなしでは全件を読めません）`);
-  const j = await r.json();
-  for (const d of j.documents || []) posts.push({ id: d.name.split('/').pop(), f: d.fields });
-  token = j.nextPageToken || '';
+  // 読めなかったら例外で止まる（0本のまま先へ進んで「食い違い0」と出さない）
+  const r = await client.request({ method: 'GET', path: '/projects/air-log-db/databases/(default)/documents/posts', queryParams: { pageSize: '300', ...(token ? { pageToken: token } : {}) } });
+  for (const d of r.body.documents || []) posts.push({ id: d.name.split('/').pop(), f: d.fields });
+  token = r.body.nextPageToken || '';
 } while (token);
+if (!posts.length) throw new Error('Firestore から記事が1本も読めなかったので止めました');
 
 const kuma = posts.filter(p => p.id.startsWith('kuma-'));
 // 手元にあるだけでは本番に出ない。GitHub に上がっている（git が追っている）画像だけを「ある」とみなす

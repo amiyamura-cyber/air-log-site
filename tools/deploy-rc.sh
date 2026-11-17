@@ -3,6 +3,8 @@
 #
 #   bash tools/deploy-rc.sh
 #
+# ・コードを変えたときは push のあとに手で動かす。それとは別に、毎日の定期タスク airlog-daily-deploy がこれを動かす
+#   （管理画面で足した・直した記事を、本番の控えのファイル data/ とサイトマップに入れるため。2026-11-17）
 # ・さくらは国外IPからのFTPを拒否するので、GitHub Actions ではなくこのMac（国内）から上げる
 # ・FTPのパスワードは macOS のキーチェーン（サービス名 airlog-ftp・アカウント rc-group）から読む。ファイルには書かない
 # ・main と GitHub が一致していないときは止める（上げた版と GitHub の版がずれないように）

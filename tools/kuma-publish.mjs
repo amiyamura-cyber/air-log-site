@@ -10,7 +10,8 @@
 //   ・触るのは kuma- の記事だけ。手で書いた記事には触らない
 //   ・管理画面で人が直した記事（最後の更新者が kuma-import / kuma-publish 以外）は触らず、件数を出す
 //   ・変えるのは status と updatedAt / updatedBy だけ（本文などは書き換えない）
-//   ・本番に出るのは、10分おきの自動処理（.github/workflows/publish.yml）が次に動いたとき
+//   ・公開ページへはその場で出る（index.html が、変わった記事を Firestore に聞く）
+//   ・本番の控えのファイル（data/）とサイトマップに入るのは、次に tools/deploy-rc.sh が動いたとき（毎日の定期タスク airlog-daily-deploy）
 //   ・結果は tools/.kuma-cache/publish-last-run.json に残す
 // LONG-RUN-OK：記事の一覧は1回読むだけ。書き込みは対象の本数ぶん
 import fs from 'fs';

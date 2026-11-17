@@ -137,6 +137,7 @@ button{font-family:inherit;color:inherit}
 .p-card__body{padding:8px 8px 16px;display:flex;flex-direction:column;flex:1}
 @media(min-width:768px){.p-card__body{padding:16px 16px 24px}}
 .p-card__title{font-size:.875rem;font-weight:700;line-height:1.65;margin-bottom:8px;transition:color .2s}
+.p-card__title a{transition:none}/* 題のリンク（Google が記事を辿れるようにするためのもの・2026-11-17）。色の変わり方は題そのものに任せる */
 @media(min-width:768px){.p-card__title{font-size:1rem;margin-bottom:16px}}
 @media(max-width:639.8px){.p-card__title{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3}}
 .p-card:hover .p-card__title{color:var(--blue)}
@@ -947,7 +948,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <article class="p-ycard" onclick="window.location.href='?id=${post.id}'">
         <figure class="p-ycard__thumb"><img src="${coverOf(post)}" alt="" loading="lazy" style="${posOf(post)}"></figure>
         <div class="p-ycard__info">
-          <h3 class="p-card__title">${post.title || '無題'}</h3>
+          <h3 class="p-card__title"><a href="?id=${post.id}" onclick="event.stopPropagation()">${post.title || '無題'}</a></h3>
           <div class="p-card__cats">${pillHtml(post)}</div>
           <p class="p-card__date"><span>更新日</span>${post.displayDate || ''}</p>
         </div>
@@ -965,7 +966,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const url = (p, s) => `?cat=${c}${(s || sort) === 'asc' ? '&sort=asc' : ''}${p > 1 ? '&p=' + p : ''}`;
 
     renderBreadcrumb(info.title);
-    setPageMeta(info.title + 'の記事一覧｜エアログ', info.desc, '?cat=' + c);
+    // 題がもう「一覧」で終わっているもの（最新記事一覧）には「の記事一覧」を足さない（タブ名を「一覧の記事一覧」にしない。2026-11-17）
+    const tabName = /一覧$/.test(info.title) ? info.title : info.title + 'の記事一覧';
+    setPageMeta(tabName + '｜エアログ', info.desc, '?cat=' + c);
     document.getElementById('listTitle').textContent = info.title;
     const desc = document.getElementById('listDesc');
     desc.textContent = info.desc; desc.style.display = info.desc ? '' : 'none';
@@ -992,7 +995,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <article class="p-card" onclick="window.location.href='?id=${post.id}'">
         <img class="p-card__thumb" src="${coverOf(post)}" alt="" loading="lazy" style="${posOf(post)}">
         <div class="p-card__body">
-          <h3 class="p-card__title">${post.title || '無題'}</h3>
+          <h3 class="p-card__title"><a href="?id=${post.id}" onclick="event.stopPropagation()">${post.title || '無題'}</a></h3>
           <div class="p-card__cats">${pillHtml(post)}</div>
           <p class="p-card__date"><span>更新日</span>${post.displayDate || ''}</p>
         </div>

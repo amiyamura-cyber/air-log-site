@@ -73,9 +73,14 @@ if (!LOCAL) {
   const top = await text(LIVE);
   ok('本番：トップが開く', top.status === 200, `HTTP ${top.status}`);
   ok('公開ページ：目録を読めなかったら「記事が無いサイト」に見せない', /indexLoadError = e;/.test(top.body) && /if \(indexLoadError && [\s\S]{0,400}LOAD_FAILED_HTML/.test(top.body), '読めなかったのに No Article・空の一覧が出る');
-  ok('公開ページ：記事・一覧ごとにタブ名と説明文を入れる（検索結果の見出しがサイト名だけにならない）', /setPageMeta\(\(post\.title/.test(top.body) && /setPageMeta\(info\.title/.test(top.body), '記事ページのタブ名がどれもサイト名のままになる');
+  ok('公開ページ：記事・一覧ごとにタブ名と説明文を入れる（検索結果の見出しがサイト名だけにならない）', /setPageMeta\(\(post\.title/.test(top.body) && /setPageMeta\(tabName \+/.test(top.body), '記事ページのタブ名がどれもサイト名のままになる');
   const rc = await text(LIVE + '.firebaserc');
   ok('本番：設定ファイル（.firebaserc）を外に出していない', rc.status === 404 || rc.status === 403, `HTTP ${rc.status}`);
+  // カードの題は、どれも記事へのリンクの形（a タグ）になっていること。押すと動く仕掛けだけだと Google が記事を辿れない
+  const cardTitles = [...top.body.matchAll(/<h3 class="p-card__title">(.{0,24})/g)];
+  const cardLinked = cardTitles.filter(m => m[1].startsWith('<a href="?id=')).length;
+  ok('公開ページ：カードの題が記事へのリンクの形になっている（Google が辿れる）', cardTitles.length > 0 && cardLinked === cardTitles.length, `カードの題 ${cardTitles.length} か所のうち、リンクの形 ${cardLinked} か所`);
+  ok('公開ページ：一覧のタブ名で「一覧」が重ならない', /\/一覧\$\/\.test\(info\.title\)/.test(top.body) && !/setPageMeta\(info\.title \+ 'の記事一覧/.test(top.body), '題が「一覧」で終わる一覧（最新記事一覧）のタブ名が「一覧の記事一覧」になる');
   // トップの説明文（検索結果で見出しの下に出る文）。文言は固定しない：ある・空でない・長すぎない、だけを見る
   const topDesc = (top.body.match(/<meta name="description" content="([^"]*)">/) || [])[1];
   ok('本番：トップに説明文がある（空でなく120字以内）', !!topDesc && topDesc.trim().length >= 30 && topDesc.length <= 120, topDesc === undefined ? '説明文の行が無い' : `${topDesc.length} 字`);
