@@ -123,8 +123,20 @@ if (!LOCAL) {
     const cc = (await fetch(LIVE + f, { method: 'HEAD' })).headers.get('cache-control') || '';
     ok(`本番：${f || 'トップ'} は控えを使う前にサーバーへ聞く`, /no-cache/.test(cc), `Cache-Control: ${cc || '（無し）'}。上げ直しても古い版が出続ける`);
   }
+  // キーワードを探す（2026-11-25）：seo.php が Google の検索候補とニュースを読めているか。読めないと管理画面の欄が「探せませんでした」になる
+  const seo = await text(LIVE + 'seo.php?q=' + encodeURIComponent('採用') + '&fresh=1');
+  let seoJ = null; try { seoJ = JSON.parse(seo.body); } catch (e) {}
+  ok('本番：キーワードを探す（seo.php）が Google の検索候補とニュースを返す', seo.status === 200 && seoJ && Array.isArray(seoJ.phrases) && seoJ.phrases.length > 0 && Array.isArray(seoJ.articles) && seoJ.articles.length > 0 && seoJ.errors.length === 0,
+     seoJ ? `HTTP ${seo.status}・候補 ${seoJ.phrases ? seoJ.phrases.length : '-'}・ニュース ${seoJ.articles ? seoJ.articles.length : '-'}・読めなかったもの ${JSON.stringify(seoJ.errors || seoJ.error)}` : `HTTP ${seo.status}・JSON でない（PHP が動いていない？）`);
   const thanks = await text(LIVE + 'thanks.html');
   ok('本番：管理画面・サンクスページは検索よけのまま', /<meta name="robots"[^>]*noindex/i.test(admin) && /<meta name="robots"[^>]*noindex/i.test(thanks.body), 'noindex が外れている');
+}
+
+// 管理画面の「キーワードを探す」（2026-11-25）：欄があり、seo.php を読み、言葉を決まった言葉で埋めない（Streamlit 版の「単語14」を持ち込まない）
+ok('管理画面：キーワードを探すの欄があり seo.php を読む', /id="seoQuery"/.test(admin) && /fetch\('seo\.php\?q='/.test(admin) && /airlogPostsForSeo = loadDataError \? null/.test(admin), '欄・seo.php の呼び出し・記事を読めなかったら似た記事を数えない、のどれかが無い');
+if (LOCAL) {
+  const seoSrc = fs.readFileSync(path.join(ROOT, 'seo.php'), 'utf8').split('\n').filter(l => !/^\s*\/\//.test(l)).join('\n');   // 説明書きの行は見ない
+  ok('seo.php：足りない分を決まった言葉で埋めない', !/単語|backup_pool|huge_fallback/.test(seoSrc), '決まった言葉で埋める処理が入っている');
 }
 
 const bad = results.filter(r => !r.pass);
