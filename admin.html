@@ -186,6 +186,31 @@
   .kizi-tool .btn.alt { background: #16a34a; }
   .kizi-tool .btn.alt:hover { background: #15803d; }
   .kizi-tool .note { font-size: 12px; color: #666; margin-top: 12px; }
+  /* キーワードを探す（2026-11-25。Streamlit 版の SEOキーワード抽出を移したもの） */
+  .seo-find { background: #fff; border: 1px solid #bfd3fb; border-radius: 10px; padding: 14px; margin-bottom: 18px; }
+  .seo-find__head { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .seo-find__lead { font-size: 12px; color: #555; margin-bottom: 10px; line-height: 1.6; }
+  .seo-find__row { display: flex; gap: 8px; }
+  .seo-find__row input[type="text"] { flex: 1; min-width: 0; }
+  .seo-find__row button { flex: none; background: #2563eb; color: #fff; border: none; border-radius: 8px; padding: 0 18px; font-size: 14px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .seo-find__row button:disabled { background: #93b4f5; cursor: default; }
+  .seo-find__status { font-size: 12px; color: #555; margin-top: 10px; line-height: 1.6; }
+  .seo-find__status.is-error { color: #b91c1c; font-weight: 700; }
+  .seo-find__phrases { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; max-height: 300px; overflow-y: auto; }
+  .seo-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #cbd2da; background: #f8fafc; border-radius: 16px; padding: 5px 10px; font-size: 13px; color: #1a1a2e; cursor: pointer; text-align: left; line-height: 1.4; }
+  .seo-chip:hover { border-color: #2563eb; background: #eef4ff; }
+  .seo-chip--more { background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 700; }
+  .seo-chip--more:hover { background: #1d4ed8; }
+  .seo-chip__badge { font-size: 11px; border-radius: 10px; padding: 1px 7px; white-space: nowrap; }
+  .seo-chip__badge--dup { background: #fef3c7; color: #92400e; }
+  .seo-find details { margin-top: 12px; font-size: 13px; }
+  .seo-find summary { cursor: pointer; font-weight: 700; color: #2563eb; }
+  .seo-find ol { margin: 8px 0 0 20px; padding: 0; }
+  .seo-find li { margin-bottom: 6px; line-height: 1.5; }
+  .seo-find li a { color: #1a1a2e; }
+  .seo-find li small { color: #777; }
+  .seo-dup { font-size: 12px; margin-top: 6px; line-height: 1.6; color: #92400e; background: #fef3c7; border-radius: 6px; padding: 6px 10px; }
+  .seo-dup[hidden] { display: none; }
   .kizi-toast {
     position: fixed; left: 50%; bottom: 30px; transform: translateX(-50%) translateY(20px);
     background: #111827; color: #fff; padding: 12px 22px; border-radius: 30px; font-size: 14px;
@@ -507,8 +532,25 @@
         <div class="title">🔷 AIに記事を書いてもらう</div>
         <div class="desc">以下の条件を入力してボタンを押すと、AIへの詳細な指示書がコピーされます。</div>
 
+        <!-- キーワードを探す（2026-11-25）。裏で seo.php が Google の検索候補とニュースを読む -->
+        <div class="seo-find">
+          <div class="seo-find__head">🔍 キーワードを探す</div>
+          <div class="seo-find__lead">書きたいテーマを入れて「探す」を押すと、Google でみんなが実際に検索している言い方が出ます。押した言葉が、下の「対策キーワード」に入ります。</div>
+          <div class="seo-find__row">
+            <input type="text" id="seoQuery" placeholder="例：採用 面接">
+            <button type="button" id="seoBtn">探す</button>
+          </div>
+          <div class="seo-find__status" id="seoStatus"></div>
+          <div class="seo-find__phrases" id="seoPhrases"></div>
+          <details id="seoNewsWrap" hidden>
+            <summary>関連ニュース（参考）</summary>
+            <ol id="seoNews"></ol>
+          </details>
+        </div>
+
         <label for="keyword">対策キーワード</label>
         <input type="text" id="keyword" placeholder="例：採用面接 質問">
+        <div class="seo-dup" id="seoDup" hidden></div>
 
         <label for="target">ターゲット読者</label>
         <input type="text" id="target" placeholder="例：中小企業の経営者、人事担当者">
@@ -1359,6 +1401,9 @@ document.addEventListener('DOMContentLoaded', () => {
   async function renderGrid() {
     const posts = await loadData();
     sheetPosts = posts.slice();
+    // 「キーワードを探す」が似た記事を数えるのに使う。読めなかったときは null（0本と見せない）
+    window.airlogPostsForSeo = loadDataError ? null : posts.slice();
+    document.dispatchEvent(new Event('airlog-posts'));
     if (viewSheet.style.display !== 'none') renderSheet();
     posts.sort((a, b) => new Date(b.date) - new Date(a.date));
     articleGrid.innerHTML = ''; articleCount.textContent = `全 ${posts.length} 件`;
@@ -2688,5 +2733,130 @@ async function generateAndOpenFromToc() {
   </div>
 </div>
 <!-- ▲ ここまで ▲ -->
+
+<script>
+// ▼ キーワードを探す（2026-11-25）▼
+// ・言葉の候補とニュースは seo.php（さくら）が Google から読んで返す。取れなかったものは決まった言葉で埋めず、取れなかったと出す
+// ・「似た記事」は管理画面が読んだ全記事（非公開も含む）の題と対策キーワードから数える。みんな同じ Firestore を見るので、
+//   だれかが書いて保存した言葉は、ほかの人の画面にも「似た記事あり」で出る（別に「使った言葉」を保存する場所は作らない）
+// ・記事を読めていないときは数えない（0本＝まだ無い、と見せない）
+(function () {
+  const qEl = document.getElementById('seoQuery');
+  const btn = document.getElementById('seoBtn');
+  const statusEl = document.getElementById('seoStatus');
+  const phrasesEl = document.getElementById('seoPhrases');
+  const newsWrap = document.getElementById('seoNewsWrap');
+  const newsEl = document.getElementById('seoNews');
+  const kwEl = document.getElementById('keyword');
+  const dupEl = document.getElementById('seoDup');
+  if (!qEl || !btn || !kwEl) return;
+  let last = null;   // 直近の結果（記事を読み直したら似た記事の数だけ出し直す）
+  let showAll = false; // 候補は100件を超えることがあるので、最初は FIRST 件だけ並べ、残りはボタンで出す（捨てない）
+  const FIRST = 12;
+
+  function esc(v) {
+    return String(v == null ? '' : v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+  function words(s) {
+    return String(s || '').toLowerCase().replace(/[　\s]+/g, ' ').trim().split(' ').filter(Boolean);
+  }
+  // 言葉を全部（空白で分けた語のすべて）題か対策キーワードに含む記事。null＝記事を読めていない
+  function similarPosts(phrase) {
+    const posts = window.airlogPostsForSeo;
+    if (!Array.isArray(posts)) return null;
+    const ws = words(phrase);
+    if (!ws.length) return [];
+    return posts.filter(function (p) {
+      const hay = (String(p.title || '') + ' ' + String(p.keyword || '')).toLowerCase().replace(/[　\s]+/g, '');
+      return ws.every(function (w) { return hay.indexOf(w) !== -1; });
+    });
+  }
+
+  function renderPhrases() {
+    if (!last) return;
+    const known = Array.isArray(window.airlogPostsForSeo);
+    const rows = last.phrases.map(function (p) { const s = similarPosts(p); return { p: p, s: s }; });
+    // まだ書いていない言葉を先に（Google の並び順は保つ）
+    if (known) rows.sort(function (a, b) { return (a.s.length > 0) - (b.s.length > 0); });
+    const shown = showAll ? rows : rows.slice(0, FIRST);
+    phrasesEl.innerHTML = shown.map(function (r) {
+      let badge = '';
+      if (r.s) {
+        // 印は似た記事があるときだけ（全部に付けると読みにくい）。印が無い＝まだ書いていない
+        badge = r.s.length ? '<span class="seo-chip__badge seo-chip__badge--dup">似た記事 ' + r.s.length + '本</span>' : '';
+      }
+      const tip = r.s && r.s.length ? '似た記事：' + r.s.slice(0, 5).map(function (x) { return x.title; }).join(' ／ ') : '';
+      return '<button type="button" class="seo-chip" data-phrase="' + esc(r.p) + '" title="' + esc(tip) + '">' + esc(r.p) + badge + '</button>';
+    }).join('') + (rows.length > shown.length
+      ? '<button type="button" class="seo-chip seo-chip--more" id="seoMore">残り ' + (rows.length - shown.length) + '件を見る</button>' : '');
+    const notes = [];
+    notes.push('Google の検索候補 ' + last.phrases.length + '件（' + esc(last.fetchedAt) + ' 時点）');
+    if (!known) notes.push('記事一覧を読めていないので、似た記事があるかは出していません（ログインしてから探し直してください）');
+    else notes.push('印の無い言葉は、まだ記事がありません。「似た記事」は言葉が全部、題か対策キーワードに入っている記事（非公開も含む）です');
+    if (!last.phrases.length && !last.errors.length) notes.push('この言葉では Google に候補がありませんでした。言葉を短くすると出やすくなります');
+    if (last.errors.length) {
+      statusEl.className = 'seo-find__status is-error';
+      statusEl.innerHTML = esc(last.errors.join('／')) + '。<br>' + notes.join('<br>');
+    } else {
+      statusEl.className = 'seo-find__status';
+      statusEl.innerHTML = notes.join('<br>');
+    }
+  }
+
+  function renderNews() {
+    if (!last || !last.articles.length) { newsWrap.hidden = true; return; }
+    newsEl.innerHTML = last.articles.map(function (a) {
+      return '<li><a href="' + esc(a.url) + '" target="_blank" rel="noopener">' + esc(a.title) + '</a> <small>' + esc(a.source) + (a.date ? '・' + esc(a.date) : '') + '</small></li>';
+    }).join('');
+    newsWrap.querySelector('summary').textContent = '関連ニュース（参考・' + last.articles.length + '本）';
+    newsWrap.hidden = false;
+  }
+
+  async function search() {
+    const q = qEl.value.trim();
+    if (!q) { statusEl.className = 'seo-find__status is-error'; statusEl.textContent = '書きたいテーマを入れてください'; return; }
+    btn.disabled = true; btn.textContent = '探し中…';
+    statusEl.className = 'seo-find__status'; statusEl.textContent = 'Google から読んでいます（10秒ほどかかることがあります）';
+    phrasesEl.innerHTML = ''; newsWrap.hidden = true;
+    try {
+      const r = await fetch('seo.php?q=' + encodeURIComponent(q), { cache: 'no-store' });
+      const j = await r.json().catch(function () { return null; });
+      if (!r.ok || !j || !Array.isArray(j.phrases)) throw new Error((j && j.error) || ('HTTP ' + r.status));
+      last = j; showAll = false;
+      renderPhrases(); renderNews();
+    } catch (e) {
+      last = null;
+      statusEl.className = 'seo-find__status is-error';
+      statusEl.textContent = '探せませんでした（' + e.message + '）。少し待ってからもう一度押してください';
+    } finally {
+      btn.disabled = false; btn.textContent = '探す';
+    }
+  }
+
+  // 対策キーワードに入っている言葉に、似た記事がもうあるかを下に出す
+  function checkKeyword() {
+    const kw = kwEl.value.trim();
+    const s = kw ? similarPosts(kw) : [];
+    if (!s || !s.length) { dupEl.hidden = true; dupEl.textContent = ''; return; }
+    dupEl.innerHTML = 'この言葉の似た記事が ' + s.length + '本あります：' + s.slice(0, 3).map(function (x) { return '「' + esc(x.title) + '」'; }).join('') + (s.length > 3 ? ' ほか' : '') + '<br>同じ話にならないよう、切り口を変えるか別の言葉を選んでください';
+    dupEl.hidden = false;
+  }
+
+  btn.addEventListener('click', search);
+  qEl.addEventListener('keydown', function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); search(); } });
+  phrasesEl.addEventListener('click', function (e) {
+    const b = e.target.closest('.seo-chip');
+    if (!b) return;
+    if (b.id === 'seoMore') { showAll = true; renderPhrases(); return; }
+    kwEl.value = b.dataset.phrase;
+    checkKeyword();
+    kwEl.focus();
+    if (typeof showToast === 'function') showToast('対策キーワードに「' + b.dataset.phrase + '」を入れました');
+  });
+  kwEl.addEventListener('input', checkKeyword);
+  document.addEventListener('airlog-posts', function () { renderPhrases(); checkKeyword(); });
+  window.airlogSeo = { search: search, similarPosts: similarPosts, last: function () { return last; } };   // 点検用
+})();
+</script>
 </body>
 </html>
